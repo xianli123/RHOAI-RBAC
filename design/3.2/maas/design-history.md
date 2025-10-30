@@ -23,6 +23,7 @@ This file contains information that will be used to populate the History tab of 
 - Recording 2 focused on MaaS Admin: https://drive.google.com/file/d/16zOf70_oN5sgkPW3bs1bi9ooNMNBuyqd/view
 - We collected feedback from Field-facing teams, need to synthesize this feedback into updates
 - TODO: synthesize this feedback into prototype updates
+- The "Add asset" modal should include the ability to only make it available to certain groups or users. Not wide open to everyone. Some users may want to only share with certain others.
 
 2025-10-15
 - Reviewed MaaS iteration 1 work at Gen AI Studio UX Stakeholder Sync

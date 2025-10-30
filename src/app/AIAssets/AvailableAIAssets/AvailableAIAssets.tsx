@@ -1020,6 +1020,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   // Add Asset modal state
   type AssetType = 'Model' | 'MCP Server' | '';
   type ModelLocation = 'Internal' | 'External' | '';
+  type AccessControlType = 'All users' | 'User' | 'Group' | 'Service Account';
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = React.useState(false);
   const [assetType, setAssetType] = React.useState<AssetType>('');
   const [isAssetTypeOpen, setIsAssetTypeOpen] = React.useState(false);
@@ -1038,6 +1039,10 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [tools, setTools] = React.useState('');
   const [isToolsOpen, setIsToolsOpen] = React.useState(false);
   const [assetDescription, setAssetDescription] = React.useState('');
+  const [accessControlType, setAccessControlType] = React.useState<AccessControlType>('All users');
+  const [isAccessControlTypeOpen, setIsAccessControlTypeOpen] = React.useState(false);
+  const [accessControlName, setAccessControlName] = React.useState('');
+  const [isAccessControlNameOpen, setIsAccessControlNameOpen] = React.useState(false);
 
   // Initialize state from localStorage
   React.useEffect(() => {
@@ -1470,6 +1475,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     setModelDeployment('');
     setMcpServer('');
     setTools('');
+    setAccessControlType('All users');
+    setAccessControlName('');
     setAssetDescription('');
   };
 
@@ -3658,6 +3665,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         setTools={setTools}
         isToolsOpen={isToolsOpen}
         setIsToolsOpen={setIsToolsOpen}
+        accessControlType={accessControlType}
+        setAccessControlType={setAccessControlType}
+        isAccessControlTypeOpen={isAccessControlTypeOpen}
+        setIsAccessControlTypeOpen={setIsAccessControlTypeOpen}
+        accessControlName={accessControlName}
+        setAccessControlName={setAccessControlName}
+        isAccessControlNameOpen={isAccessControlNameOpen}
+        setIsAccessControlNameOpen={setIsAccessControlNameOpen}
         assetDescription={assetDescription}
         setAssetDescription={setAssetDescription}
       />

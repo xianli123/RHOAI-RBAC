@@ -23,6 +23,7 @@ import {
 } from '@patternfly/react-core';
 
 type AssetType = 'Model' | 'MCP Server' | '';
+type AccessControlType = 'All users' | 'User' | 'Group' | 'Service Account';
 
 const AssetEndpoints: React.FunctionComponent = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -36,6 +37,10 @@ const AssetEndpoints: React.FunctionComponent = () => {
   const [isMcpServerOpen, setIsMcpServerOpen] = React.useState(false);
   const [tools, setTools] = React.useState('');
   const [isToolsOpen, setIsToolsOpen] = React.useState(false);
+  const [accessControlType, setAccessControlType] = React.useState<AccessControlType>('All users');
+  const [isAccessControlTypeOpen, setIsAccessControlTypeOpen] = React.useState(false);
+  const [accessControlName, setAccessControlName] = React.useState('');
+  const [isAccessControlNameOpen, setIsAccessControlNameOpen] = React.useState(false);
   const [description, setDescription] = React.useState('');
 
   const handleOpenModal = () => {
@@ -50,6 +55,8 @@ const AssetEndpoints: React.FunctionComponent = () => {
     setModelDeployment('');
     setMcpServer('');
     setTools('');
+    setAccessControlType('All users');
+    setAccessControlName('');
     setDescription('');
   };
 
@@ -57,6 +64,27 @@ const AssetEndpoints: React.FunctionComponent = () => {
     // Handle adding the asset here
     console.log('Adding asset:', { assetType, project, modelDeployment, mcpServer, tools, description });
     handleCloseModal();
+  };
+
+  // Helper function to get access control names based on type
+  const getAccessControlNames = (type: AccessControlType): string[] => {
+    switch (type) {
+      case 'User':
+        return ['john.doe', 'jane.smith', 'bob.wilson', 'alice.johnson'];
+      case 'Group':
+        return ['dev-team', 'qa-team', 'prod-team', 'data-science-team'];
+      case 'Service Account':
+        return ['prod-service-account', 'dev-service-account', 'ci-service-account'];
+      default:
+        return [];
+    }
+  };
+
+  const handleAccessControlTypeChange = (value: AccessControlType) => {
+    setAccessControlType(value);
+    setIsAccessControlTypeOpen(false);
+    // Reset access control name when type changes
+    setAccessControlName('');
   };
 
   const isFormValid = () => {
@@ -326,6 +354,84 @@ const AssetEndpoints: React.FunctionComponent = () => {
                   </Select>
                 </FormGroup>
               </>
+            )}
+
+            <FormGroup 
+              label="Availability" 
+              fieldId="access-control-type-select"
+              isRequired
+            >
+              <Select
+                id="access-control-type-select"
+                isOpen={isAccessControlTypeOpen}
+                selected={accessControlType}
+                onSelect={(_event, value) => handleAccessControlTypeChange(value as AccessControlType)}
+                onOpenChange={setIsAccessControlTypeOpen}
+                toggle={(toggleRef) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setIsAccessControlTypeOpen(!isAccessControlTypeOpen)}
+                    isExpanded={isAccessControlTypeOpen}
+                    style={{ width: '100%' }}
+                    id="access-control-type-toggle"
+                  >
+                    {accessControlType}
+                  </MenuToggle>
+                )}
+              >
+                <SelectList>
+                  <SelectOption value="All users" id="asset-endpoints-access-control-all-users">
+                    All users
+                  </SelectOption>
+                  <SelectOption value="User" id="asset-endpoints-access-control-user">
+                    User
+                  </SelectOption>
+                  <SelectOption value="Group" id="asset-endpoints-access-control-group">
+                    Group
+                  </SelectOption>
+                  <SelectOption value="Service Account" id="asset-endpoints-access-control-service-account">
+                    Service Account
+                  </SelectOption>
+                </SelectList>
+              </Select>
+            </FormGroup>
+
+            {accessControlType !== 'All users' && (
+              <FormGroup 
+                label={accessControlType === 'User' ? 'Username' : accessControlType === 'Group' ? 'Group name' : 'Service account name'}
+                fieldId="access-control-name-select"
+                isRequired
+              >
+                <Select
+                  id="access-control-name-select"
+                  isOpen={isAccessControlNameOpen}
+                  selected={accessControlName}
+                  onSelect={(_event, value) => {
+                    setAccessControlName(value as string);
+                    setIsAccessControlNameOpen(false);
+                  }}
+                  onOpenChange={setIsAccessControlNameOpen}
+                  toggle={(toggleRef) => (
+                    <MenuToggle
+                      ref={toggleRef}
+                      onClick={() => setIsAccessControlNameOpen(!isAccessControlNameOpen)}
+                      isExpanded={isAccessControlNameOpen}
+                      style={{ width: '100%' }}
+                      id="access-control-name-toggle"
+                    >
+                      {accessControlName || `Select ${accessControlType === 'User' ? 'user' : accessControlType === 'Group' ? 'group' : 'service account'}`}
+                    </MenuToggle>
+                  )}
+                >
+                  <SelectList>
+                    {getAccessControlNames(accessControlType).map((name) => (
+                      <SelectOption key={name} value={name} id={`asset-endpoints-access-control-name-${name}`}>
+                        {name}
+                      </SelectOption>
+                    ))}
+                  </SelectList>
+                </Select>
+              </FormGroup>
             )}
 
             <FormGroup 

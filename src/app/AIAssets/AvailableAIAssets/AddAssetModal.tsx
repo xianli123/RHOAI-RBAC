@@ -21,6 +21,7 @@ import {
 
 type AssetType = 'Model' | 'MCP Server' | '';
 type ModelLocation = 'Internal' | 'External' | '';
+type AccessControlType = 'All users' | 'User' | 'Group' | 'Service Account';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -72,6 +73,16 @@ interface AddAssetModalProps {
   isToolsOpen: boolean;
   setIsToolsOpen: (value: boolean) => void;
   
+  // Access Control fields
+  accessControlType: AccessControlType;
+  setAccessControlType: (value: AccessControlType) => void;
+  isAccessControlTypeOpen: boolean;
+  setIsAccessControlTypeOpen: (value: boolean) => void;
+  accessControlName: string;
+  setAccessControlName: (value: string) => void;
+  isAccessControlNameOpen: boolean;
+  setIsAccessControlNameOpen: (value: boolean) => void;
+  
   // Description
   assetDescription: string;
   setAssetDescription: (value: string) => void;
@@ -114,9 +125,31 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   setTools,
   isToolsOpen,
   setIsToolsOpen,
+  accessControlType,
+  setAccessControlType,
+  isAccessControlTypeOpen,
+  setIsAccessControlTypeOpen,
+  accessControlName,
+  setAccessControlName,
+  isAccessControlNameOpen,
+  setIsAccessControlNameOpen,
   assetDescription,
   setAssetDescription
 }) => {
+  // Helper function to get access control names based on type
+  const getAccessControlNames = (type: AccessControlType): string[] => {
+    switch (type) {
+      case 'User':
+        return ['john.doe', 'jane.smith', 'bob.wilson', 'alice.johnson'];
+      case 'Group':
+        return ['dev-team', 'qa-team', 'prod-team', 'data-science-team'];
+      case 'Service Account':
+        return ['prod-service-account', 'dev-service-account', 'ci-service-account'];
+      default:
+        return [];
+    }
+  };
+
   const handleAssetTypeChange = (value: AssetType) => {
     setAssetType(value);
     setIsAssetTypeOpen(false);
@@ -136,6 +169,13 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     setExternalProvider('');
     setExternalProviderAPIKey('');
     setSelectedExternalModels(new Set());
+  };
+
+  const handleAccessControlTypeChange = (value: AccessControlType) => {
+    setAccessControlType(value);
+    setIsAccessControlTypeOpen(false);
+    // Reset access control name when type changes
+    setAccessControlName('');
   };
 
   const handleExternalModelToggle = (modelId: string, checked: boolean) => {
@@ -555,6 +595,84 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                 </Select>
               </FormGroup>
             </>
+          )}
+
+          <FormGroup 
+            label="Availability" 
+            fieldId="add-asset-access-control-type-select"
+            isRequired
+          >
+            <Select
+              id="add-asset-access-control-type-select"
+              isOpen={isAccessControlTypeOpen}
+              selected={accessControlType}
+              onSelect={(_event, value) => handleAccessControlTypeChange(value as AccessControlType)}
+              onOpenChange={setIsAccessControlTypeOpen}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsAccessControlTypeOpen(!isAccessControlTypeOpen)}
+                  isExpanded={isAccessControlTypeOpen}
+                  style={{ width: '100%' }}
+                  id="add-asset-access-control-type-toggle"
+                >
+                  {accessControlType}
+                </MenuToggle>
+              )}
+            >
+              <SelectList>
+                <SelectOption value="All users" id="access-control-all-users">
+                  All users
+                </SelectOption>
+                <SelectOption value="User" id="access-control-user">
+                  User
+                </SelectOption>
+                <SelectOption value="Group" id="access-control-group">
+                  Group
+                </SelectOption>
+                <SelectOption value="Service Account" id="access-control-service-account">
+                  Service Account
+                </SelectOption>
+              </SelectList>
+            </Select>
+          </FormGroup>
+
+          {accessControlType !== 'All users' && (
+            <FormGroup 
+              label={accessControlType === 'User' ? 'Username' : accessControlType === 'Group' ? 'Group name' : 'Service account name'}
+              fieldId="add-asset-access-control-name-select"
+              isRequired
+            >
+              <Select
+                id="add-asset-access-control-name-select"
+                isOpen={isAccessControlNameOpen}
+                selected={accessControlName}
+                onSelect={(_event, value) => {
+                  setAccessControlName(value as string);
+                  setIsAccessControlNameOpen(false);
+                }}
+                onOpenChange={setIsAccessControlNameOpen}
+                toggle={(toggleRef) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setIsAccessControlNameOpen(!isAccessControlNameOpen)}
+                    isExpanded={isAccessControlNameOpen}
+                    style={{ width: '100%' }}
+                    id="add-asset-access-control-name-toggle"
+                  >
+                    {accessControlName || `Select ${accessControlType === 'User' ? 'user' : accessControlType === 'Group' ? 'group' : 'service account'}`}
+                  </MenuToggle>
+                )}
+              >
+                <SelectList>
+                  {getAccessControlNames(accessControlType).map((name) => (
+                    <SelectOption key={name} value={name} id={`access-control-name-${name}`}>
+                      {name}
+                    </SelectOption>
+                  ))}
+                </SelectList>
+              </Select>
+            </FormGroup>
           )}
 
           <FormGroup 
