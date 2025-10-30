@@ -293,8 +293,19 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
           </select>
         </FormGroup>
 
-        {/* Limits and Policies */}
-        <ExpandableSection
+        <FormGroup label="Expiration date">
+          <DatePicker
+            value={formData.limits?.expirationDate ? formData.limits.expirationDate.toISOString().split('T')[0] : ''}
+            onChange={(_event, str, date) => {
+              handleNestedInputChange('limits', 'expirationDate', date);
+            }}
+            placeholder="Select expiration date (optional)"
+            isDisabled={isSubmitting}
+          />
+        </FormGroup>
+
+        {/* Limits and Policies - Temporarily hidden */}
+        {/* <ExpandableSection
           toggleText="Limits and Policies"
           isExpanded={isLimitsExpanded}
           onToggle={() => setIsLimitsExpanded(!isLimitsExpanded)}
@@ -394,10 +405,10 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
               </FormGroup>
             </FlexItem>
           </Flex>
-        </ExpandableSection>
+        </ExpandableSection> */}
 
         {/* AI Asset Access */}
-        <Title headingLevel="h2">Available AI assets</Title>
+        <Title headingLevel="h2">AI asset access</Title>
         <FormGroup>
           <FormHelperText>
             <HelperText>
@@ -409,7 +420,7 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
         </FormGroup>
 
         {/* Model Endpoints */}
-        <FormGroup label="Model Endpoints">
+        <FormGroup label="Models">
           <AIAssetSelect
             options={modelOptions}
             selected={formData.assets.modelEndpoints}

@@ -1010,7 +1010,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Content component={ContentVariants.small}>Total Cost</Content>
+                      <Content component={ContentVariants.small}>Total Cost (not 3.3)</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.totalCost}</Title>

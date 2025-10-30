@@ -2,6 +2,11 @@
 
 This file contains information that will be used to populate the History tab of Apollo and provided as context to the AI Assistant to answer questions.
 
+2025-10-30
+- Iteration 2
+- Moved the expiration date in the "Create API Key" modal to the main form, making it more visible since it's likely to be used
+- Removed the "Limits and Policies" expansion from the Create API Key modal; there's a possible use case for an AIE to restrict themselves further than what the default policy imposes, but per stakeholder discussion it probably isn't essential for now. We'll revisit this in the future once we get budget controls available, which is the most likely time that a user would want to self-impose a restriction like this.
+
 2025-10-27
 - Confirmed with MaaS PM that user management and cost-related functionality is out of scope for 3.2/3.3 for now, despite their mention in the 3.0 Jira.
 
@@ -18,6 +23,7 @@ This file contains information that will be used to populate the History tab of 
 - Recording 2 focused on MaaS Admin: https://drive.google.com/file/d/16zOf70_oN5sgkPW3bs1bi9ooNMNBuyqd/view
 - We collected feedback from Field-facing teams, need to synthesize this feedback into updates
 - TODO: synthesize this feedback into prototype updates
+- The "Add asset" modal should include the ability to only make it available to certain groups or users. Not wide open to everyone. Some users may want to only share with certain others.
 
 2025-10-15
 - Reviewed MaaS iteration 1 work at Gen AI Studio UX Stakeholder Sync

@@ -182,7 +182,18 @@ const Policies: React.FunctionComponent = () => {
                 >
                   <Td dataLabel="Name">
                     <div>
-                      <strong>{policy.name}</strong>
+                      <Button 
+                        variant="link" 
+                        isInline
+                        id={`policy-name-${policy.id}`}
+                        style={{ textDecoration: 'none' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(policy);
+                        }}
+                      >
+                        {policy.name}
+                      </Button>
                       {policy.description && (
                         <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
                           {policy.description}

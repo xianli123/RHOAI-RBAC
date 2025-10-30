@@ -203,7 +203,17 @@ const APIKeys: React.FunctionComponent = () => {
                 >
                   <Td dataLabel="Name">
                     <div>
-                      <strong>{apiKey.name}</strong>
+                      <Button
+                        variant="link"
+                        isInline
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(apiKey);
+                        }}
+                        style={{ fontWeight: 'bold', padding: 0, textDecoration: 'none' }}
+                      >
+                        {apiKey.name}
+                      </Button>
                       {apiKey.description && (
                         <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
                           {apiKey.description}
