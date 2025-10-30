@@ -132,10 +132,10 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                         return model ? (
                           <Tr key={model.id}>
                             <Td dataLabel="Name">
-                              <a href="#">{model.name}</a>
+                              {model.name}
                             </Td>
                             <Td dataLabel="ID">
-                              <a href="#"><code>{model.id}</code></a>
+                              <code>{model.id}</code>
                             </Td>
                             <Td dataLabel="Endpoint">
                               <code>{model.endpoint}</code>
