@@ -179,7 +179,7 @@ const APIKeyMetricsTab: React.FunctionComponent<APIKeyMetricsTabProps> = ({ keyI
           </GridItem>
           <GridItem span={3}>
             <Card>
-              <CardTitle>Total Cost</CardTitle>
+              <CardTitle>Total Cost (not 3.3)</CardTitle>
               <CardBody>
                 <Title headingLevel="h2" size="2xl" style={{ margin: 0 }}>
                   {formatCurrency(metrics.totalCost)}
