@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to RHOAI 3.2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .message {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            margin: 0 auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="message">Redirecting to RHOAI 3.2 prototype</div>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Get the current pathname
+        const currentPath = window.location.pathname;
+        
+        // Base URL for the redirect
+        const baseRedirectUrl = 'https://rhoai-5171de.pages.redhat.com/branch-3.2';
+        
+        // Build the final redirect URL
+        let redirectUrl = baseRedirectUrl;
+        
+        // If there's a subpath (and it's not just '/'), append it to the redirect URL
+        if (currentPath && currentPath !== '/' && currentPath !== '/index.html') {
+            // Remove leading slash if present to avoid double slashes
+            const subPath = currentPath.startsWith('/') ? currentPath.substring(1) : currentPath;
+            redirectUrl = baseRedirectUrl + '/' + subPath;
+        }
+        
+        // Redirect after 3 seconds
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 3000);
+    </script>
+</body>
+</html>
+
