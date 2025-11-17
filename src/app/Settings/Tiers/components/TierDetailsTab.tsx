@@ -13,6 +13,7 @@ import {
   Alert,
   Popover,
   Button,
+  Divider,
 } from '@patternfly/react-core';
 import { HelpIcon } from '@patternfly/react-icons';
 import { Tier } from '../types';
@@ -109,7 +110,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         </Alert>
       )}
 
-      <Content component={ContentVariants.h2} id="tier-details-heading">
+      <Content component={ContentVariants.h2} id="tier-details-heading" style={{ marginTop: '1rem' }}>
         Tier details
       </Content>
       <DescriptionList columnModifier={{ default: '2Col' }}>
@@ -136,13 +137,13 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
                   bodyContent={
                     <div>
                       <p style={{ marginBottom: '0.5rem' }}>
-                        Numeric hierarchy for tier precedence. Higher numbers indicate higher tiers.
+                        Higher numbers indicate higher tiers.
                       </p>
                       <p style={{ marginBottom: '0.5rem' }}>
                         When a user belongs to multiple groups, the highest level tier is selected.
                       </p>
                       <p style={{ margin: 0 }}>
-                        <strong>Examples:</strong> 1 (lowest), 10 (medium), 20 (highest)
+                        <strong>Example:</strong> 1 (lowest), 10 (medium), 100 (highest)
                       </p>
                     </div>
                   }
@@ -160,7 +161,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
             </Flex>
           </DescriptionListTerm>
           <DescriptionListDescription>
-            <Badge id="tier-level-badge" isRead>Level {tier.level}</Badge>
+            <Badge id="tier-level-badge" isRead>{tier.level}</Badge>
           </DescriptionListDescription>
         </DescriptionListGroup>
 
@@ -183,7 +184,9 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         )}
       </DescriptionList>
 
-      <Content component={ContentVariants.h2} id="groups-heading" style={{ marginTop: '2rem' }}>
+      <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
+
+      <Content component={ContentVariants.h2} id="groups-heading">
         Groups
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
@@ -198,22 +201,26 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         </DescriptionListGroup>
       </DescriptionList>
 
-      <Content component={ContentVariants.h2} id="models-heading" style={{ marginTop: '2rem' }}>
+      <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
+
+      <Content component={ContentVariants.h2} id="models-heading">
         Models
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        Only AI asset model endpoints can be assigned to tiers.
+        These AI asset model endpoints will be available to users who can access this tier.
       </div>
       <DescriptionList>
         <DescriptionListGroup>
-          <DescriptionListTerm>Available models in this tier</DescriptionListTerm>
+          <DescriptionListTerm>Available models</DescriptionListTerm>
           <DescriptionListDescription>
             {renderModelsList(tier.models)}
           </DescriptionListDescription>
         </DescriptionListGroup>
       </DescriptionList>
 
-      <Content component={ContentVariants.h2} id="limits-heading" style={{ marginTop: '2rem' }}>
+      <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
+
+      <Content component={ContentVariants.h2} id="limits-heading">
         Limits
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>

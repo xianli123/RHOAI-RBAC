@@ -24,7 +24,7 @@ export const mockTiers: Tier[] = [
   {
     id: 'free-tier',
     name: 'Free Tier',
-    description: 'Free tier with access to MaaS models and baseline rate limits',
+    description: 'Free tier with access to all AI asset models and baseline rate limits',
     level: 1,
     status: 'Active',
     isDefault: true,

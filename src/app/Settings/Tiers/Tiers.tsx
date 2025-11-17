@@ -72,52 +72,16 @@ const Tiers: React.FunctionComponent = () => {
   };
 
   const rowActions = (tier: Tier): IAction[] => {
-    const actions: IAction[] = [
+    return [
       {
         title: 'View details',
         onClick: () => navigate(`/settings/tiers/${tier.id}`),
       },
+      {
+        title: 'Edit tier',
+        onClick: () => navigate(`/settings/tiers/${tier.id}/yaml`),
+      },
     ];
-
-    if (!tier.isReadOnly) {
-      actions.push(
-        {
-          title: tier.status === 'Active' ? 'Disable tier' : 'Enable tier',
-          onClick: () => {
-            console.log('Toggle status', tier.id);
-          },
-        },
-        {
-          title: 'Edit tier',
-          onClick: () => navigate(`/settings/tiers/${tier.id}/edit`),
-        }
-      );
-
-      // Add "Set as default" action if not already default
-      if (!tier.isDefault) {
-        actions.push({
-          title: 'Set as default',
-          onClick: () => {
-            console.log('Set as default tier', tier.id);
-          },
-        });
-      }
-
-      actions.push(
-        {
-          isSeparator: true,
-        },
-        {
-          title: 'Delete tier',
-          onClick: () => {
-            console.log('Delete tier', tier.id);
-          },
-          isDisabled: tier.isDefault,
-        }
-      );
-    }
-
-    return actions;
   };
 
   const handleCreateTier = () => {
@@ -191,7 +155,7 @@ const Tiers: React.FunctionComponent = () => {
                   </Td>
                   <Td dataLabel="Level">
                     <Badge id={`tier-level-${tier.id}`} isRead>
-                      L{tier.level}
+                      {tier.level}
                     </Badge>
                   </Td>
                   <Td dataLabel="Groups">
