@@ -186,14 +186,14 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
       <Content component={ContentVariants.h2} id="groups-heading" style={{ marginTop: '2rem' }}>
         Groups
       </Content>
+      <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
+        All users in these groups will have access to this tier's models and inherit its limits.
+      </div>
       <DescriptionList>
         <DescriptionListGroup>
           <DescriptionListTerm>Assigned groups</DescriptionListTerm>
           <DescriptionListDescription>
             {renderGroupsList(tier.groups)}
-            <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '0.5rem' }}>
-              All users in these groups will have access to this tier's models and inherit its limits.
-            </div>
           </DescriptionListDescription>
         </DescriptionListGroup>
       </DescriptionList>
@@ -201,14 +201,14 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
       <Content component={ContentVariants.h2} id="models-heading" style={{ marginTop: '2rem' }}>
         Models
       </Content>
+      <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
+        Only AI asset model endpoints can be assigned to tiers.
+      </div>
       <DescriptionList>
         <DescriptionListGroup>
-          <DescriptionListTerm>Available models</DescriptionListTerm>
+          <DescriptionListTerm>Available models in this tier</DescriptionListTerm>
           <DescriptionListDescription>
             {renderModelsList(tier.models)}
-            <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '0.5rem' }}>
-              Only MaaS models (AI Assets) can be assigned to tiers.
-            </div>
           </DescriptionListDescription>
         </DescriptionListGroup>
       </DescriptionList>
@@ -216,14 +216,14 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
       <Content component={ContentVariants.h2} id="limits-heading" style={{ marginTop: '2rem' }}>
         Limits
       </Content>
+      <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
+        These limits apply to all API keys created by users in this tier's groups.
+      </div>
       <DescriptionList>
         <DescriptionListGroup>
           <DescriptionListTerm>Configured limits</DescriptionListTerm>
           <DescriptionListDescription>
             {renderLimits()}
-            <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '0.5rem' }}>
-              These limits apply to all API keys created by users in this tier's groups.
-            </div>
           </DescriptionListDescription>
         </DescriptionListGroup>
       </DescriptionList>
