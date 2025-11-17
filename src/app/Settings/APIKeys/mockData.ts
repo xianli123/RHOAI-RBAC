@@ -169,6 +169,26 @@ export const mockAPIKeys: APIKey[] = [
       mcpServers: ['openshift', 'rhel'],
     },
   },
+  {
+    id: 'key-6',
+    name: 'Orphaned Key',
+    description: 'API key with deleted tier association',
+    apiKey: 'sk-orphaned0987654321abcdefghijklmn',
+    status: 'Inactive',
+    owner: { type: 'User', name: 'alice.johnson' },
+    dateCreated: new Date('2025-09-15T10:00:00Z'),
+    dateLastUsed: new Date('2025-10-01T14:30:00Z'),
+    limits: {
+      tokenRateLimit: 30000,
+      requestRateLimit: 600,
+      budgetLimit: 300,
+      expirationDate: new Date('2026-03-15T10:00:00Z'),
+    },
+    assets: {
+      modelEndpoints: ['granite-3.1b'],
+      mcpServers: ['git'],
+    },
+  },
 ];
 
 // Generate mock metrics data
@@ -227,6 +247,13 @@ export const mockMetrics: Record<string, APIKeyMetrics> = {
     totalCost: 78.92,
     requestsOverTime: generateMetricsOverTime(30),
   },
+  'key-6': {
+    totalRequests: 3421,
+    successRate: 98.8,
+    totalTokens: 145678,
+    totalCost: 14.57,
+    requestsOverTime: generateMetricsOverTime(30),
+  },
 };
 
 // Get policies applied to an API key
@@ -244,6 +271,8 @@ export const getAPIKeyPolicies = (keyId: string): Policy[] => {
       return []; // no policies (expired)
     case 'key-5':
       return [mockPolicies[0]]; // dev-rate-limit
+    case 'key-6':
+      return []; // no policies (orphaned)
     default:
       return [];
   }

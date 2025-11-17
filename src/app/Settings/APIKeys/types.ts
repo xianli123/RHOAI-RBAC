@@ -1,4 +1,4 @@
-export type APIKeyStatus = 'Active' | 'Expired' | 'Disabled';
+export type APIKeyStatus = 'Active' | 'Expired' | 'Disabled' | 'Inactive';
 
 export interface APIKey {
   id: string;

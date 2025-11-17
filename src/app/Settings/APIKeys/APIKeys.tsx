@@ -17,6 +17,7 @@ import {
   DropdownItem,
   MenuToggle,
   MenuToggleElement,
+  Popover,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -76,8 +77,28 @@ const APIKeys: React.FunctionComponent = () => {
       Active: { color: 'green' as const, label: 'Active' },
       Expired: { color: 'red' as const, label: 'Expired' },
       Disabled: { color: 'grey' as const, label: 'Disabled' },
+      Inactive: { color: 'orange' as const, label: 'Inactive' },
     };
     const { color, label } = statusMap[status];
+    
+    if (status === 'Inactive') {
+      return (
+        <Popover
+          aria-label="Inactive status information"
+          headerContent="Inactive API key"
+          bodyContent="This API key is inactive. The tier associated with this key may have been deleted or modified."
+        >
+          <Label 
+            id={`status-${status.toLowerCase()}`} 
+            color={color}
+            style={{ cursor: 'pointer' }}
+          >
+            {label}
+          </Label>
+        </Popover>
+      );
+    }
+    
     return <Label id={`status-${status.toLowerCase()}`} color={color}>{label}</Label>;
   };
 
