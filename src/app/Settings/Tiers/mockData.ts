@@ -2,13 +2,13 @@ import { Tier } from './types';
 
 // Available groups for tier assignment
 export const mockGroups = [
-  { id: 'dev-team', name: 'Development Team' },
-  { id: 'premium-customers', name: 'Premium Customers' },
-  { id: 'research-team', name: 'Research Team' },
-  { id: 'data-science-team', name: 'Data Science Team' },
-  { id: 'enterprise-users', name: 'Enterprise Users' },
-  { id: 'standard-users', name: 'Standard Users' },
-  { id: 'no-tier-users', name: 'No Tier Users' }, // For testing empty states
+  { id: 'dev-team', name: 'system:dev-team' },
+  { id: 'premium-customers', name: 'premium-users' },
+  { id: 'research-team', name: 'cluster-admins' },
+  { id: 'data-science-team', name: 'data-science-users' },
+  { id: 'enterprise-users', name: 'enterprise-users' },
+  { id: 'standard-users', name: 'system:authenticated' },
+  { id: 'no-tier-users', name: 'basic-users' }, // For testing empty states
 ];
 
 // Available MaaS models (AI Assets only)

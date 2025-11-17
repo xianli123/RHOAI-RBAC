@@ -374,7 +374,7 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
       />
       {tokenLimitEnabled && (
         <div style={{ marginLeft: '1.5rem', marginBottom: '1rem' }}>
-          <Flex>
+          <Flex alignItems={{ default: 'alignItemsCenter' }}>
             <FlexItem>
               <TextInput
                 type="number"
@@ -391,7 +391,10 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
                 style={{ width: '150px' }}
               />
             </FlexItem>
-            <FlexItem style={{ paddingLeft: '0.5rem' }}>
+            <FlexItem style={{ paddingLeft: '2px' }}>
+              <span>tokens</span>
+            </FlexItem>
+            <FlexItem style={{ paddingLeft: '2px' }}>
               <Select
                 id="token-limit-period"
                 isOpen={isPeriodSelectOpen['token'] || false}
@@ -436,7 +439,7 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
       />
       {rateLimitEnabled && (
         <div style={{ marginLeft: '1.5rem', marginBottom: '1rem' }}>
-          <Flex>
+          <Flex alignItems={{ default: 'alignItemsCenter' }}>
             <FlexItem>
               <TextInput
                 type="number"
@@ -453,7 +456,10 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
                 style={{ width: '150px' }}
               />
             </FlexItem>
-            <FlexItem style={{ paddingLeft: '0.5rem' }}>
+            <FlexItem style={{ paddingLeft: '2px' }}>
+              <span>requests</span>
+            </FlexItem>
+            <FlexItem style={{ paddingLeft: '2px' }}>
               <Select
                 id="rate-limit-period"
                 isOpen={isPeriodSelectOpen['rate'] || false}

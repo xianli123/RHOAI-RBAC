@@ -10,12 +10,11 @@ import {
   FlexItem,
   Content,
   ContentVariants,
-  Alert,
   Popover,
   Button,
   Divider,
 } from '@patternfly/react-core';
-import { HelpIcon } from '@patternfly/react-icons';
+import { HelpIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tier } from '../types';
 import { getGroupById, getModelById } from '../mockData';
 
@@ -52,10 +51,30 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
         {groupIds.map(id => {
           const group = getGroupById(id);
-          return group ? (
-            <FlexItem key={id}>{group.name}</FlexItem>
-          ) : (
-            <FlexItem key={id}>{id}</FlexItem>
+          const groupName = group ? group.name : id;
+          return (
+            <FlexItem key={id}>
+              <Popover
+                aria-label="Group link information"
+                headerContent="External link"
+                bodyContent={
+                  <div style={{ color: 'deeppink' }}>
+                    This link will take users to the relevant Group Details page of the OpenShift Web Console.
+                  </div>
+                }
+              >
+                <Button
+                  variant="link"
+                  isInline
+                  icon={<ExternalLinkAltIcon />}
+                  iconPosition="right"
+                  style={{ padding: 0, fontSize: 'inherit' }}
+                  id={`group-link-${id}`}
+                >
+                  {groupName}
+                </Button>
+              </Popover>
+            </FlexItem>
           );
         })}
       </Flex>
@@ -110,21 +129,6 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
 
   return (
     <PageSection>
-      {tier.isReadOnly && tier.gitSource && (
-        <Alert 
-          variant="info" 
-          isInline 
-          title="This tier is managed in git"
-          id="tier-git-managed-alert"
-        >
-          This tier is managed in git. To make changes, please edit the tier in the{' '}
-          <a href={tier.gitSource} target="_blank" rel="noopener noreferrer">
-            Git source
-          </a>{' '}
-          because editing is disabled in-Console.
-        </Alert>
-      )}
-
       <Content component={ContentVariants.h2} id="tier-details-heading" style={{ marginTop: '1rem' }}>
         Tier details
       </Content>
@@ -132,13 +136,6 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         <DescriptionListGroup>
           <DescriptionListTerm>Name</DescriptionListTerm>
           <DescriptionListDescription>{tier.name}</DescriptionListDescription>
-        </DescriptionListGroup>
-
-        <DescriptionListGroup>
-          <DescriptionListTerm>Description</DescriptionListTerm>
-          <DescriptionListDescription>
-            {tier.description || 'No description provided'}
-          </DescriptionListDescription>
         </DescriptionListGroup>
 
         <DescriptionListGroup>
@@ -177,6 +174,13 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
           </DescriptionListTerm>
           <DescriptionListDescription>
             <Badge id="tier-level-badge" isRead>{tier.level}</Badge>
+          </DescriptionListDescription>
+        </DescriptionListGroup>
+
+        <DescriptionListGroup>
+          <DescriptionListTerm>Description</DescriptionListTerm>
+          <DescriptionListDescription>
+            {tier.description || 'No description provided'}
           </DescriptionListDescription>
         </DescriptionListGroup>
 

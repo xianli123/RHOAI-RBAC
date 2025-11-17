@@ -112,6 +112,21 @@ const TierDetails: React.FunctionComponent = () => {
           </Tab>
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} aria-label="YAML tab">
             <PageSection>
+              {tier.isReadOnly && tier.gitSource && (
+                <Alert 
+                  variant="info" 
+                  isInline 
+                  title="This resource is managed in git"
+                  id="tier-git-managed-alert"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  To make changes please edit in the{' '}
+                  <a href={tier.gitSource} target="_blank" rel="noopener noreferrer">
+                    git source
+                  </a>{' '}
+                  directly. Editing in this Web Console is disabled.
+                </Alert>
+              )}
               <CodeEditor
                 id="tier-yaml-code-editor"
                 code={TIER_CONFIG_YAML}
