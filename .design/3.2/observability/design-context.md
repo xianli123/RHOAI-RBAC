@@ -6,6 +6,11 @@ NOTE: in the future we likely need to automatically grab the creation date and d
 
 ### Notebooks
 
+### Figma
+
+source: https://www.figma.com/design/ZPxunAkXuvLfvfMWHWVFSA/Observability
+- title: RHOAI Observability designs
+
 ### Miro
 
 ### Slack
