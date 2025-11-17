@@ -82,7 +82,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
   };
 
   const renderLimits = () => {
-    const hasLimits = tier.limits.tokenLimit || tier.limits.rateLimit || tier.limits.apiKeyExpirationDays !== undefined;
+    const hasLimits = tier.limits.tokenLimit || tier.limits.rateLimit;
     
     if (!hasLimits) {
       return <span style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>No limits configured</span>;
@@ -111,16 +111,6 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         {tier.limits.rateLimit && (
           <FlexItem>
             <strong>Rate limit:</strong> {tier.limits.rateLimit.amount.toLocaleString()} requests/{formatPeriod(tier.limits.rateLimit.period)}
-          </FlexItem>
-        )}
-        {tier.limits.apiKeyExpirationDays !== undefined && (
-          <FlexItem>
-            <strong>Default expiration time:</strong>{' '}
-            {tier.limits.apiKeyExpirationDays === 0 
-              ? 'Never expires' 
-              : tier.limits.apiKeyExpirationDays < 1
-              ? `${Math.round(tier.limits.apiKeyExpirationDays * 24)} hours`
-              : `${tier.limits.apiKeyExpirationDays} days`}
           </FlexItem>
         )}
       </Flex>
@@ -184,6 +174,17 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
           </DescriptionListDescription>
         </DescriptionListGroup>
 
+        <DescriptionListGroup>
+          <DescriptionListTerm>Default expiration</DescriptionListTerm>
+          <DescriptionListDescription>
+            {tier.limits.apiKeyExpirationDays === 0 
+              ? 'Never expires' 
+              : tier.limits.apiKeyExpirationDays !== undefined && tier.limits.apiKeyExpirationDays < 1
+              ? `${Math.round(tier.limits.apiKeyExpirationDays * 24)} hours`
+              : `${tier.limits.apiKeyExpirationDays} days`}
+          </DescriptionListDescription>
+        </DescriptionListGroup>
+
         {tier.gitSource && (
           <DescriptionListGroup>
             <DescriptionListTerm>Git source</DescriptionListTerm>
@@ -226,7 +227,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         Models
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        These AI asset model endpoints will be available to users who can access this tier.
+        These AI asset models will be available to users who can access this tier.
       </div>
       <DescriptionList>
         <DescriptionListGroup>

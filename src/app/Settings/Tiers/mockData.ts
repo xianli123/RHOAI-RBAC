@@ -40,7 +40,7 @@ export const mockTiers: Tier[] = [
         amount: 100,
         period: 'minute',
       },
-      apiKeyExpirationDays: 90,
+      apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-01T10:00:00Z'),
     createdBy: 'admin',
@@ -84,7 +84,7 @@ spec:
         amount: 10000,
         period: 'minute',
       },
-      apiKeyExpirationDays: 365,
+      apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-10T09:15:00Z'),
     createdBy: 'platform-admin',
@@ -129,7 +129,7 @@ spec:
         amount: 10000,
         period: 'minute',
       },
-      apiKeyExpirationDays: 0, // Never expires
+      apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-15T11:20:00Z'),
     createdBy: 'admin',

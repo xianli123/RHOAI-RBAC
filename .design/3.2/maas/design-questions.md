@@ -4,6 +4,9 @@ This file contains a running list of questions, either added manually or derived
 
 ## Questions
 
+Question: Where is the default expiration date for a tier stored?
+- 
+
 Question: In 3.2 we intend to make the Models tab only include endpoints that are "gated" by an API Key. But this requires and assumes an API Gateway is involved, particularly RHCL. Is it okay to approach it this way?
 - Yes, a RHOAI subscription will now include a license to use RHCL solely for MaaS purposes using this integration.
 
