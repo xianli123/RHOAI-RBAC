@@ -2,13 +2,64 @@
 
 This file contains information that will be used to populate the History tab of Apollo and provided as context to the AI Assistant to answer questions.
 
+2025-11-17
+- Iteration 3 of design, incorporating some of the recently-discussed changes around focusing management on Tiers rather than Policies (which are lower-level) and Keys (which we may not be able to list our in 3.2/3.3)
+- The models that are available to any given key are inherited from the associated Tier
+- The default expiration date for keys is currently 4 hours and not configurable
+- All keys can be cleared from the AI Assets page, but we may not be able to list them
+- Added "At risk" badges to the API Keys and Policies nav items since we might not show them in 3.2/3.3
+
 
 2025-11-12
-- MaaS Refinement meeting
+- Title: MaaS "10k Foot High" Sync
+- Gemini notes: https://docs.google.com/document/d/1U8-ceJc9l6ni8D9yT1iiSJ3hDIwY0EsKPPdCRS5yRGM/edit?tab=t.utg01amtulxx
+- MaaS Coordination doc: https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit?tab=t.0
+- AI Summary:
+  - Targeting 3.3 for deliverables
+  - Policy management (editing YAML for token rate limit policies and rate limit policies) could serve as initial admin UI with GitOps-friendly approach
+  - The CRD-based API for Tiers isn't available yet so we may not want to build a UI for them yet, right now they're ConfigMap-based
+  - Current API keys are ephemeral and disappear after creation (cannot list or retrieve later); can invalidate all keys at once but not individual keys
+  - Key metadata being considered for 3.3 to be able to create the API Keys list (not committed for 3.2); user can specify time-to-live when generating keys (subject to cluster admin maximum)
+  - Quota data for endpoints screen depends on RHCL team providing information first; usage reporting currently handled via custom Grafana dashboard
+  - VLM-backed LLM inference services technically possible but currently limited/unsupported feature through gateway API
+  - Chargeback is on the roadmap but not a current priority
+
+2025-11-11
+- Title: RHOAI RHCL Demo and Sync
+- Recording: https://drive.google.com/file/d/14mYJ9sBBEBnsg2iZbK7U80Yd32fBcD5V/view
+- Chat: https://drive.google.com/file/d/1onAGJZwgh-JGb4Rg4Np1RqGKEpLieLoU/view
+- Gemini notes: https://docs.google.com/document/d/1EKJHL7SGzQAo-44V2RutqMBkF6uxHeMYBf-IE6NpfnY/edit
+- Discussion document: https://docs.google.com/document/d/1CkUswEamgV7uJNlP5wS6_u1evtz_-WvkE7I_JMI1rqk/edit?tab=t.0
+- RHCL Journey map and conceptual model: https://miro.com/app/board/uXjVJ72-WlQ=/
+  - Note the mention of a "Plan Policy" connecting policies to groups of users, very similar to what the MaaS Team has been discussing so far
+  - This was a critical finding and something we raised with the MaaS ENG group to make sure that everyone was aware of this WIP API from RHCL with very similar goals
+
+2025-11-10
+- MaaS Admin UI - Feature Refinement
 - [Recording](https://drive.google.com/file/d/1G3ID8z7sdsqkKIo9bvn_ZjpFWoacqoDc/view)
 - [Chat](https://drive.google.com/file/d/1jHn0SNFiH0hDNN0EFBpnn0z2LdcKP_Y2/view)
 - [Gemini Notes](https://docs.google.com/document/d/1fkBjRRibGlrJTIUmxPIvYicnWpSfAGCnMdadqbfWZmE/edit)
 - [Feature Refinement-RHOAISTRAT-638-MaaS Admin UI](https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit?tab=t.3mrf1syv46a)
+- AI Summary: 
+  - Refinement covered two main UI pages: tier management (renamed from "policies") and API key creation/listing for AI developers
+  - MVP tier creation scope includes: defining associated models, token/rate limits, assigned groups, tier name/description, and viewing existing tiers from dashboard
+  - API key limitations: keys are ephemeral (not persisted), can only revoke all keys (not individual ones), no metadata storage for listing/deleting individual keys, and expiry defaults to 4 hours (set at creation time, cannot be modified later)
+  - Rate limiting is per user (not per API key); if a user belongs to multiple tiers, their highest-level tier applies
+  - Models listing will show one consolidated list across all models the user can access; simplified approach proposed to limit to premium/free tier setup with all models accessible in all tiers
+  - UI implementation may need to manage updates to multiple resources (config maps, policies) if operator/CRD approach isn't ready; follow-up meeting scheduled to confirm revised scope 
+
+2025-11-06
+- Show MaaS usage in AAE UX sync
+- Gemini notes: https://docs.google.com/document/d/1FEaBd7WDnatgAJTCei0Fp4OsrCQKvffgnJz5sRhA2QE/edit?tab=t.xfl2mij6zbwn
+- Discussed admins creating 'tiers' that define models and rate limits (token limit and rate limit), which are then associated with groups of users (Kubernetes groups) (00:12:14). A single tier's rate limit applies across all users and models within that tier (00:13:24). Even though Tiers are associated with groups, each user within that group is assigned an individual quota (e.g., 10,000 tokens) (00:15:43).
+- Andrew Ballantyne and Rob Greenberg confirmed that the tier defines the business logic and policy, while the Kubernetes group serves as the mechanism connecting the policy (tier) to the user (00:17:27). A user can belong to multiple tiers and thus have multiple quotas for the same model if it is included in those tiers (00:21:19).
+
+2025-11-03
+- Model Serving PM/ENG/UX Sync meeting
+- Recording: https://drive.google.com/file/d/1Se9koq8yJuGMb5AYEY6WNSHuPAFMdquP/view
+- Gemini notes: https://docs.google.com/document/d/1CVXHlwBlvqlySCE5nHqgdL0LIYaKlMfmcCuD2NyL_q0/edit?tab=t.7cr1wzqkwvhc
+- Chat: https://drive.google.com/file/d/1EPDl_RmdbBgMkGkvmy0jLVkXj5QZbHWc/view
+- Summary: Discussed 3.3 release readiness and MaaS feature prioritization. Key MaaS topics included: technical architecture needs (BFF, Golang skills), scope of AI Assets Endpoints page (will list only MaaS models), API Keys page feasibility, policy management challenges, RBAC implementation complexity, and defining personas for curating MaaS models. Open questions remain around subscriptions and reliance on OpenShift console for admin tasks.
 
 2025-10-30
 - Iteration 2

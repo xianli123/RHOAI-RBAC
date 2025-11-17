@@ -18,6 +18,11 @@ source: https://redhat.enterprise.slack.com/archives/C094HF5KD6E
 
 ### Docs
 
+source: https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit?tab=t.0
+- title: MaaS Coordination doc for 3.2/3.3
+source: https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit?tab=t.3mrf1syv46a
+- title: Feature Refinement-RHOAISTRAT-638-MaaS Admin UI
+- description: MaaS Admin UI refinement doc for 3.2/3.3
 source: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCBj3bwq02fE0mGOEtVwjBw/edit
 - title: UXD Orientation: MaaS
 - description: Contains UXD-oriented onboarding material
@@ -57,6 +62,12 @@ source: https://github.com/rh-aiservices-bu/litemaas
 
 ### Jira
 
+source: https://issues.redhat.com/browse/RHOAIUX-1409
+- title: User Experience For MaaS Admin (Tech Preview)
+source: https://issues.redhat.com/browse/RHOAISTRAT-703
+- title: MaaS Offering Fast Follow
+source: https://issues.redhat.com/browse/RHAISTRAT-174
+- title: Models-as-a-Service (MaaS) Tech Preview (Feature)
 source: https://issues.redhat.com/browse/RHAIRFE-476
 - title: AI Available Assets -  Implement Quota Management and Visibility for Model Deployments
 source: https://issues.redhat.com/browse/RHOAISTRAT-638
@@ -69,8 +80,6 @@ source: https://issues.redhat.com/browse/RHAIRFE-151
 - title: AI Available Assets - LLS Deployed Models, MCP Servers (via ConfigMap) - MVP
 source: https://issues.redhat.com/browse/RHAIRFE-608
 - title: AI Available Assets - MaaS Dev Preview Integration
-source: https://issues.redhat.com/browse/RHOAISTRAT-703
-- title: MaaS Offering Fast Follow
 source: https://issues.redhat.com/browse/RHAIRFE-244
 - title: API Keys UI - to enable API Endpoint consumption for Gen AI Studio components
 source: https://issues.redhat.com/browse/RHAIRFE-138
