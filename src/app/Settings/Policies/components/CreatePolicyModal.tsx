@@ -22,7 +22,7 @@ import {
 } from '@patternfly/react-core';
 import { CreatePolicyForm } from '../types';
 import { mockGroups, mockUsers, mockServiceAccounts } from '../mockData';
-import { mockModels, mockMCPServers } from '@app/Settings/APIKeys/mockData';
+import { mockModels } from '@app/Settings/APIKeys/mockData';
 import { AIAssetSelect, AssetOption } from '@app/Settings/APIKeys/components/AIAssetSelect';
 
 interface CreatePolicyModalProps {
@@ -38,7 +38,6 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
     description: '',
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {
       tokenLimit: undefined,
@@ -131,7 +130,6 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
       description: '',
       availableAssets: {
         models: ['all'],
-        mcpServers: ['all'],
       },
       limits: {
         tokenLimit: undefined,
@@ -157,15 +155,6 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
       id: model.id,
       name: model.name,
       description: model.id
-    }))
-  ];
-
-  const mcpServerOptions: AssetOption[] = [
-    { id: 'all', name: 'All MCP servers', description: 'Grant access to all MCP servers' },
-    ...mockMCPServers.map(server => ({
-      id: server.id,
-      name: server.name,
-      description: server.tools.join(', ')
     }))
   ];
 
@@ -282,18 +271,6 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
               placeholder="Select models"
               ariaLabel="Models selection"
               id="policy-models-select"
-              isDisabled={isSubmitting}
-            />
-          </FormGroup>
-
-          <FormGroup label="MCP Servers & tools">
-            <AIAssetSelect
-              options={mcpServerOptions}
-              selected={formData.availableAssets.mcpServers}
-              onSelect={(selectedIds) => handleNestedInputChange('availableAssets', 'mcpServers', selectedIds)}
-              placeholder="Select MCP servers"
-              ariaLabel="MCP servers selection"
-              id="policy-mcp-servers-select"
               isDisabled={isSubmitting}
             />
           </FormGroup>

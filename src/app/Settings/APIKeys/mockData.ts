@@ -1,4 +1,4 @@
-import { APIKey, Model, MCPServer, Policy, APIKeyMetrics } from './types';
+import { APIKey, Model, Policy, APIKeyMetrics } from './types';
 
 // Available models
 export const mockModels: Model[] = [
@@ -7,34 +7,6 @@ export const mockModels: Model[] = [
   { id: 'llama-7b', name: 'Llama 7B', endpoint: 'https://api.example.com/models/llama-7b/v1' },
   { id: 'codellama-13b', name: 'CodeLlama 13B', endpoint: 'https://api.example.com/models/codellama-13b/v1' },
   { id: 'mistral-7b', name: 'Mistral 7B', endpoint: 'https://api.example.com/models/mistral-7b/v1' },
-];
-
-// Available MCP servers
-export const mockMCPServers: MCPServer[] = [
-  { 
-    id: 'openshift', 
-    name: 'OpenShift', 
-    tools: ['pod-management', 'deployment-control', 'cluster-monitoring'],
-    endpoint: 'https://mcp.example.com/openshift'
-  },
-  { 
-    id: 'rhel', 
-    name: 'RHEL', 
-    tools: ['system-management', 'package-management', 'security-scanning'],
-    endpoint: 'https://mcp.example.com/rhel'
-  },
-  { 
-    id: 'ansible', 
-    name: 'Ansible', 
-    tools: ['playbook-execution', 'inventory-management', 'task-automation'],
-    endpoint: 'https://mcp.example.com/ansible'
-  },
-  { 
-    id: 'git', 
-    name: 'Git', 
-    tools: ['repository-management', 'branch-operations', 'commit-analysis'],
-    endpoint: 'https://mcp.example.com/git'
-  },
 ];
 
 // Available policies
@@ -66,7 +38,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b'],
-      mcpServers: ['git'],
     },
   },
   {
@@ -86,7 +57,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
-      mcpServers: ['openshift', 'ansible'],
     },
   },
   {
@@ -106,7 +76,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'mistral-7b'],
-      mcpServers: ['openshift', 'rhel'],
     },
   },
   {
@@ -126,7 +95,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['codellama-13b', 'mistral-7b'],
-      mcpServers: ['git'],
     },
   },
   {
@@ -146,13 +114,12 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['llama-7b'],
-      mcpServers: [],
     },
   },
   {
     id: 'key-5',
     name: 'Playground (free)',
-    description: 'Free playground API key with access to all models and MCPs',
+    description: 'Free playground API key with access to all models',
     apiKey: 'sk-playground0987654321fedcbafedcba',
     status: 'Active',
     owner: { type: 'Group', name: 'All' },
@@ -166,7 +133,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
-      mcpServers: ['openshift', 'rhel'],
     },
   },
   {
@@ -186,7 +152,6 @@ export const mockAPIKeys: APIKey[] = [
     },
     assets: {
       modelEndpoints: ['granite-3.1b'],
-      mcpServers: ['git'],
     },
   },
 ];
@@ -280,5 +245,4 @@ export const getAPIKeyPolicies = (keyId: string): Policy[] => {
 
 // Utility functions for getting data by ID
 export const getModelById = (id: string): Model | undefined => mockModels.find(m => m.id === id);
-export const getMCPServerById = (id: string): MCPServer | undefined => mockMCPServers.find(s => s.id === id);
 export const getAPIKeyById = (id: string): APIKey | undefined => mockAPIKeys.find(k => k.id === id);

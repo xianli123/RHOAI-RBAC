@@ -14,7 +14,6 @@ export interface Policy {
   };
   availableAssets: {
     models: string[]; // 'all' or specific model IDs
-    mcpServers: string[]; // 'all' or specific MCP server IDs
   };
   limits: {
     tokenLimit?: {
@@ -45,7 +44,6 @@ export interface CreatePolicyForm {
   description: string;
   availableAssets: {
     models: string[];
-    mcpServers: string[];
   };
   limits: {
     tokenLimit?: {

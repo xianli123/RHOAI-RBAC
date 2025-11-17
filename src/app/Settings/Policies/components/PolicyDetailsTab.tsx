@@ -30,7 +30,7 @@ import {
 } from '@patternfly/react-core';
 import { Policy } from '../types';
 import { getGroupById, getUserById, getServiceAccountById } from '../mockData';
-import { getModelById, getMCPServerById, mockAPIKeys } from '@app/Settings/APIKeys/mockData';
+import { getModelById, mockAPIKeys } from '@app/Settings/APIKeys/mockData';
 
 interface PolicyDetailsTabProps {
   policy: Policy;
@@ -252,13 +252,6 @@ const PolicyDetailsTab: React.FunctionComponent<PolicyDetailsTabProps> = ({ poli
               <DescriptionListTerm>Models</DescriptionListTerm>
               <DescriptionListDescription>
                 {renderAssetsList(policy.availableAssets.models, getModelById, 'models')}
-              </DescriptionListDescription>
-            </DescriptionListGroup>
-
-            <DescriptionListGroup>
-              <DescriptionListTerm>MCP Servers</DescriptionListTerm>
-              <DescriptionListDescription>
-                {renderAssetsList(policy.availableAssets.mcpServers, getMCPServerById, 'MCP servers')}
               </DescriptionListDescription>
             </DescriptionListGroup>
           </DescriptionList>

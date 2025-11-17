@@ -20,8 +20,7 @@ import {
 } from '@patternfly/react-table';
 import { APIKey } from '../types';
 import { 
-  getModelById, 
-  getMCPServerById 
+  getModelById
 } from '../mockData';
 
 interface APIKeyAssetsTabProps {
@@ -31,7 +30,6 @@ interface APIKeyAssetsTabProps {
 const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey }) => {
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
     models: true,
-    mcpServers: true,
   });
 
   const toggleSection = (sectionKey: string) => {
@@ -61,18 +59,6 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
     {
       title: 'Try in Playground',
       onClick: () => handleTryInPlayground('model', modelId),
-    },
-  ];
-
-  // Action items for MCP servers
-  const getMCPServerActions = (serverId: string): IAction[] => [
-    {
-      title: 'View details',
-      onClick: () => handleViewDetails('mcp-server', serverId),
-    },
-    {
-      title: 'Try in Playground',
-      onClick: () => handleTryInPlayground('mcp-server', serverId),
     },
   ];
 
@@ -122,55 +108,6 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                   </Table>
                 ) : (
                   <div>No models assigned to this API key</div>
-                )}
-              </ExpandableSection>
-            </FlexItem>
-
-            {/* MCP Servers Section */}
-            <FlexItem>
-              <ExpandableSection
-                toggleText={`MCP Servers & tools (${apiKey.assets.mcpServers.length})`}
-                isExpanded={expandedSections.mcpServers}
-                onToggle={() => toggleSection('mcpServers')}
-              >
-                {apiKey.assets.mcpServers.length > 0 ? (
-                  <Table aria-label="MCP Servers table">
-                    <Thead>
-                      <Tr>
-                        <Th>Name</Th>
-                        <Th>Tools</Th>
-                        <Th>Endpoint</Th>
-                        <Th></Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {apiKey.assets.mcpServers.map((serverId) => {
-                        const server = getMCPServerById(serverId);
-                        return server ? (
-                          <Tr key={server.id}>
-                            <Td dataLabel="Name">{server.name}</Td>
-                            <Td dataLabel="Tools">
-                              <Flex spaceItems={{ default: 'spaceItemsXs' }}>
-                                {server.tools.map((tool) => (
-                                  <FlexItem key={tool}>
-                                    <Badge isRead>{tool}</Badge>
-                                  </FlexItem>
-                                ))}
-                              </Flex>
-                            </Td>
-                            <Td dataLabel="Endpoint">
-                              <code>{server.endpoint}</code>
-                            </Td>
-                            <Td isActionCell>
-                              <ActionsColumn items={getMCPServerActions(server.id)} />
-                            </Td>
-                          </Tr>
-                        ) : null;
-                      })}
-                    </Tbody>
-                  </Table>
-                ) : (
-                  <div>No MCP servers assigned to this API key</div>
                 )}
               </ExpandableSection>
             </FlexItem>

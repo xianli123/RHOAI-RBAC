@@ -43,7 +43,6 @@ export const mockPolicies: Policy[] = [
     },
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {
       tokenLimit: {
@@ -97,7 +96,6 @@ spec:
     },
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {
       timeLimit: {
@@ -142,7 +140,6 @@ spec:
     },
     availableAssets: {
       models: ['gpt-oss-20b', 'granite-3.1b'],
-      mcpServers: ['openshift', 'rhel'],
     },
     limits: {
       tokenLimit: {
@@ -194,7 +191,6 @@ spec:
     },
     availableAssets: {
       models: ['granite-3.1b', 'llama-7b'],
-      mcpServers: ['all'],
     },
     limits: {},
     dateCreated: new Date('2025-01-12T16:45:00Z'),
@@ -230,7 +226,6 @@ spec:
     },
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {
       timeLimit: {
@@ -268,7 +263,6 @@ spec:
     },
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {
       tokenLimit: {
@@ -311,7 +305,6 @@ spec:
     },
     availableAssets: {
       models: ['all'],
-      mcpServers: ['all'],
     },
     limits: {},
     dateCreated: new Date('2025-01-20T10:00:00Z'),

@@ -20,20 +20,12 @@ export interface APIKey {
   };
   assets: {
     modelEndpoints: string[];
-    mcpServers: string[];
   };
 }
 
 export interface Model {
   id: string;
   name: string;
-  endpoint: string;
-}
-
-export interface MCPServer {
-  id: string;
-  name: string;
-  tools: string[];
   endpoint: string;
 }
 
@@ -76,6 +68,5 @@ export interface CreateAPIKeyForm {
   };
   assets: {
     modelEndpoints: string[];
-    mcpServers: string[];
   };
 }
