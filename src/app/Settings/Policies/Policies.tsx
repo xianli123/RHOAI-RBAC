@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   PageSection,
   Content,
@@ -13,6 +13,7 @@ import {
   Badge,
   Flex,
   FlexItem,
+  Alert,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -145,6 +146,17 @@ const Policies: React.FunctionComponent = () => {
         Manage access policies, rate limits, and usage controls for AI assets.
       </Content>
       
+      <Alert
+        variant="warning"
+        isInline
+        title="Notice"
+        id="policies-warning-banner"
+        style={{ marginTop: '1rem', marginBottom: '1rem' }}
+      >
+        This Policies feature might not be included in the final 3.2 release. For MaaS model access management, use the new{' '}
+        <Link to="/settings/tiers">Tiers</Link> page.
+      </Alert>
+
       <Card>
         <CardBody>
           <Toolbar id="policies-toolbar">

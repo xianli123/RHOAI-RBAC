@@ -76,6 +76,8 @@ import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
 import { APIKeyDetails } from '@app/Settings/APIKeys/APIKeyDetails';
 import { Policies } from '@app/Settings/Policies/Policies';
 import { PolicyDetails } from '@app/Settings/Policies/PolicyDetails';
+import { Tiers } from '@app/Settings/Tiers/Tiers';
+import { TierDetails } from '@app/Settings/Tiers/TierDetails';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -461,6 +463,13 @@ const routes: AppRouteConfig[] = [
         title: 'RHOAI 3.1 Console | Settings - User Management',
       },
       {
+        element: <Tiers />,
+        exact: true,
+        label: 'Tiers',
+        path: '/settings/tiers',
+        title: 'RHOAI 3.1 Console | Settings - Tiers',
+      },
+      {
         element: <Policies />,
         exact: true,
         label: 'Policies',
@@ -559,6 +568,18 @@ const routes: AppRouteConfig[] = [
     exact: true,
     path: '/settings/policies/:policyId/:tab',
     title: 'RHOAI 3.1 Console | Settings - Policy Details',
+  },
+  {
+    element: <TierDetails />,
+    exact: true,
+    path: '/settings/tiers/:tierId',
+    title: 'RHOAI 3.1 Console | Settings - Tier Details',
+  },
+  {
+    element: <TierDetails />,
+    exact: true,
+    path: '/settings/tiers/:tierId/:tab',
+    title: 'RHOAI 3.1 Console | Settings - Tier Details',
   },
 ];
 
