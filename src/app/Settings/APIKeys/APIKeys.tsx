@@ -27,7 +27,7 @@ import {
   Td,
 } from '@patternfly/react-table';
 import { PlusIcon, EllipsisVIcon } from '@patternfly/react-icons';
-import { mockAPIKeys, getModelById, getMCPServerById, getVectorDatabaseById, getAgentById } from './mockData';
+import { mockAPIKeys, getModelById, getMCPServerById } from './mockData';
 import { APIKey, APIKeyStatus } from './types';
 import { CreateAPIKeyModal, DeleteAPIKeyModal } from './components';
 
@@ -45,9 +45,7 @@ const APIKeys: React.FunctionComponent = () => {
   const getAssetsSummary = (apiKey: APIKey): React.ReactNode => {
     const totalAssets = 
       apiKey.assets.modelEndpoints.length +
-      apiKey.assets.mcpServers.length +
-      apiKey.assets.vectorDatabases.length +
-      apiKey.assets.agents.length;
+      apiKey.assets.mcpServers.length;
 
     if (totalAssets === 0) {
       return <span>No assets</span>;
@@ -63,16 +61,6 @@ const APIKeys: React.FunctionComponent = () => {
         {apiKey.assets.mcpServers.length > 0 && (
           <FlexItem>
             <Badge isRead>{apiKey.assets.mcpServers.length} MCP</Badge>
-          </FlexItem>
-        )}
-        {apiKey.assets.vectorDatabases.length > 0 && (
-          <FlexItem>
-            <Badge isRead>{apiKey.assets.vectorDatabases.length} Vector DBs</Badge>
-          </FlexItem>
-        )}
-        {apiKey.assets.agents.length > 0 && (
-          <FlexItem>
-            <Badge isRead>{apiKey.assets.agents.length} Agents</Badge>
           </FlexItem>
         )}
       </Flex>

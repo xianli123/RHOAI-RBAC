@@ -21,8 +21,6 @@ export interface APIKey {
   assets: {
     modelEndpoints: string[];
     mcpServers: string[];
-    vectorDatabases: string[];
-    agents: string[];
   };
 }
 
@@ -36,18 +34,6 @@ export interface MCPServer {
   id: string;
   name: string;
   tools: string[];
-  endpoint: string;
-}
-
-export interface VectorDatabase {
-  id: string;
-  name: string;
-  size: string;
-}
-
-export interface Agent {
-  id: string;
-  name: string;
   endpoint: string;
 }
 
@@ -91,7 +77,5 @@ export interface CreateAPIKeyForm {
   assets: {
     modelEndpoints: string[];
     mcpServers: string[];
-    vectorDatabases: string[];
-    agents: string[];
   };
 }

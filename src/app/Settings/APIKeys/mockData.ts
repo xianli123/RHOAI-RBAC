@@ -1,4 +1,4 @@
-import { APIKey, Model, MCPServer, VectorDatabase, Agent, Policy, APIKeyMetrics } from './types';
+import { APIKey, Model, MCPServer, Policy, APIKeyMetrics } from './types';
 
 // Available models
 export const mockModels: Model[] = [
@@ -37,22 +37,6 @@ export const mockMCPServers: MCPServer[] = [
   },
 ];
 
-// Available vector databases
-export const mockVectorDatabases: VectorDatabase[] = [
-  { id: 'vectordb-1', name: 'Knowledge Base Vectors', size: '2.4 GB' },
-  { id: 'vectordb-2', name: 'Document Embeddings', size: '1.8 GB' },
-  { id: 'vectordb-3', name: 'Code Similarity Index', size: '3.2 GB' },
-  { id: 'vectordb-4', name: 'Product Catalog Vectors', size: '892 MB' },
-];
-
-// Available agents
-export const mockAgents: Agent[] = [
-  { id: 'agent-1', name: 'Code Review Assistant', endpoint: 'https://agents.example.com/code-review' },
-  { id: 'agent-2', name: 'Documentation Generator', endpoint: 'https://agents.example.com/doc-gen' },
-  { id: 'agent-3', name: 'Bug Triage Agent', endpoint: 'https://agents.example.com/bug-triage' },
-  { id: 'agent-4', name: 'Test Case Generator', endpoint: 'https://agents.example.com/test-gen' },
-];
-
 // Available policies
 export const mockPolicies: Policy[] = [
   { id: 'devs-rate-limit-standard', name: 'Developer Rate Limit Standard', description: 'Standard rate limiting for development teams: 1000 requests/minute, 50K tokens/minute', type: 'RateLimitPolicy' },
@@ -83,8 +67,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['gpt-oss-20b'],
       mcpServers: ['git'],
-      vectorDatabases: [],
-      agents: [],
     },
   },
   {
@@ -105,8 +87,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
       mcpServers: ['openshift', 'ansible'],
-      vectorDatabases: ['vectordb-1', 'vectordb-2'],
-      agents: ['agent-1', 'agent-2'],
     },
   },
   {
@@ -127,8 +107,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'mistral-7b'],
       mcpServers: ['openshift', 'rhel'],
-      vectorDatabases: ['vectordb-1', 'vectordb-3'],
-      agents: ['agent-1', 'agent-3'],
     },
   },
   {
@@ -149,8 +127,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['codellama-13b', 'mistral-7b'],
       mcpServers: ['git'],
-      vectorDatabases: ['vectordb-4'],
-      agents: ['agent-4'],
     },
   },
   {
@@ -171,8 +147,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['llama-7b'],
       mcpServers: [],
-      vectorDatabases: [],
-      agents: [],
     },
   },
   {
@@ -193,8 +167,6 @@ export const mockAPIKeys: APIKey[] = [
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
       mcpServers: ['openshift', 'rhel'],
-      vectorDatabases: [],
-      agents: [],
     },
   },
 ];
@@ -280,6 +252,4 @@ export const getAPIKeyPolicies = (keyId: string): Policy[] => {
 // Utility functions for getting data by ID
 export const getModelById = (id: string): Model | undefined => mockModels.find(m => m.id === id);
 export const getMCPServerById = (id: string): MCPServer | undefined => mockMCPServers.find(s => s.id === id);
-export const getVectorDatabaseById = (id: string): VectorDatabase | undefined => mockVectorDatabases.find(v => v.id === id);
-export const getAgentById = (id: string): Agent | undefined => mockAgents.find(a => a.id === id);
 export const getAPIKeyById = (id: string): APIKey | undefined => mockAPIKeys.find(k => k.id === id);

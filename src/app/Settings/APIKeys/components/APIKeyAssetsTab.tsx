@@ -21,9 +21,7 @@ import {
 import { APIKey } from '../types';
 import { 
   getModelById, 
-  getMCPServerById, 
-  getVectorDatabaseById, 
-  getAgentById 
+  getMCPServerById 
 } from '../mockData';
 
 interface APIKeyAssetsTabProps {
@@ -34,8 +32,6 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
     models: true,
     mcpServers: true,
-    vectorDatabases: true,
-    agents: true,
   });
 
   const toggleSection = (sectionKey: string) => {
@@ -77,30 +73,6 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
     {
       title: 'Try in Playground',
       onClick: () => handleTryInPlayground('mcp-server', serverId),
-    },
-  ];
-
-  // Action items for vector databases
-  const getVectorDatabaseActions = (dbId: string): IAction[] => [
-    {
-      title: 'View details',
-      onClick: () => handleViewDetails('vector-database', dbId),
-    },
-    {
-      title: 'Try in Playground',
-      onClick: () => handleTryInPlayground('vector-database', dbId),
-    },
-  ];
-
-  // Action items for agents
-  const getAgentActions = (agentId: string): IAction[] => [
-    {
-      title: 'View details',
-      onClick: () => handleViewDetails('agent', agentId),
-    },
-    {
-      title: 'Try in Playground',
-      onClick: () => handleTryInPlayground('agent', agentId),
     },
   ];
 
@@ -199,82 +171,6 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                   </Table>
                 ) : (
                   <div>No MCP servers assigned to this API key</div>
-                )}
-              </ExpandableSection>
-            </FlexItem>
-
-            {/* Vector Databases Section */}
-            <FlexItem>
-              <ExpandableSection
-                toggleText={`Vector Databases (${apiKey.assets.vectorDatabases.length})`}
-                isExpanded={expandedSections.vectorDatabases}
-                onToggle={() => toggleSection('vectorDatabases')}
-              >
-                {apiKey.assets.vectorDatabases.length > 0 ? (
-                  <Table aria-label="Vector Databases table">
-                    <Thead>
-                      <Tr>
-                        <Th>Name</Th>
-                        <Th>Size</Th>
-                        <Th></Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {apiKey.assets.vectorDatabases.map((dbId) => {
-                        const db = getVectorDatabaseById(dbId);
-                        return db ? (
-                          <Tr key={db.id}>
-                            <Td dataLabel="Name">{db.name}</Td>
-                            <Td dataLabel="Size">{db.size}</Td>
-                            <Td isActionCell>
-                              <ActionsColumn items={getVectorDatabaseActions(db.id)} />
-                            </Td>
-                          </Tr>
-                        ) : null;
-                      })}
-                    </Tbody>
-                  </Table>
-                ) : (
-                  <div>No vector databases assigned to this API key</div>
-                )}
-              </ExpandableSection>
-            </FlexItem>
-
-            {/* Agents Section */}
-            <FlexItem>
-              <ExpandableSection
-                toggleText={`Agents (${apiKey.assets.agents.length})`}
-                isExpanded={expandedSections.agents}
-                onToggle={() => toggleSection('agents')}
-              >
-                {apiKey.assets.agents.length > 0 ? (
-                  <Table aria-label="Agents table">
-                    <Thead>
-                      <Tr>
-                        <Th>Name</Th>
-                        <Th>Endpoint</Th>
-                        <Th></Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {apiKey.assets.agents.map((agentId) => {
-                        const agent = getAgentById(agentId);
-                        return agent ? (
-                          <Tr key={agent.id}>
-                            <Td dataLabel="Name">{agent.name}</Td>
-                            <Td dataLabel="Endpoint">
-                              <code>{agent.endpoint}</code>
-                            </Td>
-                            <Td isActionCell>
-                              <ActionsColumn items={getAgentActions(agent.id)} />
-                            </Td>
-                          </Tr>
-                        ) : null;
-                      })}
-                    </Tbody>
-                  </Table>
-                ) : (
-                  <div>No agents assigned to this API key</div>
                 )}
               </ExpandableSection>
             </FlexItem>
