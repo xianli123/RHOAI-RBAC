@@ -12,9 +12,9 @@ This document provides a detailed implementation plan to align the current proto
 
 | Phase | Status | Completed | Total |
 |-------|--------|-----------|-------|
-| **Phase 1: Core Tiers Implementation** | ✅ Complete | 4/4 | 100% |
+| **Phase 1: Core Tiers Implementation** | ⚠️ Mostly Complete | 3.5/4 | 87% |
 | **Phase 2: API Key Tier Integration** | 🔄 In Progress | 1/4 | 25% |
-| **Phase 3: Enhanced Features** | ⏳ Partially Done | 2/4 | 50% |
+| **Phase 3: Enhanced Features** | ⏳ Partially Done | 1.5/4 | 37% |
 | **Phase 4: Integration Points** | ⏳ Partially Done | 1/2 | 50% |
 | **Phase 5: Cross-Cutting Updates** | ⏳ Partially Done | 2/3 | 67% |
 
@@ -26,20 +26,22 @@ This document provides a detailed implementation plan to align the current proto
 - ✅ Tier utility functions for user group lookup
 - ✅ Mock data for tiers, groups, and MaaS models
 - ✅ Navigation updated (Settings > Tiers)
-- ✅ Warning banner added to Policies page
 
-**Next Up:**
-- ⏳ Phase 2.2: API Key List Page Updates
-- ⏳ Phase 2.3: API Key Details Page Updates
-- ⏳ Phase 2.4: Tier Disassociation Handling
+**Next Up (Priority Order):**
+1. ⏳ Phase 1.1: Add warning banner to Policies page
+2. ⏳ Phase 2.2: API Key List Page Updates (remove Owner, add Tier column)
+3. ⏳ Phase 2.3: API Key Details Page Updates (rename Policies tab to Tiers, add tier info)
+4. ⏳ Phase 3.2: Create EditTier page and DeleteTierModal
+5. ⏳ Phase 2.4: Tier Disassociation Handling
 
 ## Phase 1: Core Tiers Implementation (MVP)
 
-### 1.1 Create New "Tiers" Page (Keep Policies Separate) ✅ COMPLETED
+### 1.1 Create New "Tiers" Page (Keep Policies Separate) ⚠️ PARTIALLY COMPLETED
 
 **Priority:** Critical (MVP)  
 **Effort:** Large  
-**Status:** ✅ **COMPLETED** - November 17, 2025  
+**Status:** ⚠️ **PARTIALLY COMPLETED** - November 17, 2025
+**Missing:** Warning banner on Policies page not implemented yet  
 
 **Changes Required:**
 - Create new `Settings > Tiers` page alongside existing Policies
@@ -92,9 +94,9 @@ export interface Tier {
 - `src/app/Settings/Tiers/index.ts`
 
 **Files to Update (Existing):**
-- `src/app/Settings/Policies/Policies.tsx` - Add pink warning banner
-- `src/app/routes.tsx` - Add new tier routes
-- Left navigation - Add "Tiers" menu item under Settings
+- ⏳ `src/app/Settings/Policies/Policies.tsx` - Add pink warning banner (NOT DONE)
+- ✅ `src/app/routes.tsx` - Add new tier routes (DONE)
+- ✅ Left navigation - Add "Tiers" menu item under Settings (DONE)
 
 **Policies Warning Banner:**
 Add to top of Policies page (`src/app/Settings/Policies/Policies.tsx`):
@@ -408,11 +410,11 @@ Add to top of Policies page (`src/app/Settings/Policies/Policies.tsx`):
 
 ---
 
-### 3.2 Tier Edit and Delete ⏳ PARTIALLY DONE
+### 3.2 Tier Edit and Delete ⏳ NOT STARTED
 
 **Priority:** Should Have (already implemented for Policies)  
-**Effort:** Small  
-**Status:** ⏳ **PARTIALLY DONE** - Row actions exist, but Edit page and Delete modal not yet created  
+**Effort:** Medium  
+**Status:** ⏳ **NOT STARTED** - Row actions exist in table, but EditTier.tsx and DeleteTierModal.tsx components don't exist yet  
 
 **Changes Required:**
 - Already exists in prototype, just needs:
@@ -421,9 +423,13 @@ Add to top of Policies page (`src/app/Settings/Policies/Policies.tsx`):
   - Disable delete if tier is default
   - Disable edit/delete for GitOps-managed tiers
 
+**Files to Create:**
+- `src/app/Settings/Tiers/EditTier.tsx` (full page like CreateTier)
+- `src/app/Settings/Tiers/components/DeleteTierModal.tsx` (confirmation modal)
+
 **Files to Update:**
-- `src/app/Settings/Tiers/components/DeleteTierModal.tsx`
-- `src/app/Settings/Tiers/components/EditTierModal.tsx`
+- `src/app/routes.tsx` - Add edit tier route
+- `src/app/Settings/Tiers/Tiers.tsx` - Update Edit action to navigate to edit page
 
 ---
 
@@ -688,4 +694,70 @@ Create comprehensive mock data for:
 3. Architecture doc: Tier inheritance model
 4. API reference: Tier and API Key CRUD operations
 5. Migration guide: If moving from Policies to Tiers for existing users
+
+---
+
+## What Remains to be Done - Summary
+
+### High Priority (MVP Blockers)
+
+1. **Warning Banner on Policies Page** (Phase 1.1 - 5 min)
+   - Add Alert component to top of `src/app/Settings/Policies/Policies.tsx`
+   - Link to new Tiers page in the message
+
+2. **API Key List Page Updates** (Phase 2.2 - 1-2 hours)
+   - Remove "Owner" column from table
+   - Add "Tier" column showing tier name and level
+   - Update mock data to include tier references in API keys
+   - Handle "Inactive - Tier deleted" status display
+
+3. **API Key Details Page Updates** (Phase 2.3 - 2-3 hours)
+   - Rename "Policies" tab to "Tiers" tab
+   - Add tier information to Details tab (tier name, level, inherited limits)
+   - Update Assets tab to only show models (remove MCP, agents, vector DBs sections)
+   - Create or update TiersTab component (rename from PoliciesTab)
+
+4. **Edit Tier Page** (Phase 3.2 - 2-3 hours)
+   - Create `src/app/Settings/Tiers/EditTier.tsx` (similar to CreateTier)
+   - Add route to `routes.tsx`
+   - Update row action in Tiers.tsx to navigate to edit page
+   - Reuse TierForm component with pre-filled data
+
+5. **Delete Tier Modal** (Phase 3.2 - 1 hour)
+   - Create `src/app/Settings/Tiers/components/DeleteTierModal.tsx`
+   - Show warning about affected API keys and groups
+   - Add confirmation step
+   - Disable delete for default tiers
+
+### Medium Priority (Should Have)
+
+6. **Tier Disassociation Handling** (Phase 2.4 - 2-3 hours)
+   - Update API key types to support disassociated status
+   - Show appropriate warnings when tier is deleted
+   - Update tier deletion flow to warn about affected keys
+
+7. **Helper Content and Samples** (Phase 3.3 - 1-2 hours)
+   - Add example tier configurations (popover or modal)
+   - Add "Getting Started" banner on first visit
+   - Add helper text throughout tier creation form
+
+8. **Documentation Updates** (Phase 5.2 - 2-3 hours)
+   - Update all page descriptions
+   - Add contextual help throughout UIs
+   - Update tooltip text on form fields
+   - Add "Learn more" links
+
+### Low Priority (Nice to Have)
+
+9. **View Endpoint Popover Enhancement** (Phase 4.1 - 3-4 hours)
+   - Add tier selector to endpoint popover
+   - Add "Generate API Key" button
+   - Implement inline key creation flow
+   - Show existing keys in popover
+
+### Estimated Total Remaining Work
+- **MVP Critical Path:** ~8-10 hours
+- **Should Have Features:** ~5-7 hours
+- **Nice to Have Features:** ~3-4 hours
+- **Total:** ~16-21 hours of development work
 
