@@ -12,27 +12,25 @@ export const mockGroups = [
 ];
 
 // Available MaaS models (AI Assets only)
+// These must match the AI Asset models defined in AIAssets/Models/ModelDetails.tsx
 export const mockMaaSModels = [
-  { id: 'granite-3.1b-maas', name: 'Granite 3.1B (MaaS)' },
-  { id: 'llama-7b-maas', name: 'Llama 7B (MaaS)' },
-  { id: 'gpt-oss-20b-maas', name: 'GPT-OSS 20B (MaaS)' },
-  { id: 'mistral-7b-maas', name: 'Mistral 7B (MaaS)' },
-  { id: 'codellama-13b-maas', name: 'CodeLlama 13B (MaaS)' },
-  { id: 'falcon-40b-maas', name: 'Falcon 40B (MaaS)' },
+  { id: 'llama-3-1-8b-instruct', name: 'llama-3.1-8b-instruct', slug: 'llama-3-1-8b-instruct' },
+  { id: 'granite-7b-code', name: 'granite-7b-code', slug: 'granite-7b-code' },
+  { id: 'mistral-7b-instruct', name: 'mistral-7b-instruct', slug: 'mistral-7b-instruct' },
 ];
 
 // Mock tiers
 export const mockTiers: Tier[] = [
   {
-    id: 'default-tier',
-    name: 'Default Tier',
-    description: 'Standard tier with access to MaaS models and baseline rate limits',
-    level: 100,
+    id: 'free-tier',
+    name: 'Free Tier',
+    description: 'Free tier with access to MaaS models and baseline rate limits',
+    level: 1,
     status: 'Active',
     isDefault: true,
     isReadOnly: false,
     groups: ['standard-users'],
-    models: ['granite-3.1b-maas', 'llama-7b-maas'],
+    models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
       tokenLimit: {
         amount: 10000,
@@ -49,14 +47,15 @@ export const mockTiers: Tier[] = [
     yaml: `apiVersion: maas.openshift.io/v1alpha1
 kind: Tier
 metadata:
-  name: default-tier
+  name: free-tier
 spec:
-  level: 100
+  level: 1
   groups:
     - standard-users
   models:
-    - granite-3.1b-maas
-    - llama-7b-maas
+    - llama-3-1-8b-instruct
+    - granite-7b-code
+    - mistral-7b-instruct
   limits:
     tokenLimit:
       amount: 10000
@@ -67,59 +66,15 @@ spec:
     apiKeyExpirationDays: 90`,
   },
   {
-    id: 'standard-tier',
-    name: 'Standard Tier',
-    description: 'Standard tier for development teams with moderate rate limits',
-    level: 200,
-    status: 'Active',
-    isReadOnly: false,
-    groups: ['dev-team', 'data-science-team'],
-    models: ['granite-3.1b-maas', 'llama-7b-maas', 'mistral-7b-maas'],
-    limits: {
-      tokenLimit: {
-        amount: 50000,
-        period: 'hour',
-      },
-      rateLimit: {
-        amount: 1000,
-        period: 'minute',
-      },
-      apiKeyExpirationDays: 90,
-    },
-    dateCreated: new Date('2025-01-05T14:30:00Z'),
-    createdBy: 'admin',
-    yaml: `apiVersion: maas.openshift.io/v1alpha1
-kind: Tier
-metadata:
-  name: standard-tier
-spec:
-  level: 200
-  groups:
-    - dev-team
-    - data-science-team
-  models:
-    - granite-3.1b-maas
-    - llama-7b-maas
-    - mistral-7b-maas
-  limits:
-    tokenLimit:
-      amount: 50000
-      period: hour
-    rateLimit:
-      amount: 1000
-      period: minute
-    apiKeyExpirationDays: 90`,
-  },
-  {
     id: 'premium-tier',
     name: 'Premium Tier',
     description: 'High-throughput tier for premium customers with access to all models',
-    level: 300,
+    level: 10,
     status: 'Active',
     gitSource: 'https://github.com/company/tiers/blob/main/premium-tier.yaml',
     isReadOnly: true,
     groups: ['premium-customers'],
-    models: ['granite-3.1b-maas', 'llama-7b-maas', 'mistral-7b-maas', 'gpt-oss-20b-maas', 'codellama-13b-maas'],
+    models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
       tokenLimit: {
         amount: 500000,
@@ -140,15 +95,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  level: 300
+  level: 10
   groups:
     - premium-customers
   models:
-    - granite-3.1b-maas
-    - llama-7b-maas
-    - mistral-7b-maas
-    - gpt-oss-20b-maas
-    - codellama-13b-maas
+    - llama-3-1-8b-instruct
+    - granite-7b-code
+    - mistral-7b-instruct
   limits:
     tokenLimit:
       amount: 500000
@@ -162,11 +115,11 @@ spec:
     id: 'enterprise-tier',
     name: 'Enterprise Tier',
     description: 'Unlimited access for enterprise users with all models and no expiration',
-    level: 400,
+    level: 20,
     status: 'Active',
     isReadOnly: false,
     groups: ['enterprise-users', 'research-team'],
-    models: ['granite-3.1b-maas', 'llama-7b-maas', 'mistral-7b-maas', 'gpt-oss-20b-maas', 'codellama-13b-maas', 'falcon-40b-maas'],
+    models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
       tokenLimit: {
         amount: 1000000,
@@ -185,17 +138,14 @@ kind: Tier
 metadata:
   name: enterprise-tier
 spec:
-  level: 400
+  level: 20
   groups:
     - enterprise-users
     - research-team
   models:
-    - granite-3.1b-maas
-    - llama-7b-maas
-    - mistral-7b-maas
-    - gpt-oss-20b-maas
-    - codellama-13b-maas
-    - falcon-40b-maas
+    - llama-3-1-8b-instruct
+    - granite-7b-code
+    - mistral-7b-instruct
   limits:
     tokenLimit:
       amount: 1000000
@@ -204,46 +154,6 @@ spec:
       amount: 100000
       period: minute
     apiKeyExpirationDays: 0`,
-  },
-  {
-    id: 'inactive-tier',
-    name: 'Inactive Test Tier',
-    description: 'Inactive tier for testing deleted tier scenarios',
-    level: 50,
-    status: 'Inactive',
-    isReadOnly: false,
-    groups: [],
-    models: ['granite-3.1b-maas'],
-    limits: {
-      tokenLimit: {
-        amount: 5000,
-        period: 'hour',
-      },
-      rateLimit: {
-        amount: 50,
-        period: 'minute',
-      },
-      apiKeyExpirationDays: 30,
-    },
-    dateCreated: new Date('2024-12-01T10:00:00Z'),
-    createdBy: 'admin',
-    yaml: `apiVersion: maas.openshift.io/v1alpha1
-kind: Tier
-metadata:
-  name: inactive-test-tier
-spec:
-  level: 50
-  groups: []
-  models:
-    - granite-3.1b-maas
-  limits:
-    tokenLimit:
-      amount: 5000
-      period: hour
-    rateLimit:
-      amount: 50
-      period: minute
-    apiKeyExpirationDays: 30`,
   },
 ];
 

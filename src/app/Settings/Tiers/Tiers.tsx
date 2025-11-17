@@ -55,14 +55,6 @@ const Tiers: React.FunctionComponent = () => {
     if (tier.limits.rateLimit) {
       limits.push(`${tier.limits.rateLimit.amount.toLocaleString()} reqs/${tier.limits.rateLimit.period}`);
     }
-    
-    if (tier.limits.apiKeyExpirationDays !== undefined) {
-      if (tier.limits.apiKeyExpirationDays === 0) {
-        limits.push('Keys never expire');
-      } else {
-        limits.push(`Keys expire in ${tier.limits.apiKeyExpirationDays} days`);
-      }
-    }
 
     if (limits.length === 0) {
       return <span style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>No limits</span>;
@@ -140,7 +132,7 @@ const Tiers: React.FunctionComponent = () => {
     <PageSection>
       <Content component={ContentVariants.h1}>Tiers</Content>
       <Content component={ContentVariants.p}>
-        Manage MaaS tiers, rate limits, and group access. Tiers control which MaaS models users can access via API keys based on their group membership.
+        Tiers control which AI asset endpoints/models that users can access based on their group membership.
       </Content>
       
       <Toolbar id="tiers-toolbar" style={{ marginTop: '1rem' }}>
@@ -162,7 +154,6 @@ const Tiers: React.FunctionComponent = () => {
             <Thead>
               <Tr>
                 <Th>Name</Th>
-                <Th>Status</Th>
                 <Th>Level</Th>
                 <Th>Groups</Th>
                 <Th>Models</Th>
@@ -197,14 +188,6 @@ const Tiers: React.FunctionComponent = () => {
                         </div>
                       )}
                     </div>
-                  </Td>
-                  <Td dataLabel="Status">
-                    <Badge 
-                      id={`tier-status-${tier.id}`}
-                      isRead={tier.status === 'Inactive'}
-                    >
-                      {tier.status}
-                    </Badge>
                   </Td>
                   <Td dataLabel="Level">
                     <Badge id={`tier-level-${tier.id}`} isRead>

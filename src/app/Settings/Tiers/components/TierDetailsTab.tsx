@@ -11,7 +11,10 @@ import {
   Content,
   ContentVariants,
   Alert,
+  Popover,
+  Button,
 } from '@patternfly/react-core';
+import { HelpIcon } from '@patternfly/react-icons';
 import { Tier } from '../types';
 import { getGroupById, getModelById } from '../mockData';
 
@@ -116,15 +119,6 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         </DescriptionListGroup>
 
         <DescriptionListGroup>
-          <DescriptionListTerm>Status</DescriptionListTerm>
-          <DescriptionListDescription>
-            <Badge isRead={tier.status === 'Inactive'}>
-              {tier.status}
-            </Badge>
-          </DescriptionListDescription>
-        </DescriptionListGroup>
-
-        <DescriptionListGroup>
           <DescriptionListTerm>Description</DescriptionListTerm>
           <DescriptionListDescription>
             {tier.description || 'No description provided'}
@@ -132,12 +126,41 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         </DescriptionListGroup>
 
         <DescriptionListGroup>
-          <DescriptionListTerm>Level</DescriptionListTerm>
+          <DescriptionListTerm>
+            <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <FlexItem>Level</FlexItem>
+              <FlexItem>
+                <Popover
+                  aria-label="Level information"
+                  headerContent="Tier level"
+                  bodyContent={
+                    <div>
+                      <p style={{ marginBottom: '0.5rem' }}>
+                        Numeric hierarchy for tier precedence. Higher numbers indicate higher tiers.
+                      </p>
+                      <p style={{ marginBottom: '0.5rem' }}>
+                        When a user belongs to multiple groups, the highest level tier is selected.
+                      </p>
+                      <p style={{ margin: 0 }}>
+                        <strong>Examples:</strong> 1 (lowest), 10 (medium), 20 (highest)
+                      </p>
+                    </div>
+                  }
+                >
+                  <Button
+                    variant="plain"
+                    aria-label="More info for tier level"
+                    id="tier-level-help-button"
+                    style={{ padding: 0, minWidth: 'auto' }}
+                  >
+                    <HelpIcon />
+                  </Button>
+                </Popover>
+              </FlexItem>
+            </Flex>
+          </DescriptionListTerm>
           <DescriptionListDescription>
             <Badge id="tier-level-badge" isRead>Level {tier.level}</Badge>
-            <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '0.25rem' }}>
-              Higher level = higher priority
-            </div>
           </DescriptionListDescription>
         </DescriptionListGroup>
 

@@ -13,12 +13,36 @@ import {
   PageBreadcrumb,
   Badge,
 } from '@patternfly/react-core';
+import { CodeEditor, Language } from '@patternfly/react-code-editor';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 import { getTierById } from './mockData';
 import { TierDetailsTab } from './components/TierDetailsTab';
-import { CodeBlock, CodeBlockCode } from '@patternfly/react-core';
 
 type TabKey = 'details' | 'yaml';
+
+// ConfigMap YAML used for all tiers
+const TIER_CONFIG_YAML = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tier-to-group-mapping
+  namespace: maas-api
+data:
+  tiers: |
+    - name: free
+      description: Free tier for basic users
+      level: 1
+      groups:
+      - system:authenticated
+    - name: premium
+      description: Premium tier
+      level: 10
+      groups:
+      - premium-users
+    - name: enterprise
+      description: Enterprise tier
+      level: 20
+      groups:
+      - enterprise-users`;
 
 const TierDetails: React.FunctionComponent = () => {
   const { tierId, tab } = useParams<{ tierId: string; tab?: string }>();
@@ -68,13 +92,11 @@ const TierDetails: React.FunctionComponent = () => {
       {breadcrumb}
       <PageSection>
         <Content component={ContentVariants.h1}>{tier.name}</Content>
-        <Badge id={`tier-status-badge-${tier.id}`} isRead={tier.status === 'Inactive'}>
-          {tier.status}
-        </Badge>
-        {' '}
-        <Badge id={`tier-level-badge-${tier.id}`} isRead>
-          Level {tier.level}
-        </Badge>
+        {tier.description && (
+          <Content component={ContentVariants.p} style={{ marginTop: '0.5rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
+            {tier.description}
+          </Content>
+        )}
       </PageSection>
 
       <PageSection type="tabs">
@@ -90,11 +112,15 @@ const TierDetails: React.FunctionComponent = () => {
           </Tab>
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} aria-label="YAML tab">
             <PageSection>
-              <CodeBlock id="tier-yaml-code">
-                <CodeBlockCode>
-                  {tier.yaml || '# No YAML available for this tier'}
-                </CodeBlockCode>
-              </CodeBlock>
+              <CodeEditor
+                id="tier-yaml-code-editor"
+                code={TIER_CONFIG_YAML}
+                language={Language.yaml}
+                isDarkTheme
+                isLineNumbersVisible
+                isReadOnly
+                height="400px"
+              />
             </PageSection>
           </Tab>
         </Tabs>

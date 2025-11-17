@@ -75,6 +75,7 @@
     "@fortawesome/react-fontawesome": "^3.0.2",
     "@patternfly/chatbot": "^6.3.2",
     "@patternfly/react-charts": "^8.3.1",
+    "@patternfly/react-code-editor": "^6.4.0",
     "@patternfly/react-core": "^6.0.0",
     "@patternfly/react-icons": "^6.0.0",
     "@patternfly/react-styles": "^6.0.0",
