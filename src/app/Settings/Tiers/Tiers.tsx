@@ -127,22 +127,14 @@ const Tiers: React.FunctionComponent = () => {
             </Thead>
             <Tbody>
               {mockTiers.map((tier) => (
-                <Tr 
-                  key={tier.id}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => handleRowClick(tier)}
-                >
+                <Tr key={tier.id}>
                   <Td dataLabel="Name">
                     <div>
                       <Button 
                         variant="link" 
                         isInline
                         id={`tier-name-${tier.id}`}
-                        style={{ textDecoration: 'none' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRowClick(tier);
-                        }}
+                        onClick={() => handleRowClick(tier)}
                       >
                         {tier.name}
                       </Button>
@@ -172,7 +164,6 @@ const Tiers: React.FunctionComponent = () => {
                   <Td isActionCell>
                     <ActionsColumn 
                       items={rowActions(tier)}
-                      onClick={(e) => e.stopPropagation()} // Prevent row click when clicking actions
                     />
                   </Td>
                 </Tr>
