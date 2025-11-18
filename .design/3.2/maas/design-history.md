@@ -4,6 +4,12 @@ This file contains information that will be used to populate the History tab of 
 
 ## History
 
+2025-11-18
+- Title: MaaS Team Sync
+- [Gemini notes](https://docs.google.com/document/d/10wMJYU24BNtVZFPksrfaVpTndEGXGPbxNpaF_kPlpoU/edit)
+- The ability to display a list of keys in the UI is dependent on named tokens as a potential fix using Kube secrets for now https://github.com/opendatahub-io/maas-billing/pull/222
+- Seems like Tiers might be doable for now though
+
 2025-11-17
 - Iteration 3 of design, incorporating some of the recently-discussed changes around focusing management on Tiers rather than Policies (which are lower-level) and Keys (which we may not be able to list our in 3.2/3.3)
 - The models that are available to any given key are inherited from the associated Tier
@@ -13,8 +19,8 @@ This file contains information that will be used to populate the History tab of 
 
 2025-11-12
 - Title: MaaS "10k Foot High" Sync
-- [Gemini notes](https://docs.google.com/document/d/1U8-ceJc9l6ni8D9yT1iiSJ3hDIwY0EsKPPdCRS5yRGM/edit?tab=t.utg01amtulxx)
-- [MaaS Coordination doc](https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit?tab=t.0)
+- [Gemini notes](https://docs.google.com/document/d/1U8-ceJc9l6ni8D9yT1iiSJ3hDIwY0EsKPPdCRS5yRGM/edit)
+- [MaaS Coordination doc](https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit)
 - AI Summary:
   - Targeting 3.3 for deliverables
   - Policy management (editing YAML for token rate limit policies and rate limit policies) could serve as initial admin UI with GitOps-friendly approach
@@ -30,7 +36,7 @@ This file contains information that will be used to populate the History tab of 
 - [Recording](https://drive.google.com/file/d/14mYJ9sBBEBnsg2iZbK7U80Yd32fBcD5V/view)
 - [Chat](https://drive.google.com/file/d/1onAGJZwgh-JGb4Rg4Np1RqGKEpLieLoU/view)
 - [Gemini notes](https://docs.google.com/document/d/1EKJHL7SGzQAo-44V2RutqMBkF6uxHeMYBf-IE6NpfnY/edit)
-- [Discussion document](https://docs.google.com/document/d/1CkUswEamgV7uJNlP5wS6_u1evtz_-WvkE7I_JMI1rqk/edit?tab=t.0)
+- [Discussion document](https://docs.google.com/document/d/1CkUswEamgV7uJNlP5wS6_u1evtz_-WvkE7I_JMI1rqk/edit)
 - [RHCL journey map and conceptual model](https://miro.com/app/board/uXjVJ72-WlQ=/)
   - Note the mention of a "Plan Policy" connecting policies to groups of users, very similar to what the MaaS Team has been discussing so far
   - This was a critical finding and something we raised with the MaaS ENG group to make sure that everyone was aware of this WIP API from RHCL with very similar goals
@@ -40,7 +46,7 @@ This file contains information that will be used to populate the History tab of 
 - [Recording](https://drive.google.com/file/d/1G3ID8z7sdsqkKIo9bvn_ZjpFWoacqoDc/view)
 - [Chat](https://drive.google.com/file/d/1jHn0SNFiH0hDNN0EFBpnn0z2LdcKP_Y2/view)
 - [Gemini Notes](https://docs.google.com/document/d/1fkBjRRibGlrJTIUmxPIvYicnWpSfAGCnMdadqbfWZmE/edit)
-- [Feature Refinement-RHOAISTRAT-638-MaaS Admin UI](https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit?tab=t.3mrf1syv46a)
+- [Feature Refinement-RHOAISTRAT-638-MaaS Admin UI](https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit)
 - AI Summary: 
   - Refinement covered two main UI pages: tier management (renamed from "policies") and API key creation/listing for AI developers
   - MVP tier creation scope includes: defining associated models, token/rate limits, assigned groups, tier name/description, and viewing existing tiers from dashboard
@@ -51,13 +57,13 @@ This file contains information that will be used to populate the History tab of 
 
 2025-11-06
 - Show MaaS usage in AAE UX sync
-- [Gemini notes](https://docs.google.com/document/d/1FEaBd7WDnatgAJTCei0Fp4OsrCQKvffgnJz5sRhA2QE/edit?tab=t.xfl2mij6zbwn)
+- [Gemini notes](https://docs.google.com/document/d/1FEaBd7WDnatgAJTCei0Fp4OsrCQKvffgnJz5sRhA2QE/edit)
 - Discussed admins creating 'tiers' that define models and rate limits (token limit and rate limit), which are then associated with groups of users (Kubernetes groups) (00:12:14). A single tier's rate limit applies across all users and models within that tier (00:13:24). Even though Tiers are associated with groups, each user within that group is assigned an individual quota (e.g., 10,000 tokens) (00:15:43).
 - Stakeholders confirmed that the tier defines the business logic and policy, while the Kubernetes group serves as the mechanism connecting the policy (tier) to the user (00:17:27). A user can belong to multiple tiers and thus have multiple quotas for the same model if it is included in those tiers (00:21:19).
 
 2025-11-04
 - MaaS Stakeholders Sync
-- [Gemini notes](https://docs.google.com/document/d/1hq1mVnemiBNQ1QXJhnC2c-ABE9hG3k2zRPqBMh1OcTo/edit?tab=t.sor7xs8hzmc6#heading=h.mfkmzr3qx655)
+- [Gemini notes](https://docs.google.com/document/d/1hq1mVnemiBNQ1QXJhnC2c-ABE9hG3k2zRPqBMh1OcTo/edit)
 - Admin UI and Entity Relationship Finalization: The MaaS Admin UI team is bootstrapping and requires clarity on the MVP features and timeline for 3.2/3.3, but the backend for frontend for APIs will be needed (00:27:10). Stakeholders suggested that finalizing entity relationships should be a good deadline for TP. The team agreed that tier management and the domain model need improvement, especially to address flexibility requirements from early engagements (00:29:09).
 - Policy Changes and API Stabilization: The group agreed that policy changes and tier management might be out of scope for the short 3.2 timeline, which is focused on stabilization (00:38:06). The team emphasized the need to stabilize the API first before building features like GitOps or dashboard integration (00:33:30).
 - Engineering Objectives and Iterative Approach: concluded that the engineering objectives for 3.2 are focused on user experience hardening, integration with the MaaS Admin UI/dashboard team, and enabling GitOps, while 3.3 will be stabilization and fixing issues from 3.2 (00:51:04).
@@ -66,7 +72,7 @@ This file contains information that will be used to populate the History tab of 
 2025-11-03
 - Model Serving PM/ENG/UX Sync meeting
 - [Recording](https://drive.google.com/file/d/1Se9koq8yJuGMb5AYEY6WNSHuPAFMdquP/view)
-- [Gemini notes](https://docs.google.com/document/d/1CVXHlwBlvqlySCE5nHqgdL0LIYaKlMfmcCuD2NyL_q0/edit?tab=t.7cr1wzqkwvhc)
+- [Gemini notes](https://docs.google.com/document/d/1CVXHlwBlvqlySCE5nHqgdL0LIYaKlMfmcCuD2NyL_q0/edit)
 - [Chat](https://drive.google.com/file/d/1EPDl_RmdbBgMkGkvmy0jLVkXj5QZbHWc/view)
 - Summary: Discussed 3.3 release readiness and MaaS feature prioritization. Key MaaS topics included: technical architecture needs (BFF, Golang skills), scope of AI Assets Endpoints page (will list only MaaS models), API Keys page feasibility, policy management challenges, RBAC implementation complexity, and defining personas for curating MaaS models. Open questions remain around subscriptions and reliance on OpenShift console for admin tasks.
 
@@ -82,7 +88,7 @@ This file contains information that will be used to populate the History tab of 
 - Reviewed MaaS iteration 1 work with Field team
 - [Recording](https://drive.google.com/file/d/1qqv2Ja4bT4H23DvKf3w6iSs0o1-34pYT/view)
 - [Chat](https://drive.google.com/file/d/1GAYii0Bji67Mrd5qNhZrrM2TU41sZqbv/view)
-- [Gemini notes](https://docs.google.com/document/d/12txTp0Jryo0yzCMhbQ9OLPbZ1PJTlyKmCn0Q0t7jhAQ/edit?tab=t.6ladz7juhizl)
+- [Gemini notes](https://docs.google.com/document/d/12txTp0Jryo0yzCMhbQ9OLPbZ1PJTlyKmCn0Q0t7jhAQ/edit)
 - TODO: synthesize this feedback into prototype updates
 
 2025-10-16
@@ -97,7 +103,7 @@ This file contains information that will be used to populate the History tab of 
 - Reviewed MaaS iteration 1 work at Gen AI Studio UX Stakeholder Sync
 - [Recording](https://drive.google.com/file/d/1u6d9W7zFMJMUvXbjiBTPGGuNREt1B42Z/view)
 - [Chat](https://drive.google.com/file/d/1WlZqQM18p28ehRHP3umBwoIkX-qX-py0/view)
-- [Gemini Notes](https://docs.google.com/document/d/1jEoMUuy99ei6iVClLttCQYOMDh0IeMM_KjP88TzH5PE/edit?tab=t.qfvlx7uu9b8c)
+- [Gemini Notes](https://docs.google.com/document/d/1jEoMUuy99ei6iVClLttCQYOMDh0IeMM_KjP88TzH5PE/edit)
 - TODO: synthesize this feedback into prototype updates
 
 2025-10-13
@@ -116,7 +122,7 @@ This file contains information that will be used to populate the History tab of 
 2025-10-02
 - RH AI UX Field Feedback Call
 - [Recording](https://drive.google.com/file/d/16zKWm_Av_zUmsJIdTIJ043o0jS5To-DZ/view)
-- [Gemini notes](https://docs.google.com/document/d/1CafyfZI28WSV75R-IMszxjaOSFV4QzmkYMKtlwIBqmU/edit?tab=t.9in1b8lmc9l4)
+- [Gemini notes](https://docs.google.com/document/d/1CafyfZI28WSV75R-IMszxjaOSFV4QzmkYMKtlwIBqmU/edit)
 - API Gateway vs. Direct VLM Access - Andy discussed the future of API gateways and their integration with OpenShift AI, anticipating that keys and tracking will be integrated. A stakeholder pointed out that some customers prefer not to use API gateways due to extra configuration, utilizing a vLLM middleware solution for logging instead. Andy inquired whether most customers would lean towards API gateways or the direct VLM method.
 - Distinction Between Models and Models as a Service - Andy initiated a discussion about simplifying the user experience by potentially removing the distinction between "models" and "models as a service" in future versions, aiming for a single "models" tab where all models are available as a service, ideally behind an API gateway. A stakeholder supported this simplification, stating that from a user's perspective, it's just a model, and the "mass" (models as a service) is an implementation detail.
 - Namespace Scope and User Permissions - A stakeholder questioned the real-world use cases for namespace-scoped models, suggesting that perhaps all models in AI assets should exclusively use "models as a service". Another stakeholder countered that namespaces still serve to organize workloads, even with API gateways, and emphasized the need for granular access controls to ensure users can only interact with models they are authorized to use.
@@ -124,7 +130,7 @@ This file contains information that will be used to populate the History tab of 
 2025-10-01
 - GenAI UXD Stakeholder meeting
 - [Recording](https://drive.google.com/file/d/12xsK-eEHY17jKlL1dhIt_GFZXjg3-4H4/view)
-- [Gemini notes](https://docs.google.com/document/d/1Z4Zk-PNg24z1immh4eK6fJyYKuALc0CbB3-leUKc82s/edit?tab=t.9ca9a4kc68ub)
+- [Gemini notes](https://docs.google.com/document/d/1Z4Zk-PNg24z1immh4eK6fJyYKuALc0CbB3-leUKc82s/edit)
 - After some discussion there seems to be general agreement that in 3.2 we'll try to move in the direction of everything in AI Assets being available as a service and operate behind an API Gateway, rather than 3.0's experience where non-gateway'd models are also technically "available" but perhaps not with the same level of control or observability that provides the best experience to AI Engineers who simply want to consume model endpoints to their heart's content. Guiding GUI users to adopt an API Key-based approach has security, management, and observability implications that are worth encouraging. There may be a subset of use cases where a user might want to share a model endpoint within the same namespace without publishing it for others to discover and consume, but an opinionated AI Assets area doesn't prevent users with the know-how from navigating to the Model Deployment Details pages of the ones they have access to and getting the raw endpoints from there.
 - We also discussed allowing admins to bring in their own external AI inference providers (e.g. OpenAI) into the platform for others to consume. This would likely be done using either the existing Connections mechanism or from the AI Assets page in a new "Add Asset" form/wizard. API Keys from the API gateway could then sit in front of that endpoint, providing more granular per-user and per-group controls and visibility.
 
