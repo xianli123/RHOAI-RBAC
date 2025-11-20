@@ -6,7 +6,7 @@
   "scripts": {
     "start": "serve .",
     "dev": "serve . --listen 4173",
-    "build": "echo \"Static prototype – nothing to build\"",
+    "build": "mkdir -p public && cp index.html public/ 2>/dev/null || true",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "devDependencies": {
