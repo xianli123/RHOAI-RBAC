@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RHOAI - Projects</title>
+    <!-- PatternFly CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly-addons.css">
     <style>
         * {
             margin: 0;
@@ -12,14 +15,14 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: var(--pf-global--FontFamily--sans-serif);
             display: flex;
             height: 100vh;
             overflow: hidden;
-            background-color: #ffffff;
+            background-color: var(--pf-global--BackgroundColor--100);
         }
 
-        /* Sidebar */
+        /* Sidebar - Keep original style */
         .sidebar {
             width: 240px;
             background-color: #f5f5f5;
@@ -60,7 +63,7 @@
             color: #666;
         }
 
-        /* Main Content */
+        /* Main Content - Use PatternFly styles */
         .main-content {
             flex: 1;
             display: flex;
@@ -68,208 +71,21 @@
             overflow: hidden;
         }
 
-        /* Header */
-        .header {
-            padding: 2rem;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .header-top {
+        /* Override PatternFly page styles to work with our sidebar */
+        .pf-c-page {
+            height: 100%;
             display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
+            flex-direction: column;
         }
 
-        .header-icon {
-            font-size: 2rem;
-            margin-right: 0.75rem;
-        }
-
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .header-description {
-            color: #666;
-            margin-left: 2.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .start-workbench-btn {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            padding: 0.5rem 1rem;
-            background-color: transparent;
-            border: 1px solid #0066cc;
-            color: #0066cc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .start-workbench-btn:hover {
-            background-color: #f0f7ff;
-        }
-
-        /* Controls */
-        .controls {
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .filter-btn {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: transparent;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .search-bar {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-
-        .create-project-btn {
-            padding: 0.5rem 1rem;
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .create-project-btn:hover {
-            background-color: #0052a3;
-        }
-
-        /* Table Container */
-        .table-container {
+        .pf-c-page__main {
             flex: 1;
             overflow-y: auto;
-            padding: 0 2rem;
-        }
-
-        .table-header {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 40px;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e0e0e0;
-            font-weight: 500;
-            color: #666;
-            font-size: 0.875rem;
-        }
-
-        .table-header-cell {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        .table-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 40px;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .table-row:hover {
-            background-color: #f9f9f9;
-        }
-
-        .project-name {
-            color: #0066cc;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .project-name:hover {
-            text-decoration: underline;
-        }
-
-        .project-description {
-            font-size: 0.875rem;
-            color: #666;
-            margin-top: 0.25rem;
-        }
-
-        .workbenches {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .workbench-item {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .workbench-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        .more-options {
-            cursor: pointer;
-            color: #666;
-            font-size: 1.25rem;
-            text-align: center;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 1rem 2rem;
-            border-top: 1px solid #e0e0e0;
-            gap: 0.5rem;
-        }
-
-        .pagination-info {
-            margin-right: 1rem;
-            color: #666;
-            font-size: 0.875rem;
-        }
-
-        .pagination-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            color: #666;
-        }
-
-        .pagination-btn:hover {
-            color: #333;
-        }
-
-        .pagination-page {
-            padding: 0.25rem 0.5rem;
-            color: #333;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar - Keep original -->
     <aside class="sidebar">
         <a href="#" class="nav-item">
             <span class="nav-item-icon">🏠</span>
@@ -311,63 +127,134 @@
         </a>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content - PatternFly -->
     <main class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-top">
-                <span class="header-icon">📁</span>
-                <h1 class="header-title">Projects</h1>
-            </div>
-            <p class="header-description">View your existing projects or create new projects.</p>
-            <button class="start-workbench-btn">Start basic workbench</button>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <button class="filter-btn">
-                <span>🔽</span>
-                <span>Name</span>
-                <span>▼</span>
-            </button>
-            <input type="text" class="search-bar" placeholder="Filter by name" />
-            <button class="create-project-btn">Create project</button>
-        </div>
-
-        <!-- Table -->
-        <div class="table-container">
-            <div class="table-header">
-                <div class="table-header-cell">
-                    <span>Name</span>
-                    <span>▲</span>
+        <div class="pf-c-page" style="height: 100%; display: flex; flex-direction: column;">
+            <main class="pf-c-page__main" tabindex="0" style="flex: 1; overflow-y: auto; padding: var(--pf-global--spacer--lg);">
+                <!-- Title Section -->
+                <div class="pf-c-content" style="margin-bottom: var(--pf-global--spacer--lg);">
+                    <h1 class="pf-c-title pf-m-2xl">
+                        <span style="margin-right: var(--pf-global--spacer--sm);">📁</span>
+                        Projects
+                    </h1>
+                    <p class="pf-c-content__body">View your existing projects or create new projects.</p>
                 </div>
-                <div class="table-header-cell">
-                    <span>Created</span>
-                    <span>⇅</span>
-                </div>
-                <div class="table-header-cell">
-                    <span>Workbenches</span>
-                    <span>?</span>
-                </div>
-                <div></div>
-            </div>
 
-            <div id="projects-list">
-                <!-- Projects will be inserted here by JavaScript -->
-            </div>
-    </div>
+                <!-- Toolbar -->
+                <div class="pf-c-toolbar" id="toolbar" role="toolbar">
+                    <div class="pf-c-toolbar__content">
+                        <div class="pf-c-toolbar__content-section pf-m-filter-group">
+                            <div class="pf-c-toolbar__item">
+                                <div class="pf-c-select">
+                                    <button class="pf-c-select__toggle" type="button" id="filter-toggle" aria-haspopup="true" aria-expanded="false">
+                                        <span class="pf-c-select__toggle-text">Name</span>
+                                        <span class="pf-c-select__toggle-arrow">
+                                            <i class="fas fa-caret-down" aria-hidden="true"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pf-c-toolbar__item pf-c-toolbar__item--filter-search">
+                                <div class="pf-c-input-group">
+                                    <div class="pf-c-text-input-group">
+                                        <div class="pf-c-text-input-group__main">
+                                            <span class="pf-c-text-input-group__text">
+                                                <input class="pf-c-text-input-group__text-input" type="text" id="search-input" placeholder="Filter by name" aria-label="Filter by name" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pf-c-toolbar__content-section">
+                            <div class="pf-c-toolbar__item">
+                                <button class="pf-c-button pf-m-primary" type="button">Create project</button>
+                            </div>
+                            <div class="pf-c-toolbar__item">
+                                <button class="pf-c-button pf-m-link" type="button">Start basic workbench</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Pagination -->
-        <div class="pagination">
-            <span class="pagination-info">1-10 of 44</span>
-            <button class="pagination-btn">««</button>
-            <button class="pagination-btn">‹</button>
-            <span class="pagination-page">1 of 5</span>
-            <button class="pagination-btn">›</button>
-            <button class="pagination-btn">»»</button>
+                <!-- Table -->
+                <div class="pf-c-table pf-m-compact pf-m-sticky-header" role="grid" aria-label="Projects table" style="margin-top: var(--pf-global--spacer--md);">
+                    <table class="pf-c-table__table" role="grid">
+                        <thead>
+                            <tr role="row">
+                                <th class="pf-c-table__sort" role="columnheader" aria-sort="ascending" scope="col">
+                                    <button class="pf-c-table__button">
+                                        <span class="pf-c-table__text">
+                                            <span class="pf-c-table__text">Name</span>
+                                            <span class="pf-c-table__sort-indicator">
+                                                <i class="fas fa-long-arrow-alt-up"></i>
+                                            </span>
+                                        </span>
+                                    </button>
+                                </th>
+                                <th class="pf-c-table__sort" role="columnheader" aria-sort="none" scope="col">
+                                    <button class="pf-c-table__button">
+                                        <span class="pf-c-table__text">
+                                            <span class="pf-c-table__text">Created</span>
+                                            <span class="pf-c-table__sort-indicator">
+                                                <i class="fas fa-arrows-alt-v"></i>
+                                            </span>
+                                        </span>
+                                    </button>
+                                </th>
+                                <th role="columnheader" scope="col">
+                                    <span class="pf-c-table__text">
+                                        Workbenches
+                                        <span class="pf-c-tooltip">
+                                            <button class="pf-c-tooltip__trigger" aria-describedby="workbenches-help">
+                                                <i class="pficon pf-icon-help" aria-hidden="true"></i>
+                                            </button>
+                                        </span>
+                                    </span>
+                                </th>
+                                <td role="cell"></td>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-tbody" role="rowgroup">
+                            <!-- Projects will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pf-c-pagination pf-m-bottom" style="margin-top: var(--pf-global--spacer--lg);">
+                    <div class="pf-c-pagination__total-items">
+                        <b>1 - 10</b> of <b>44</b>
+                    </div>
+                    <div class="pf-c-pagination__nav">
+                        <div class="pf-c-pagination__nav-page-select">
+                            <button class="pf-c-button pf-m-plain pf-m-disabled" type="button" disabled aria-label="Go to first page">
+                                <i class="fas fa-angle-double-left" aria-hidden="true"></i>
+                            </button>
+                            <button class="pf-c-button pf-m-plain pf-m-disabled" type="button" disabled aria-label="Go to previous page">
+                                <i class="fas fa-angle-left" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="pf-c-pagination__nav-page-select">
+                            <input class="pf-c-form-control" aria-label="Current page" type="number" min="1" max="5" value="1" />
+                            <span aria-hidden="true">of <b>5</b></span>
+                        </div>
+                        <div class="pf-c-pagination__nav-page-select">
+                            <button class="pf-c-button pf-m-plain" type="button" aria-label="Go to next page">
+                                <i class="fas fa-angle-right" aria-hidden="true"></i>
+                            </button>
+                            <button class="pf-c-button pf-m-plain" type="button" aria-label="Go to last page">
+                                <i class="fas fa-angle-double-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </main>
 
+    <!-- PatternFly JS (for interactive components) -->
+    <script src="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly-base.min.js"></script>
     <script>
         // Sample project data
         const projects = [
@@ -484,41 +371,58 @@
 
         const allProjects = [...projects, ...additionalProjects];
 
-        // Render projects
+        // Render projects using PatternFly table structure
         function renderProjects(projectList) {
-            const container = document.getElementById('projects-list');
-            container.innerHTML = '';
+            const tbody = document.getElementById('projects-tbody');
+            tbody.innerHTML = '';
 
             projectList.forEach(project => {
-                const row = document.createElement('div');
-                row.className = 'table-row';
+                const row = document.createElement('tr');
+                row.className = 'pf-c-table__tr';
+                row.setAttribute('role', 'row');
 
-                const runningColor = project.runningWorkbenches > 0 ? '#0066cc' : '#333';
-                const stoppedColor = project.stoppedWorkbenches > 0 ? '#0066cc' : '#333';
+                const runningColor = project.runningWorkbenches > 0 ? 'var(--pf-global--primary-color--100)' : 'var(--pf-global--Color--200)';
+                const stoppedColor = project.stoppedWorkbenches > 0 ? 'var(--pf-global--primary-color--100)' : 'var(--pf-global--Color--200)';
 
                 row.innerHTML = `
-                    <div>
-                        <a href="#" class="project-name">
-                            ${project.name}
-                            <span>?</span>
-                        </a>
-                        ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
-                    </div>
-                    <div>${project.created}</div>
-                    <div class="workbenches">
-                        <div class="workbench-item">
-                            <span style="color: ${runningColor}">▶</span>
-                            <span>${project.runningWorkbenches}</span>
+                    <td class="pf-c-table__td" role="cell" data-label="Name">
+                        <div>
+                            <a href="#" class="pf-c-link" style="color: var(--pf-global--primary-color--100);">
+                                ${project.name}
+                                <span class="pf-c-tooltip">
+                                    <button class="pf-c-tooltip__trigger" aria-describedby="project-help" style="margin-left: 0.25rem;">
+                                        <i class="pficon pf-icon-help" aria-hidden="true" style="font-size: 0.875rem;"></i>
+                                    </button>
+                                </span>
+                            </a>
+                            ${project.description ? `<div style="font-size: 0.875rem; color: var(--pf-global--Color--200); margin-top: 0.25rem;">${project.description}</div>` : ''}
                         </div>
-                        <div class="workbench-item">
-                            <span style="color: ${stoppedColor}">●</span>
-                            <span>${project.stoppedWorkbenches}</span>
+                    </td>
+                    <td class="pf-c-table__td" role="cell" data-label="Created">
+                        ${project.created}
+                    </td>
+                    <td class="pf-c-table__td" role="cell" data-label="Workbenches">
+                        <div style="display: flex; align-items: center; gap: var(--pf-global--spacer--md);">
+                            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                <span style="color: ${runningColor};">▶</span>
+                                <span>${project.runningWorkbenches}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                <span style="color: ${stoppedColor};">●</span>
+                                <span>${project.stoppedWorkbenches}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="more-options">⋮</div>
+                    </td>
+                    <td class="pf-c-table__td pf-c-table__action" role="cell">
+                        <div class="pf-c-dropdown">
+                            <button class="pf-c-dropdown__toggle pf-m-plain" type="button" aria-expanded="false" aria-label="Actions">
+                                <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </td>
                 `;
 
-                container.appendChild(row);
+                tbody.appendChild(row);
             });
         }
 
@@ -526,7 +430,7 @@
         renderProjects(allProjects.slice(0, 10));
 
         // Search functionality
-        document.querySelector('.search-bar').addEventListener('input', (e) => {
+        document.getElementById('search-input').addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filtered = allProjects.filter(p => 
                 p.name.toLowerCase().includes(searchTerm)
