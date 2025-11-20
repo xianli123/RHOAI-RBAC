@@ -1,0 +1,15 @@
+{
+  "name": "rhoai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RHOAI UXD prototypes",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve . --listen 4173",
+    "build": "echo \"Static prototype – nothing to build\"",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
+}
