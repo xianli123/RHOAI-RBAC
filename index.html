@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting to RHOAI 3.2</title>
+    <title>RHOAI - Projects</title>
     <style>
         * {
             margin: 0;
@@ -14,68 +14,525 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        .container {
-            text-align: center;
-            padding: 2rem;
+        .nav-item:hover {
+            background-color: #e8e8e8;
         }
 
-        .message {
-            font-size: 1.5rem;
+        .nav-item.active {
+            background-color: #e0e0e0;
             font-weight: 500;
-            margin-bottom: 2rem;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #ffffff;
-            border-radius: 50%;
-            margin: 0 auto;
-            animation: spin 1s linear infinite;
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+            display: inline-block;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .nav-item-arrow {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            padding: 2rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-icon {
+            font-size: 2rem;
+            margin-right: 0.75rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .header-description {
+            color: #666;
+            margin-left: 2.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .start-workbench-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            border: 1px solid #0066cc;
+            color: #0066cc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .start-workbench-btn:hover {
+            background-color: #f0f7ff;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .search-bar {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .create-project-btn {
+            padding: 0.5rem 1rem;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .create-project-btn:hover {
+            background-color: #0052a3;
+        }
+
+        /* Table Container */
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 2rem;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 40px;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 500;
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .table-header-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 40px;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .table-row:hover {
+            background-color: #f9f9f9;
+        }
+
+        .project-name {
+            color: #0066cc;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-name:hover {
+            text-decoration: underline;
+        }
+
+        .project-description {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .workbenches {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .workbench-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .workbench-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .more-options {
+            cursor: pointer;
+            color: #666;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 1rem 2rem;
+            border-top: 1px solid #e0e0e0;
+            gap: 0.5rem;
+        }
+
+        .pagination-info {
+            margin-right: 1rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .pagination-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            color: #666;
+        }
+
+        .pagination-btn:hover {
+            color: #333;
+        }
+
+        .pagination-page {
+            padding: 0.25rem 0.5rem;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="message">Redirecting to RHOAI 3.2 prototype</div>
-        <div class="spinner"></div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <span class="nav-item-icon">📁</span>
+            <span>Projects</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">🧠</span>
+            <span>AI hub</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">💻</span>
+            <span>Develop & train</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">📊</span>
+            <span>Observe & monitor</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">📚</span>
+            <span>Learning resources</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">⭐</span>
+            <span>Applications</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-item-icon">⚙️</span>
+            <span>Settings</span>
+            <span class="nav-item-arrow">›</span>
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <span class="header-icon">📁</span>
+                <h1 class="header-title">Projects</h1>
+            </div>
+            <p class="header-description">View your existing projects or create new projects.</p>
+            <button class="start-workbench-btn">Start basic workbench</button>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="filter-btn">
+                <span>🔽</span>
+                <span>Name</span>
+                <span>▼</span>
+            </button>
+            <input type="text" class="search-bar" placeholder="Filter by name" />
+            <button class="create-project-btn">Create project</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-header-cell">
+                    <span>Name</span>
+                    <span>▲</span>
+                </div>
+                <div class="table-header-cell">
+                    <span>Created</span>
+                    <span>⇅</span>
+                </div>
+                <div class="table-header-cell">
+                    <span>Workbenches</span>
+                    <span>?</span>
+                </div>
+                <div></div>
+            </div>
+
+            <div id="projects-list">
+                <!-- Projects will be inserted here by JavaScript -->
+            </div>
     </div>
 
+        <!-- Pagination -->
+        <div class="pagination">
+            <span class="pagination-info">1-10 of 44</span>
+            <button class="pagination-btn">««</button>
+            <button class="pagination-btn">‹</button>
+            <span class="pagination-page">1 of 5</span>
+            <button class="pagination-btn">›</button>
+            <button class="pagination-btn">»»</button>
+        </div>
+    </main>
+
     <script>
-        // Get the current pathname
-        const currentPath = window.location.pathname;
-        
-        // Base URL for the redirect
-        const baseRedirectUrl = 'https://rhoai-5171de.pages.redhat.com/branch-3.2';
-        
-        // Build the final redirect URL
-        let redirectUrl = baseRedirectUrl;
-        
-        // If there's a subpath (and it's not just '/'), append it to the redirect URL
-        if (currentPath && currentPath !== '/' && currentPath !== '/index.html') {
-            // Remove leading slash if present to avoid double slashes
-            const subPath = currentPath.startsWith('/') ? currentPath.substring(1) : currentPath;
-            redirectUrl = baseRedirectUrl + '/' + subPath;
+        // Sample project data
+        const projects = [
+            {
+                name: "a project with object storage with an extremely long name so we...",
+                description: "cluster-admin DC: UXDPOC6 connects to Object storage, and a model is saved in the path \"/models/fraud/1/model.onnx\"",
+                created: "10/30/2024, 7:26:48 PM",
+                runningWorkbenches: 2,
+                stoppedWorkbenches: 6
+            },
+            {
+                name: "Daragh-test",
+                description: "cluster-admin Project to deploy a model",
+                created: "5/8/2025, 7:25:02 PM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 0
+            },
+            {
+                name: "dedicated-admin",
+                description: "",
+                created: "10/31/2025, 2:59:17 AM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 0
+            },
+            {
+                name: "Feast",
+                description: "cluster-admin",
+                created: "8/20/2025, 4:48:11 PM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 0
+            },
+            {
+                name: "haley-test",
+                description: "cluster-admin",
+                created: "4/9/2025, 2:52:01 PM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 1
+            },
+            {
+                name: "istio-system",
+                description: "",
+                created: "10/3/2024, 4:31:24 AM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 0
+            },
+            {
+                name: "Jenn",
+                description: "",
+                created: "7/16/2025, 5:23:20 AM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 0
+            },
+            {
+                name: "Machine Learning Pipeline",
+                description: "cluster-admin Advanced ML pipeline for fraud detection",
+                created: "11/15/2024, 3:45:12 PM",
+                runningWorkbenches: 1,
+                stoppedWorkbenches: 3
+            },
+            {
+                name: "Data Analytics Platform",
+                description: "cluster-admin Real-time analytics and monitoring system",
+                created: "9/22/2024, 10:20:30 AM",
+                runningWorkbenches: 0,
+                stoppedWorkbenches: 2
+            },
+            {
+                name: "Model Training Workspace",
+                description: "cluster-admin Workspace for training deep learning models",
+                created: "6/10/2024, 8:15:45 PM",
+                runningWorkbenches: 2,
+                stoppedWorkbenches: 4
+            }
+        ];
+
+        // Additional random projects to reach 44 total
+        const additionalProjects = [
+            { name: "Cloud Infrastructure", description: "cluster-admin", created: "3/5/2024, 2:30:00 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "API Gateway Service", description: "", created: "2/18/2024, 11:45:22 AM", runningWorkbenches: 1, stoppedWorkbenches: 0 },
+            { name: "Database Migration", description: "cluster-admin", created: "1/12/2024, 9:20:15 AM", runningWorkbenches: 0, stoppedWorkbenches: 0 },
+            { name: "Security Testing Lab", description: "cluster-admin", created: "12/8/2023, 4:55:30 PM", runningWorkbenches: 0, stoppedWorkbenches: 2 },
+            { name: "Performance Benchmark", description: "", created: "11/25/2023, 1:10:45 AM", runningWorkbenches: 1, stoppedWorkbenches: 1 },
+            { name: "Container Registry", description: "cluster-admin", created: "10/14/2023, 7:30:20 PM", runningWorkbenches: 0, stoppedWorkbenches: 0 },
+            { name: "Monitoring Dashboard", description: "cluster-admin", created: "9/3/2023, 6:15:10 AM", runningWorkbenches: 2, stoppedWorkbenches: 3 },
+            { name: "Load Testing Environment", description: "", created: "8/20/2023, 3:40:55 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "CI/CD Pipeline", description: "cluster-admin", created: "7/7/2023, 12:25:30 PM", runningWorkbenches: 1, stoppedWorkbenches: 2 },
+            { name: "Documentation Site", description: "", created: "6/15/2023, 10:50:15 AM", runningWorkbenches: 0, stoppedWorkbenches: 0 },
+            { name: "Backup System", description: "cluster-admin", created: "5/22/2023, 8:35:40 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "Log Aggregation", description: "", created: "4/10/2023, 5:20:25 AM", runningWorkbenches: 1, stoppedWorkbenches: 0 },
+            { name: "Message Queue Service", description: "cluster-admin", created: "3/18/2023, 2:45:50 PM", runningWorkbenches: 0, stoppedWorkbenches: 2 },
+            { name: "Cache Layer", description: "", created: "2/5/2023, 11:30:35 AM", runningWorkbenches: 1, stoppedWorkbenches: 1 },
+            { name: "Authentication Service", description: "cluster-admin", created: "1/12/2023, 9:15:20 PM", runningWorkbenches: 0, stoppedWorkbenches: 0 },
+            { name: "File Storage System", description: "", created: "12/20/2022, 4:50:10 AM", runningWorkbenches: 2, stoppedWorkbenches: 3 },
+            { name: "Search Engine", description: "cluster-admin", created: "11/8/2022, 7:25:45 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "Notification Service", description: "", created: "10/15/2022, 1:40:30 PM", runningWorkbenches: 1, stoppedWorkbenches: 0 },
+            { name: "Analytics Engine", description: "cluster-admin", created: "9/2/2022, 6:55:15 AM", runningWorkbenches: 0, stoppedWorkbenches: 2 },
+            { name: "Report Generator", description: "", created: "8/18/2022, 3:20:50 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "Data Warehouse", description: "cluster-admin", created: "7/5/2022, 10:45:25 AM", runningWorkbenches: 1, stoppedWorkbenches: 2 },
+            { name: "ETL Pipeline", description: "", created: "6/12/2022, 8:30:40 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "Stream Processing", description: "cluster-admin", created: "5/20/2022, 5:15:55 AM", runningWorkbenches: 2, stoppedWorkbenches: 3 },
+            { name: "Graph Database", description: "", created: "4/8/2022, 2:50:20 PM", runningWorkbenches: 0, stoppedWorkbenches: 0 },
+            { name: "Time Series DB", description: "cluster-admin", created: "3/15/2022, 11:35:10 AM", runningWorkbenches: 1, stoppedWorkbenches: 1 },
+            { name: "Blockchain Network", description: "", created: "2/22/2022, 7:20:45 PM", runningWorkbenches: 0, stoppedWorkbenches: 2 },
+            { name: "IoT Gateway", description: "cluster-admin", created: "1/10/2022, 4:05:30 AM", runningWorkbenches: 1, stoppedWorkbenches: 0 },
+            { name: "Edge Computing", description: "", created: "12/18/2021, 9:50:15 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 },
+            { name: "Quantum Simulator", description: "cluster-admin", created: "11/25/2021, 6:35:50 AM", runningWorkbenches: 2, stoppedWorkbenches: 4 },
+            { name: "Neural Network Lab", description: "", created: "10/12/2021, 1:20:25 PM", runningWorkbenches: 0, stoppedWorkbenches: 2 },
+            { name: "Computer Vision", description: "cluster-admin", created: "9/19/2021, 8:55:40 PM", runningWorkbenches: 1, stoppedWorkbenches: 1 },
+            { name: "NLP Processing", description: "", created: "8/6/2021, 5:40:15 AM", runningWorkbenches: 0, stoppedWorkbenches: 3 },
+            { name: "Recommendation Engine", description: "cluster-admin", created: "7/14/2021, 2:25:50 PM", runningWorkbenches: 1, stoppedWorkbenches: 2 },
+            { name: "Fraud Detection", description: "", created: "6/21/2021, 10:10:35 AM", runningWorkbenches: 2, stoppedWorkbenches: 3 },
+            { name: "Risk Assessment", description: "cluster-admin", created: "5/29/2021, 7:45:20 PM", runningWorkbenches: 0, stoppedWorkbenches: 1 }
+        ];
+
+        const allProjects = [...projects, ...additionalProjects];
+
+        // Render projects
+        function renderProjects(projectList) {
+            const container = document.getElementById('projects-list');
+            container.innerHTML = '';
+
+            projectList.forEach(project => {
+                const row = document.createElement('div');
+                row.className = 'table-row';
+
+                const runningColor = project.runningWorkbenches > 0 ? '#0066cc' : '#333';
+                const stoppedColor = project.stoppedWorkbenches > 0 ? '#0066cc' : '#333';
+
+                row.innerHTML = `
+                    <div>
+                        <a href="#" class="project-name">
+                            ${project.name}
+                            <span>?</span>
+                        </a>
+                        ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
+                    </div>
+                    <div>${project.created}</div>
+                    <div class="workbenches">
+                        <div class="workbench-item">
+                            <span style="color: ${runningColor}">▶</span>
+                            <span>${project.runningWorkbenches}</span>
+                        </div>
+                        <div class="workbench-item">
+                            <span style="color: ${stoppedColor}">●</span>
+                            <span>${project.stoppedWorkbenches}</span>
+                        </div>
+                    </div>
+                    <div class="more-options">⋮</div>
+                `;
+
+                container.appendChild(row);
+            });
         }
-        
-        // Redirect after 3 seconds
-        setTimeout(() => {
-            window.location.href = redirectUrl;
-        }, 3000);
+
+        // Initial render (first 10 projects)
+        renderProjects(allProjects.slice(0, 10));
+
+        // Search functionality
+        document.querySelector('.search-bar').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allProjects.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            renderProjects(filtered.slice(0, 10));
+        });
     </script>
 </body>
 </html>
-
