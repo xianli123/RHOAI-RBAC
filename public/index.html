@@ -4,209 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RHOAI - Projects</title>
-    <!-- PatternFly CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly-addons.css">
+    <!-- PatternFly 6 CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6/dist/patternfly.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6/dist/patternfly-addons.css">
     <style>
+        /* 全局重置尽量少，只做最小化处理，其他交给 PatternFly 6 */
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: var(--pf-global--FontFamily--sans-serif);
-            display: flex;
+            margin: 0;
             height: 100vh;
-            overflow: hidden;
-            background-color: var(--pf-global--BackgroundColor--100);
-        }
-
-        /* Sidebar - Keep original style */
-        .sidebar {
-            width: 240px;
-            background-color: #f5f5f5;
-            border-right: 1px solid #e0e0e0;
-            padding: 1rem 0;
-            overflow-y: auto;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: #333;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .nav-item:hover {
-            background-color: #e8e8e8;
-        }
-
-        .nav-item.active {
-            background-color: #e0e0e0;
-            font-weight: 500;
-        }
-
-        .nav-item-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.75rem;
-            display: inline-block;
-        }
-
-        .nav-item-arrow {
-            margin-left: auto;
-            font-size: 0.75rem;
-            color: #666;
-        }
-
-        /* Main Content - Use PatternFly styles */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Override PatternFly page styles to work with our sidebar */
-        .pf-c-page {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .pf-c-page__main {
-            flex: 1;
-            overflow-y: auto;
         }
     </style>
 </head>
-<body>
-    <!-- Sidebar - Keep original -->
-    <aside class="sidebar">
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">🏠</span>
-            <span>Home</span>
-        </a>
-        <a href="#" class="nav-item active">
-            <span class="nav-item-icon">📁</span>
-            <span>Projects</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">🧠</span>
-            <span>AI hub</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">💻</span>
-            <span>Develop & train</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">📊</span>
-            <span>Observe & monitor</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">📚</span>
-            <span>Learning resources</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">⭐</span>
-            <span>Applications</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-item-icon">⚙️</span>
-            <span>Settings</span>
-            <span class="nav-item-arrow">›</span>
-        </a>
-    </aside>
+<body class="pf-v6-c-page">
+    <!-- Masthead（简单版本，仅放标题） -->
+    <header class="pf-v6-c-masthead">
+        <div class="pf-v6-c-masthead__main">
+            <div class="pf-v6-c-masthead__brand">
+                <span class="pf-v6-c-brand" style="padding-left: var(--pf-v6-global--spacer--md);">
+                    RHOAI
+                </span>
+            </div>
+        </div>
+    </header>
 
-    <!-- Main Content - PatternFly -->
-    <main class="main-content">
-        <div class="pf-c-page" style="height: 100%; display: flex; flex-direction: column;">
-            <main class="pf-c-page__main" tabindex="0" style="flex: 1; overflow-y: auto; padding: var(--pf-global--spacer--lg);">
+    <div class="pf-v6-c-page__main">
+        <!-- 左侧导航：PatternFly 6 Sidebar + Nav -->
+        <div class="pf-v6-c-page__sidebar pf-v6-m-expanded">
+            <div class="pf-v6-c-sidebar">
+                <div class="pf-v6-c-sidebar__panel">
+                    <nav class="pf-v6-c-nav pf-v6-m-vertical" aria-label="Global">
+                        <section class="pf-v6-c-nav__section">
+                            <ul class="pf-v6-c-nav__list">
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Home
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link pf-m-current" aria-current="page">
+                                        Projects
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        AI hub
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Develop &amp; train
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Observe &amp; monitor
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Learning resources
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Applications
+                                    </a>
+                                </li>
+                                <li class="pf-v6-c-nav__item">
+                                    <a href="#" class="pf-v6-c-nav__link">
+                                        Settings
+                                    </a>
+                                </li>
+                            </ul>
+                        </section>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧主内容 -->
+        <main class="pf-v6-c-page__main-section" tabindex="0" style="padding: var(--pf-v6-global--spacer--lg);">
                 <!-- Title Section -->
-                <div class="pf-c-content" style="margin-bottom: var(--pf-global--spacer--lg);">
-                    <h1 class="pf-c-title pf-m-2xl">
-                        <span style="margin-right: var(--pf-global--spacer--sm);">📁</span>
+                <div class="pf-v6-c-content" style="margin-bottom: var(--pf-v6-global--spacer--lg);">
+                    <h1 class="pf-v6-c-title pf-m-2xl">
+                        <span style="margin-right: var(--pf-v6-global--spacer--sm);">📁</span>
                         Projects
                     </h1>
-                    <p class="pf-c-content__body">View your existing projects or create new projects.</p>
+                    <p class="pf-v6-c-content__body">View your existing projects or create new projects.</p>
                 </div>
 
                 <!-- Toolbar -->
-                <div class="pf-c-toolbar" id="toolbar" role="toolbar">
-                    <div class="pf-c-toolbar__content">
-                        <div class="pf-c-toolbar__content-section pf-m-filter-group">
-                            <div class="pf-c-toolbar__item">
-                                <div class="pf-c-select">
-                                    <button class="pf-c-select__toggle" type="button" id="filter-toggle" aria-haspopup="true" aria-expanded="false">
-                                        <span class="pf-c-select__toggle-text">Name</span>
-                                        <span class="pf-c-select__toggle-arrow">
+                <div class="pf-v6-c-toolbar" id="toolbar" role="toolbar">
+                    <div class="pf-v6-c-toolbar__content">
+                        <div class="pf-v6-c-toolbar__content-section pf-m-filter-group">
+                            <div class="pf-v6-c-toolbar__item">
+                                <div class="pf-v6-c-select">
+                                    <button class="pf-v6-c-select__toggle" type="button" id="filter-toggle" aria-haspopup="true" aria-expanded="false">
+                                        <span class="pf-v6-c-select__toggle-text">Name</span>
+                                        <span class="pf-v6-c-select__toggle-arrow">
                                             <i class="fas fa-caret-down" aria-hidden="true"></i>
                                         </span>
                                     </button>
                                 </div>
                             </div>
-                            <div class="pf-c-toolbar__item pf-c-toolbar__item--filter-search">
-                                <div class="pf-c-input-group">
-                                    <div class="pf-c-text-input-group">
-                                        <div class="pf-c-text-input-group__main">
-                                            <span class="pf-c-text-input-group__text">
-                                                <input class="pf-c-text-input-group__text-input" type="text" id="search-input" placeholder="Filter by name" aria-label="Filter by name" />
+                            <div class="pf-v6-c-toolbar__item pf-v6-c-toolbar__item--filter-search">
+                                <div class="pf-v6-c-input-group">
+                                    <div class="pf-v6-c-text-input-group">
+                                        <div class="pf-v6-c-text-input-group__main">
+                                            <span class="pf-v6-c-text-input-group__text">
+                                                <input class="pf-v6-c-text-input-group__text-input" type="text" id="search-input" placeholder="Filter by name" aria-label="Filter by name" />
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="pf-c-toolbar__content-section">
-                            <div class="pf-c-toolbar__item">
-                                <button class="pf-c-button pf-m-primary" type="button">Create project</button>
+                        <div class="pf-v6-c-toolbar__content-section">
+                            <div class="pf-v6-c-toolbar__item">
+                                <button class="pf-v6-c-button pf-m-primary" type="button">Create project</button>
                             </div>
-                            <div class="pf-c-toolbar__item">
-                                <button class="pf-c-button pf-m-link" type="button">Start basic workbench</button>
+                            <div class="pf-v6-c-toolbar__item">
+                                <button class="pf-v6-c-button pf-m-link" type="button">Start basic workbench</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Table -->
-                <div class="pf-c-table pf-m-compact pf-m-sticky-header" role="grid" aria-label="Projects table" style="margin-top: var(--pf-global--spacer--md);">
-                    <table class="pf-c-table__table" role="grid">
+                <div class="pf-v6-c-table pf-v6-m-compact pf-v6-m-sticky-header" role="grid" aria-label="Projects table" style="margin-top: var(--pf-v6-global--spacer--md);">
+                    <table class="pf-v6-c-table__table" role="grid">
                         <thead>
                             <tr role="row">
-                                <th class="pf-c-table__sort" role="columnheader" aria-sort="ascending" scope="col">
-                                    <button class="pf-c-table__button">
-                                        <span class="pf-c-table__text">
-                                            <span class="pf-c-table__text">Name</span>
-                                            <span class="pf-c-table__sort-indicator">
+                                <th class="pf-v6-c-table__sort" role="columnheader" aria-sort="ascending" scope="col">
+                                    <button class="pf-v6-c-table__button">
+                                        <span class="pf-v6-c-table__text">
+                                            <span class="pf-v6-c-table__text">Name</span>
+                                            <span class="pf-v6-c-table__sort-indicator">
                                                 <i class="fas fa-long-arrow-alt-up"></i>
                                             </span>
                                         </span>
                                     </button>
                                 </th>
-                                <th class="pf-c-table__sort" role="columnheader" aria-sort="none" scope="col">
-                                    <button class="pf-c-table__button">
-                                        <span class="pf-c-table__text">
-                                            <span class="pf-c-table__text">Created</span>
-                                            <span class="pf-c-table__sort-indicator">
+                                <th class="pf-v6-c-table__sort" role="columnheader" aria-sort="none" scope="col">
+                                    <button class="pf-v6-c-table__button">
+                                        <span class="pf-v6-c-table__text">
+                                            <span class="pf-v6-c-table__text">Created</span>
+                                            <span class="pf-v6-c-table__sort-indicator">
                                                 <i class="fas fa-arrows-alt-v"></i>
                                             </span>
                                         </span>
                                     </button>
                                 </th>
                                 <th role="columnheader" scope="col">
-                                    <span class="pf-c-table__text">
+                                    <span class="pf-v6-c-table__text">
                                         Workbenches
-                                        <span class="pf-c-tooltip">
-                                            <button class="pf-c-tooltip__trigger" aria-describedby="workbenches-help">
+                                        <span class="pf-v6-c-tooltip">
+                                            <button class="pf-v6-c-tooltip__trigger" aria-describedby="workbenches-help">
                                                 <i class="pficon pf-icon-help" aria-hidden="true"></i>
                                             </button>
                                         </span>
@@ -219,31 +176,31 @@
                             <!-- Projects will be inserted here by JavaScript -->
                         </tbody>
                     </table>
-                </div>
+    </div>
 
                 <!-- Pagination -->
-                <div class="pf-c-pagination pf-m-bottom" style="margin-top: var(--pf-global--spacer--lg);">
-                    <div class="pf-c-pagination__total-items">
+                <div class="pf-v6-c-pagination pf-v6-m-bottom" style="margin-top: var(--pf-v6-global--spacer--lg);">
+                    <div class="pf-v6-c-pagination__total-items">
                         <b>1 - 10</b> of <b>44</b>
                     </div>
-                    <div class="pf-c-pagination__nav">
-                        <div class="pf-c-pagination__nav-page-select">
-                            <button class="pf-c-button pf-m-plain pf-m-disabled" type="button" disabled aria-label="Go to first page">
+                    <div class="pf-v6-c-pagination__nav">
+                        <div class="pf-v6-c-pagination__nav-page-select">
+                            <button class="pf-v6-c-button pf-v6-m-plain pf-v6-m-disabled" type="button" disabled aria-label="Go to first page">
                                 <i class="fas fa-angle-double-left" aria-hidden="true"></i>
                             </button>
-                            <button class="pf-c-button pf-m-plain pf-m-disabled" type="button" disabled aria-label="Go to previous page">
+                            <button class="pf-v6-c-button pf-v6-m-plain pf-v6-m-disabled" type="button" disabled aria-label="Go to previous page">
                                 <i class="fas fa-angle-left" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div class="pf-c-pagination__nav-page-select">
-                            <input class="pf-c-form-control" aria-label="Current page" type="number" min="1" max="5" value="1" />
+                        <div class="pf-v6-c-pagination__nav-page-select">
+                            <input class="pf-v6-c-form-control" aria-label="Current page" type="number" min="1" max="5" value="1" />
                             <span aria-hidden="true">of <b>5</b></span>
                         </div>
-                        <div class="pf-c-pagination__nav-page-select">
-                            <button class="pf-c-button pf-m-plain" type="button" aria-label="Go to next page">
+                        <div class="pf-v6-c-pagination__nav-page-select">
+                            <button class="pf-v6-c-button pf-v6-m-plain" type="button" aria-label="Go to next page">
                                 <i class="fas fa-angle-right" aria-hidden="true"></i>
                             </button>
-                            <button class="pf-c-button pf-m-plain" type="button" aria-label="Go to last page">
+                            <button class="pf-v6-c-button pf-v6-m-plain" type="button" aria-label="Go to last page">
                                 <i class="fas fa-angle-double-right" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -253,8 +210,8 @@
         </div>
     </main>
 
-    <!-- PatternFly JS (for interactive components) -->
-    <script src="https://unpkg.com/@patternfly/patternfly@5/dist/patternfly-base.min.js"></script>
+    <!-- PatternFly 6 JS (for interactive components) -->
+    <script src="https://unpkg.com/@patternfly/patternfly@6/dist/patternfly-base.min.js"></script>
     <script>
         // Sample project data
         const projects = [
@@ -378,31 +335,31 @@
 
             projectList.forEach(project => {
                 const row = document.createElement('tr');
-                row.className = 'pf-c-table__tr';
+                row.className = 'pf-v6-c-table__tr';
                 row.setAttribute('role', 'row');
 
-                const runningColor = project.runningWorkbenches > 0 ? 'var(--pf-global--primary-color--100)' : 'var(--pf-global--Color--200)';
-                const stoppedColor = project.stoppedWorkbenches > 0 ? 'var(--pf-global--primary-color--100)' : 'var(--pf-global--Color--200)';
+                const runningColor = project.runningWorkbenches > 0 ? 'var(--pf-v6-global--primary-color--100)' : 'var(--pf-v6-global--Color--200)';
+                const stoppedColor = project.stoppedWorkbenches > 0 ? 'var(--pf-v6-global--primary-color--100)' : 'var(--pf-v6-global--Color--200)';
 
                 row.innerHTML = `
-                    <td class="pf-c-table__td" role="cell" data-label="Name">
+                    <td class="pf-v6-c-table__td" role="cell" data-label="Name">
                         <div>
-                            <a href="#" class="pf-c-link" style="color: var(--pf-global--primary-color--100);">
+                            <a href="#" class="pf-v6-c-link" style="color: var(--pf-v6-global--primary-color--100);">
                                 ${project.name}
-                                <span class="pf-c-tooltip">
-                                    <button class="pf-c-tooltip__trigger" aria-describedby="project-help" style="margin-left: 0.25rem;">
+                                <span class="pf-v6-c-tooltip">
+                                    <button class="pf-v6-c-tooltip__trigger" aria-describedby="project-help" style="margin-left: 0.25rem;">
                                         <i class="pficon pf-icon-help" aria-hidden="true" style="font-size: 0.875rem;"></i>
                                     </button>
                                 </span>
                             </a>
-                            ${project.description ? `<div style="font-size: 0.875rem; color: var(--pf-global--Color--200); margin-top: 0.25rem;">${project.description}</div>` : ''}
+                            ${project.description ? `<div style="font-size: 0.875rem; color: var(--pf-v6-global--Color--200); margin-top: 0.25rem;">${project.description}</div>` : ''}
                         </div>
                     </td>
-                    <td class="pf-c-table__td" role="cell" data-label="Created">
+                    <td class="pf-v6-c-table__td" role="cell" data-label="Created">
                         ${project.created}
                     </td>
-                    <td class="pf-c-table__td" role="cell" data-label="Workbenches">
-                        <div style="display: flex; align-items: center; gap: var(--pf-global--spacer--md);">
+                    <td class="pf-v6-c-table__td" role="cell" data-label="Workbenches">
+                        <div style="display: flex; align-items: center; gap: var(--pf-v6-global--spacer--md);">
                             <div style="display: flex; align-items: center; gap: 0.25rem;">
                                 <span style="color: ${runningColor};">▶</span>
                                 <span>${project.runningWorkbenches}</span>
@@ -413,9 +370,9 @@
                             </div>
                         </div>
                     </td>
-                    <td class="pf-c-table__td pf-c-table__action" role="cell">
-                        <div class="pf-c-dropdown">
-                            <button class="pf-c-dropdown__toggle pf-m-plain" type="button" aria-expanded="false" aria-label="Actions">
+                    <td class="pf-v6-c-table__td pf-v6-c-table__action" role="cell">
+                        <div class="pf-v6-c-dropdown">
+                            <button class="pf-v6-c-dropdown__toggle pf-v6-m-plain" type="button" aria-expanded="false" aria-label="Actions">
                                 <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                             </button>
                         </div>

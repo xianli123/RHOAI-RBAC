@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "serve": "^14.2.5"
+  },
+  "dependencies": {
+    "@patternfly/patternfly": "^6.4.0"
   }
 }
