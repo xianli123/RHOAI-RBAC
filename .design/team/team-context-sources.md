@@ -32,3 +32,8 @@ source: https://drive.google.com/drive/u/0/folders/1huODB_N2ZhaEGOwnllE6BeQ5qD2D
 - title: Red Hat AI
 - description: Google Drive folder for all UXD documents related to our Red Hat AI portfolio
 
+## Jira
+
+source: https://issues.redhat.com/projects/RHOAIUX/issues/RHOAIUX-1224?filter=allopenissues&orderby=created+DESC%2C+priority+DESC%2C+updated+DESC
+- title: Red Hat OpenShift AI UX Jira Project
+- description: All open issues for the Red Hat OpenShift AI UX Team
