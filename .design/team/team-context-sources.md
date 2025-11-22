@@ -26,7 +26,7 @@ source: https://www.figma.com/files/1210702722894069364/team/1288561879376028765
 - title: OpenShift AI
 - description: Figma folder containing all Figma Design files for OpenShift AI
 
-## Drive
+## Google Drive
 
 source: https://drive.google.com/drive/u/0/folders/1huODB_N2ZhaEGOwnllE6BeQ5qD2DxTwf
 - title: Red Hat AI
