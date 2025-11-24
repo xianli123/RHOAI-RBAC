@@ -41,25 +41,6 @@ export const mockAPIKeys: APIKey[] = [
     },
   },
   {
-    id: 'key-1',
-    name: 'development-team-key',
-    description: '',
-    apiKey: 'sk-1234567890abcdef1234567890abcdef',
-    status: 'Active',
-    owner: { type: 'User', name: 'username-here' },
-    dateCreated: new Date('2025-10-12T10:30:00Z'),
-    dateLastUsed: new Date('2025-10-12T10:30:00Z'),
-    limits: {
-      tokenRateLimit: 50000,
-      requestRateLimit: 1000,
-      budgetLimit: 500,
-      expirationDate: new Date('2026-01-15T10:30:00Z'),
-    },
-    assets: {
-      modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
-    },
-  },
-  {
     id: 'key-2',
     name: 'production-workload-key',
     description: '',
