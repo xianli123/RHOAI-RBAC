@@ -217,7 +217,6 @@ const APIKeys: React.FunctionComponent = () => {
               <Tr>
                 <Th>Name</Th>
                 <Th>Status</Th>
-                <Th>Owner</Th>
                 <Th>Creation date</Th>
                 <Th>Expiration date</Th>
                 <Th></Th>
@@ -238,9 +237,6 @@ const APIKeys: React.FunctionComponent = () => {
                   </Td>
                   <Td dataLabel="Status">
                     {getStatusLabel(apiKey.status)}
-                  </Td>
-                  <Td dataLabel="Owner">
-                    {getOwnerDisplay(apiKey.owner)}
                   </Td>
                   <Td dataLabel="Creation date">
                     {formatCreationDate(apiKey.dateCreated)}
