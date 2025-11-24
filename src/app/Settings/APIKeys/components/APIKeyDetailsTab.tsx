@@ -95,7 +95,7 @@ const APIKeyDetailsTab: React.FunctionComponent<APIKeyDetailsTabProps> = ({ apiK
         <CodeBlockCode>
 {`curl -X POST https://api.example.com/v1/chat/completions \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer ${apiKey.apiKey}" \\
+  -H "Authorization: Bearer <key-value-here>" \\
   -d '{
     "model": "gpt-oss-20b",
     "messages": [
