@@ -13,6 +13,10 @@ import {
   FlexItem,
   Label,
   Popover,
+  MenuToggle,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -27,12 +31,14 @@ import {
 import { PlusIcon } from '@patternfly/react-icons';
 import { mockAPIKeys, getModelById } from './mockData';
 import { APIKey, APIKeyStatus } from './types';
-import { CreateAPIKeyModal, DeleteAPIKeyModal } from './components';
+import { CreateAPIKeyModal, DeleteAPIKeyModal, DeleteAllAPIKeysModal } from './components';
 
 const APIKeys: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = React.useState(false);
+  const [isActionsDropdownOpen, setIsActionsDropdownOpen] = React.useState(false);
   const [selectedAPIKey, setSelectedAPIKey] = React.useState<APIKey | null>(null);
 
   const formatAPIKey = (apiKey: string): string => {
@@ -127,6 +133,11 @@ const APIKeys: React.FunctionComponent = () => {
     // TODO: Implement actual delete functionality
   };
 
+  const handleDeleteAllKeys = () => {
+    console.log('Deleting all API keys');
+    // TODO: Implement actual delete all functionality
+  };
+
   const handleToggleAPIKeyStatus = (apiKey: APIKey) => {
     console.log('Toggling API key status:', apiKey.id);
     // TODO: Implement actual toggle functionality
@@ -155,9 +166,46 @@ const APIKeys: React.FunctionComponent = () => {
 
   return (
     <PageSection>
-      <Content component={ContentVariants.h1}>API keys</Content>
+      <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+        <FlexItem>
+          <Content component={ContentVariants.h1}>API keys</Content>
+        </FlexItem>
+        <FlexItem>
+          <Dropdown
+            id="api-keys-actions-dropdown"
+            isOpen={isActionsDropdownOpen}
+            onOpenChange={(isOpen: boolean) => setIsActionsDropdownOpen(isOpen)}
+            popperProps={{ position: 'right' }}
+            toggle={(toggleRef) => (
+              <MenuToggle
+                id="api-keys-actions-toggle"
+                ref={toggleRef}
+                onClick={() => setIsActionsDropdownOpen(!isActionsDropdownOpen)}
+                isExpanded={isActionsDropdownOpen}
+                variant="secondary"
+                aria-label="Actions"
+              >
+                Actions
+              </MenuToggle>
+            )}
+          >
+            <DropdownList>
+              <DropdownItem
+                id="delete-all-keys-action"
+                key="delete-all"
+                onClick={() => {
+                  setIsActionsDropdownOpen(false);
+                  setIsDeleteAllModalOpen(true);
+                }}
+              >
+                Delete all API keys
+              </DropdownItem>
+            </DropdownList>
+          </Dropdown>
+        </FlexItem>
+      </Flex>
       <Content component={ContentVariants.p}>
-        Manage API keys that control access to AI asset endpoints.
+        Manage API keys that can be used to access AI asset endpoints.
       </Content>
       
       <Toolbar id="api-keys-toolbar" style={{ marginTop: '1rem' }}>
@@ -245,6 +293,13 @@ const APIKeys: React.FunctionComponent = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         apiKey={selectedAPIKey}
         onDelete={handleDeleteConfirm}
+      />
+
+      <DeleteAllAPIKeysModal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => setIsDeleteAllModalOpen(false)}
+        onDelete={handleDeleteAllKeys}
+        keyCount={mockAPIKeys.length}
       />
     </PageSection>
   );
