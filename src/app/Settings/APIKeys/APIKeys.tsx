@@ -17,7 +17,6 @@ import {
   Dropdown,
   DropdownList,
   DropdownItem,
-  MenuToggleElement,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -27,7 +26,7 @@ import {
   Th,
   Td,
 } from '@patternfly/react-table';
-import { PlusIcon, EllipsisVIcon } from '@patternfly/react-icons';
+import { PlusIcon } from '@patternfly/react-icons';
 import { mockAPIKeys, getModelById } from './mockData';
 import { APIKey, APIKeyStatus } from './types';
 import { CreateAPIKeyModal, DeleteAPIKeyModal, DeleteAllAPIKeysModal } from './components';
@@ -39,7 +38,6 @@ const APIKeys: React.FunctionComponent = () => {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = React.useState(false);
   const [isActionsDropdownOpen, setIsActionsDropdownOpen] = React.useState(false);
   const [selectedAPIKey, setSelectedAPIKey] = React.useState<APIKey | null>(null);
-  const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
 
   const formatAPIKey = (apiKey: string): string => {
     return apiKey.substring(0, 9) + '...';
@@ -114,10 +112,6 @@ const APIKeys: React.FunctionComponent = () => {
     });
   };
 
-  const handleViewDetails = (apiKey: APIKey) => {
-    navigate(`/gen-ai-studio/api-keys/${apiKey.id}`);
-  };
-
   const handleDeleteAPIKey = (apiKey: APIKey) => {
     setSelectedAPIKey(apiKey);
     setIsDeleteModalOpen(true);
@@ -140,18 +134,6 @@ const APIKeys: React.FunctionComponent = () => {
 
   const handleCreateAPIKey = () => {
     setIsCreateModalOpen(true);
-  };
-
-  const toggleKebabMenu = (apiKeyId: string) => {
-    setOpenKebabMenus((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(apiKeyId)) {
-        newSet.delete(apiKeyId);
-      } else {
-        newSet.add(apiKeyId);
-      }
-      return newSet;
-    });
   };
 
   return (
@@ -195,7 +177,7 @@ const APIKeys: React.FunctionComponent = () => {
         </FlexItem>
       </Flex>
       <Content component={ContentVariants.p}>
-        Manage API keys that can be used to access AI asset endpoints.
+        Manage personal API keys that can be used to access AI asset endpoints.
       </Content>
       
       <Toolbar id="api-keys-toolbar" style={{ marginTop: '1rem' }}>
@@ -219,21 +201,13 @@ const APIKeys: React.FunctionComponent = () => {
                 <Th>Status</Th>
                 <Th>Creation date</Th>
                 <Th>Expiration date</Th>
-                <Th></Th>
               </Tr>
             </Thead>
             <Tbody>
               {mockAPIKeys.map((apiKey) => (
                 <Tr key={apiKey.id}>
                   <Td dataLabel="Name">
-                    <Button
-                      variant="link"
-                      isInline
-                      id={`api-key-name-${apiKey.id}`}
-                      onClick={() => handleViewDetails(apiKey)}
-                    >
-                      {apiKey.name}
-                    </Button>
+                    {apiKey.name}
                   </Td>
                   <Td dataLabel="Status">
                     {getStatusLabel(apiKey.status)}
@@ -243,58 +217,6 @@ const APIKeys: React.FunctionComponent = () => {
                   </Td>
                   <Td dataLabel="Expiration date">
                     {formatExpirationDate(apiKey.limits?.expirationDate)}
-                  </Td>
-                  <Td isActionCell style={{ textAlign: 'right', width: '60px' }}>
-                    <Dropdown
-                      isOpen={openKebabMenus.has(apiKey.id)}
-                      onOpenChange={(isOpen) => {
-                        if (!isOpen) {
-                          setOpenKebabMenus((prev) => {
-                            const newSet = new Set(prev);
-                            newSet.delete(apiKey.id);
-                            return newSet;
-                          });
-                        }
-                      }}
-                      popperProps={{ position: 'right' }}
-                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => toggleKebabMenu(apiKey.id)}
-                          variant="plain"
-                          aria-label={`Actions for ${apiKey.name}`}
-                          isExpanded={openKebabMenus.has(apiKey.id)}
-                        >
-                          <EllipsisVIcon />
-                        </MenuToggle>
-                      )}
-                    >
-                      <DropdownList>
-                        <DropdownItem
-                          key="view-details"
-                          onClick={() => {
-                            handleViewDetails(apiKey);
-                            toggleKebabMenu(apiKey.id);
-                          }}
-                        >
-                          View details
-                        </DropdownItem>
-                        <DropdownItem
-                          key="toggle-status"
-                          isAriaDisabled
-                          tooltipProps={{ content: 'Not available in 3.2/3.3', position: 'top' }}
-                        >
-                          {apiKey.status === 'Active' ? 'Disable API key' : 'Enable API key'}
-                        </DropdownItem>
-                        <DropdownItem
-                          key="delete"
-                          isAriaDisabled
-                          tooltipProps={{ content: 'Not available in 3.2/3.3', position: 'top' }}
-                        >
-                          Delete API key
-                        </DropdownItem>
-                      </DropdownList>
-                    </Dropdown>
                   </Td>
                 </Tr>
               ))}

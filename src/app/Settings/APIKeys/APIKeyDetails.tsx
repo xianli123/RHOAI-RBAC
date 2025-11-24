@@ -12,7 +12,6 @@ import {
   Flex,
   FlexItem,
   Alert,
-  ClipboardCopy,
   PageBreadcrumb,
   Tooltip,
 } from '@patternfly/react-core';
@@ -61,10 +60,6 @@ const APIKeyDetails: React.FunctionComponent = () => {
     );
   }
 
-  const formatAPIKey = (apiKey: string): string => {
-    return apiKey.substring(0, 9) + '••••••••••••••••••••••••••••••••';
-  };
-
   const breadcrumb = (
     <PageBreadcrumb>
       <Breadcrumb>
@@ -79,14 +74,6 @@ const APIKeyDetails: React.FunctionComponent = () => {
       {breadcrumb}
       <PageSection>
         <Content component={ContentVariants.h1}>{apiKey.name}</Content>
-        <ClipboardCopy
-          hoverTip="Copy"
-          clickTip="Copied"
-          variant="inline-compact"
-          isReadOnly
-        >
-          {formatAPIKey(apiKey.apiKey)}
-        </ClipboardCopy>
       </PageSection>
 
       <PageSection type="tabs">
