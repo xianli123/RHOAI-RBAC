@@ -4,7 +4,6 @@ import {
   DescriptionListTerm,
   DescriptionListGroup,
   DescriptionListDescription,
-  ClipboardCopy,
   PageSection,
   Content,
   ContentVariants,
@@ -29,10 +28,6 @@ const APIKeyDetailsTab: React.FunctionComponent<APIKeyDetailsTabProps> = ({ apiK
     });
   };
 
-  const formatAPIKey = (apiKey: string): string => {
-    return apiKey.substring(0, 9) + '••••••••••••••••••••••••••••••••';
-  };
-
   return (
     <PageSection>
       <Content component={ContentVariants.h2} id="api-key-details-heading" style={{ marginTop: '1rem' }}>
@@ -42,21 +37,6 @@ const APIKeyDetailsTab: React.FunctionComponent<APIKeyDetailsTabProps> = ({ apiK
         <DescriptionListGroup>
           <DescriptionListTerm>Name</DescriptionListTerm>
           <DescriptionListDescription>{apiKey.name}</DescriptionListDescription>
-        </DescriptionListGroup>
-
-        <DescriptionListGroup>
-          <DescriptionListTerm>API key</DescriptionListTerm>
-          <DescriptionListDescription>
-            <ClipboardCopy
-              hoverTip="Copy"
-              clickTip="Copied"
-              variant="inline-compact"
-              isReadOnly
-              id="api-key-clipboard"
-            >
-              {formatAPIKey(apiKey.apiKey)}
-            </ClipboardCopy>
-          </DescriptionListDescription>
         </DescriptionListGroup>
 
         <DescriptionListGroup>
