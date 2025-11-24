@@ -12,6 +12,7 @@ import {
   Alert,
   PageBreadcrumb,
   Badge,
+  Tooltip,
 } from '@patternfly/react-core';
 import { CodeEditor, Language } from '@patternfly/react-code-editor';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
@@ -110,7 +111,13 @@ const TierDetails: React.FunctionComponent = () => {
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} aria-label="Details tab">
             <TierDetailsTab tier={tier} />
           </Tab>
-          <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} aria-label="YAML tab">
+          <Tab 
+            eventKey="yaml" 
+            title={<TabTitleText>YAML</TabTitleText>} 
+            aria-label="YAML tab"
+            isAriaDisabled
+            tooltip={<Tooltip content="Out of scope for 3.2/3.3" />}
+          >
             <PageSection>
               {tier.isReadOnly && tier.gitSource && (
                 <Alert 
