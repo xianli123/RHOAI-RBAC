@@ -120,7 +120,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
   return (
     <PageSection>
       <Content component={ContentVariants.h2} id="tier-details-heading" style={{ marginTop: '1rem' }}>
-        Tier details
+        Details
       </Content>
       <DescriptionList columnModifier={{ default: '2Col' }}>
         <DescriptionListGroup>
