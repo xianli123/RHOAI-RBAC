@@ -256,12 +256,16 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
             <div style={{ fontSize: '0.875rem' }}>
               <strong>Inherited limits:</strong>
               <ul style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>
-                {userTier.limits.tokenLimit && (
-                  <li>Token limit: {userTier.limits.tokenLimit.amount.toLocaleString()} tokens per {userTier.limits.tokenLimit.period}</li>
-                )}
-                {userTier.limits.rateLimit && (
-                  <li>Rate limit: {userTier.limits.rateLimit.amount.toLocaleString()} requests per {userTier.limits.rateLimit.period}</li>
-                )}
+                {userTier.limits.tokenLimits && userTier.limits.tokenLimits.length > 0 && 
+                  userTier.limits.tokenLimits.map((limit, idx) => (
+                    <li key={`token-${idx}`}>Token limit: {limit.amount.toLocaleString()} tokens per {limit.quantity} {limit.unit}</li>
+                  ))
+                }
+                {userTier.limits.rateLimits && userTier.limits.rateLimits.length > 0 &&
+                  userTier.limits.rateLimits.map((limit, idx) => (
+                    <li key={`rate-${idx}`}>Rate limit: {limit.amount.toLocaleString()} requests per {limit.quantity} {limit.unit}</li>
+                  ))
+                }
                 <li>Accessible models: {userTier.models.length}</li>
               </ul>
             </div>
