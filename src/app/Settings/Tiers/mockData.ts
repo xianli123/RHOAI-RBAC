@@ -32,14 +32,22 @@ export const mockTiers: Tier[] = [
     groups: ['standard-users'],
     models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
-      tokenLimit: {
-        amount: 10000,
-        period: 'hour',
-      },
-      rateLimit: {
-        amount: 100,
-        period: 'minute',
-      },
+      tokenLimits: [
+        {
+          id: 'token-limit-1',
+          amount: 10000,
+          quantity: 1,
+          unit: 'hour',
+        },
+      ],
+      rateLimits: [
+        {
+          id: 'rate-limit-1',
+          amount: 100,
+          quantity: 1,
+          unit: 'minute',
+        },
+      ],
       apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-01T10:00:00Z'),
@@ -76,14 +84,22 @@ spec:
     groups: ['premium-customers'],
     models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
-      tokenLimit: {
-        amount: 500000,
-        period: 'hour',
-      },
-      rateLimit: {
-        amount: 10000,
-        period: 'minute',
-      },
+      tokenLimits: [
+        {
+          id: 'token-limit-2',
+          amount: 500000,
+          quantity: 1,
+          unit: 'hour',
+        },
+      ],
+      rateLimits: [
+        {
+          id: 'rate-limit-2',
+          amount: 10000,
+          quantity: 1,
+          unit: 'minute',
+        },
+      ],
       apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-10T09:15:00Z'),
@@ -121,14 +137,22 @@ spec:
     groups: ['enterprise-users', 'research-team'],
     models: ['llama-3-1-8b-instruct', 'granite-7b-code', 'mistral-7b-instruct'],
     limits: {
-      tokenLimit: {
-        amount: 1000000,
-        period: 'hour',
-      },
-      rateLimit: {
-        amount: 10000,
-        period: 'minute',
-      },
+      tokenLimits: [
+        {
+          id: 'token-limit-3',
+          amount: 1000000,
+          quantity: 1,
+          unit: 'hour',
+        },
+      ],
+      rateLimits: [
+        {
+          id: 'rate-limit-3',
+          amount: 10000,
+          quantity: 1,
+          unit: 'minute',
+        },
+      ],
       apiKeyExpirationDays: 4 / 24, // 4 hours
     },
     dateCreated: new Date('2025-01-15T11:20:00Z'),

@@ -79,6 +79,7 @@ import { PolicyDetails } from '@app/Settings/Policies/PolicyDetails';
 import { Tiers } from '@app/Settings/Tiers/Tiers';
 import { TierDetails } from '@app/Settings/Tiers/TierDetails';
 import { CreateTier } from '@app/Settings/Tiers/CreateTier';
+import { EditTier } from '@app/Settings/Tiers/EditTier';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -582,15 +583,15 @@ const routes: AppRouteConfig[] = [
     title: 'RHOAI 3.1 Console | Settings - Create Tier',
   },
   {
-    element: <TierDetails />,
+    element: <EditTier />,
     exact: true,
-    path: '/settings/tiers/:tierId',
-    title: 'RHOAI 3.1 Console | Settings - Tier Details',
+    path: '/settings/tiers/:tierId/edit',
+    title: 'RHOAI 3.1 Console | Settings - Edit Tier',
   },
   {
     element: <TierDetails />,
     exact: true,
-    path: '/settings/tiers/:tierId/:tab',
+    path: '/settings/tiers/:tierId',
     title: 'RHOAI 3.1 Console | Settings - Tier Details',
   },
 ];

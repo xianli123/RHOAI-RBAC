@@ -33,12 +33,15 @@ import {
 import { PlusIcon, FilterIcon } from '@patternfly/react-icons';
 import { mockTiers, getGroupById, getModelById } from './mockData';
 import { Tier } from './types';
+import { DeleteTierModal } from './components/DeleteTierModal';
 
 const Tiers: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [filterDropdownOpen, setFilterDropdownOpen] = React.useState(false);
   const [filterAttribute, setFilterAttribute] = React.useState<'keyword'>('keyword');
   const [filterInput, setFilterInput] = React.useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [tierToDelete, setTierToDelete] = React.useState<Tier | null>(null);
 
   const getGroupsSummary = (tier: Tier): React.ReactNode => {
     if (tier.groups.length === 0) {
@@ -59,25 +62,21 @@ const Tiers: React.FunctionComponent = () => {
   const getLimitsSummary = (tier: Tier): React.ReactNode => {
     const limits: string[] = [];
     
-    const formatPeriod = (period: string): string => {
-      switch (period) {
-        case 'minute':
-          return 'min';
-        case 'hour':
-          return 'hr';
-        case 'day':
-          return 'day';
-        default:
-          return period;
-      }
+    const formatUnit = (quantity: number, unit: string): string => {
+      const unitAbbrev = unit === 'minute' ? 'min' : unit === 'hour' ? 'hr' : 'day';
+      return quantity === 1 ? unitAbbrev : `${quantity}${unitAbbrev}`;
     };
     
-    if (tier.limits.tokenLimit) {
-      limits.push(`${tier.limits.tokenLimit.amount.toLocaleString()} tokens/${formatPeriod(tier.limits.tokenLimit.period)}`);
+    if (tier.limits.tokenLimits) {
+      tier.limits.tokenLimits.forEach(limit => {
+        limits.push(`${limit.amount.toLocaleString()} tokens/${formatUnit(limit.quantity, limit.unit)}`);
+      });
     }
     
-    if (tier.limits.rateLimit) {
-      limits.push(`${tier.limits.rateLimit.amount.toLocaleString()} requests/${formatPeriod(tier.limits.rateLimit.period)}`);
+    if (tier.limits.rateLimits) {
+      tier.limits.rateLimits.forEach(limit => {
+        limits.push(`${limit.amount.toLocaleString()} requests/${formatUnit(limit.quantity, limit.unit)}`);
+      });
     }
 
     if (limits.length === 0) {
@@ -103,9 +102,23 @@ const Tiers: React.FunctionComponent = () => {
       },
       {
         title: 'Edit tier',
-        onClick: () => navigate(`/settings/tiers/${tier.id}/yaml`),
+        onClick: () => navigate(`/settings/tiers/${tier.id}/edit`),
+      },
+      {
+        title: 'Delete tier',
+        onClick: () => {
+          setTierToDelete(tier);
+          setIsDeleteModalOpen(true);
+        },
       },
     ];
+  };
+
+  const handleConfirmDelete = () => {
+    // Delete the tier
+    console.log('Tier deleted:', tierToDelete?.id);
+    setIsDeleteModalOpen(false);
+    setTierToDelete(null);
   };
 
   const handleCreateTier = () => {
@@ -265,6 +278,16 @@ const Tiers: React.FunctionComponent = () => {
               ))}
             </Tbody>
           </Table>
+
+      <DeleteTierModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTierToDelete(null);
+        }}
+        tier={tierToDelete}
+        onDelete={handleConfirmDelete}
+      />
     </PageSection>
   );
 };

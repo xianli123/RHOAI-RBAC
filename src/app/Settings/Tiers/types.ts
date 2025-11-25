@@ -10,14 +10,18 @@ export interface Tier {
   groups: string[]; // Kubernetes groups assigned to this tier
   models: string[]; // Model IDs (must be AI Assets / MaaS models)
   limits: {
-    tokenLimit?: {
+    tokenLimits?: Array<{
+      id: string;
       amount: number;
-      period: 'minute' | 'hour' | 'day';
-    };
-    rateLimit?: {
+      quantity: number;
+      unit: 'minute' | 'hour' | 'day';
+    }>;
+    rateLimits?: Array<{
+      id: string;
       amount: number;
-      period: 'minute' | 'hour' | 'day';
-    };
+      quantity: number;
+      unit: 'minute' | 'hour' | 'day';
+    }>;
     apiKeyExpirationDays?: number; // Default expiration for API keys
   };
   dateCreated: Date;
@@ -32,14 +36,18 @@ export interface CreateTierForm {
   groups: string[];
   models: string[];
   limits: {
-    tokenLimit?: {
+    tokenLimits?: Array<{
+      id: string;
       amount: number;
-      period: 'minute' | 'hour' | 'day';
-    };
-    rateLimit?: {
+      quantity: number;
+      unit: 'minute' | 'hour' | 'day';
+    }>;
+    rateLimits?: Array<{
+      id: string;
       amount: number;
-      period: 'minute' | 'hour' | 'day';
-    };
+      quantity: number;
+      unit: 'minute' | 'hour' | 'day';
+    }>;
     apiKeyExpirationDays?: number;
   };
 }

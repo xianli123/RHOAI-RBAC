@@ -16,6 +16,7 @@ import {
   HelperTextItem,
   Label,
   MenuToggle,
+  MenuToggleElement,
   NumberInput,
   PageSection,
   PageSectionTypes,
@@ -30,6 +31,7 @@ import {
   WizardStep,
 } from '@patternfly/react-core';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { mockTiers } from '../../Settings/Tiers/mockData';
 
 interface WizardData {
   // Step 1: Source model
@@ -68,6 +70,8 @@ interface WizardData {
   applyEnvVars: boolean;
   makeAvailableAsAIAsset: boolean;
   makeAvailableGlobally: boolean;
+  selectedTiers: string[];
+  customTierNames: string;
 }
 
 const DeployModelWizard: React.FunctionComponent = () => {
@@ -105,6 +109,8 @@ const DeployModelWizard: React.FunctionComponent = () => {
     applyEnvVars: false,
     makeAvailableAsAIAsset: false,
     makeAvailableGlobally: false,
+    selectedTiers: [],
+    customTierNames: '',
   });
 
   // State for dropdowns
@@ -114,6 +120,7 @@ const DeployModelWizard: React.FunctionComponent = () => {
   const [isHardwareProfileOpen, setIsHardwareProfileOpen] = React.useState(false);
   const [isModelFormatOpen, setIsModelFormatOpen] = React.useState(false);
   const [isServingRuntimeOpen, setIsServingRuntimeOpen] = React.useState(false);
+  const [isTierSelectOpen, setIsTierSelectOpen] = React.useState(false);
 
   const updateWizardData = (updates: Partial<WizardData>) => {
     setWizardData((prev) => ({ ...prev, ...updates }));
@@ -631,8 +638,123 @@ const DeployModelWizard: React.FunctionComponent = () => {
           id="make-available-ai-asset"
           label="Make this deployment available as an AI asset"
           isChecked={wizardData.makeAvailableAsAIAsset}
-          onChange={(_event, checked) => updateWizardData({ makeAvailableAsAIAsset: checked })}
+          onChange={(_event, checked) => updateWizardData({ makeAvailableAsAIAsset: checked, selectedTiers: checked ? [] : [], customTierNames: checked ? '' : '' })}
         />
+        {wizardData.makeAvailableAsAIAsset && (
+          <div style={{ marginTop: '1rem', marginLeft: '1.5rem' }}>
+            <FormGroup label="Tiers">
+              <Select
+                id="tier-select"
+                isOpen={isTierSelectOpen}
+                selected={wizardData.selectedTiers}
+                onSelect={(_event, value) => {
+                const tierValue = value as string;
+                if (tierValue === 'Custom...') {
+                  // Toggle Custom option
+                  if (wizardData.selectedTiers.includes('Custom...')) {
+                    updateWizardData({ 
+                      selectedTiers: wizardData.selectedTiers.filter(t => t !== 'Custom...'),
+                      customTierNames: ''
+                    });
+                  } else {
+                    updateWizardData({ selectedTiers: [...wizardData.selectedTiers, 'Custom...'] });
+                  }
+                } else {
+                  // Toggle tier selection
+                  if (wizardData.selectedTiers.includes(tierValue)) {
+                    updateWizardData({ 
+                      selectedTiers: wizardData.selectedTiers.filter(t => t !== tierValue)
+                    });
+                  } else {
+                    updateWizardData({ 
+                      selectedTiers: [...wizardData.selectedTiers, tierValue]
+                    });
+                  }
+                }
+              }}
+              onOpenChange={(isOpen) => setIsTierSelectOpen(isOpen)}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => {
+                // Get display names for selected tiers
+                const selectedDisplayNames = wizardData.selectedTiers
+                  .filter(tierId => tierId !== 'Custom...')
+                  .map(tierId => {
+                    const tier = mockTiers.find(t => t.id === tierId);
+                    return tier ? tier.name : tierId;
+                  });
+                
+                // Add "Custom..." if it's selected
+                if (wizardData.selectedTiers.includes('Custom...')) {
+                  selectedDisplayNames.push('Custom...');
+                }
+                
+                const displayText = selectedDisplayNames.length > 0 
+                  ? selectedDisplayNames.join(', ') 
+                  : 'Select tiers';
+                
+                return (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setIsTierSelectOpen(!isTierSelectOpen)}
+                    isExpanded={isTierSelectOpen}
+                    id="tier-select-toggle"
+                    style={{ width: '400px' }}
+                  >
+                    {displayText}
+                  </MenuToggle>
+                );
+              }}
+            >
+              <SelectList>
+                {mockTiers
+                  .filter(tier => tier.status === 'Active')
+                  .map(tier => (
+                    <SelectOption 
+                      key={tier.id}
+                      value={tier.id}
+                      hasCheckbox
+                      isSelected={wizardData.selectedTiers.includes(tier.id)}
+                    >
+                      {tier.name}
+                    </SelectOption>
+                  ))}
+                <SelectOption 
+                  value="Custom..."
+                  hasCheckbox
+                  isSelected={wizardData.selectedTiers.includes('Custom...')}
+                >
+                  Custom...
+                </SelectOption>
+              </SelectList>
+            </Select>
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>
+                    The model will be made available to users who can access these tiers
+                  </HelperTextItem>
+                </HelperText>
+              </FormHelperText>
+            </FormGroup>
+            {wizardData.selectedTiers.includes('Custom...') && (
+              <div style={{ marginTop: '1rem' }}>
+                <TextInput
+                  id="custom-tier-names"
+                  type="text"
+                  value={wizardData.customTierNames}
+                  onChange={(_event, value) => updateWizardData({ customTierNames: value })}
+                  placeholder="Enter tier names (comma separated)"
+                  aria-label="Custom tier names"
+                />
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>
+                      Enter the exact names of additional tiers (comma separated) that you would like the model to be available to
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              </div>
+            )}
+          </div>
+        )}
       </FormGroup>
     </Form>
   );

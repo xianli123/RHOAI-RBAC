@@ -25,6 +25,27 @@ const TierYAMLEditor: React.FunctionComponent<TierYAMLEditorProps> = ({
 
   // Convert form data to YAML
   const formDataToYAML = (data: CreateTierForm): string => {
+    const hasLimits = (data.limits.tokenLimits && data.limits.tokenLimits.length > 0) || 
+                      (data.limits.rateLimits && data.limits.rateLimits.length > 0) ||
+                      data.limits.apiKeyExpirationDays !== undefined;
+    
+    let limitsYaml = '';
+    if (data.limits.tokenLimits && data.limits.tokenLimits.length > 0) {
+      limitsYaml += `\n    tokenLimits:`;
+      data.limits.tokenLimits.forEach(limit => {
+        limitsYaml += `\n      - amount: ${limit.amount}\n        quantity: ${limit.quantity}\n        unit: ${limit.unit}`;
+      });
+    }
+    if (data.limits.rateLimits && data.limits.rateLimits.length > 0) {
+      limitsYaml += `\n    rateLimits:`;
+      data.limits.rateLimits.forEach(limit => {
+        limitsYaml += `\n      - amount: ${limit.amount}\n        quantity: ${limit.quantity}\n        unit: ${limit.unit}`;
+      });
+    }
+    if (data.limits.apiKeyExpirationDays !== undefined) {
+      limitsYaml += `\n    apiKeyExpirationDays: ${data.limits.apiKeyExpirationDays}`;
+    }
+
     const yaml = `apiVersion: maas.openshift.io/v1alpha1
 kind: Tier
 metadata:
@@ -34,14 +55,7 @@ spec:
   ${data.description ? `description: "${data.description}"` : '# description: ""'}
   groups:${data.groups.length > 0 ? data.groups.map(g => `\n    - ${g}`).join('') : '\n    []'}
   models:${data.models.length > 0 ? data.models.map(m => `\n    - ${m}`).join('') : '\n    []'}
-  limits:${data.limits.tokenLimit || data.limits.rateLimit || data.limits.apiKeyExpirationDays !== undefined ? '' : ' {}'}${data.limits.tokenLimit ? `
-    tokenLimit:
-      amount: ${data.limits.tokenLimit.amount}
-      period: ${data.limits.tokenLimit.period}` : ''}${data.limits.rateLimit ? `
-    rateLimit:
-      amount: ${data.limits.rateLimit.amount}
-      period: ${data.limits.rateLimit.period}` : ''}${data.limits.apiKeyExpirationDays !== undefined ? `
-    apiKeyExpirationDays: ${data.limits.apiKeyExpirationDays}` : ''}
+  limits:${hasLimits ? limitsYaml : ' {}'}
 `;
     return yaml;
   };
@@ -61,7 +75,8 @@ spec:
       };
 
       let currentSection: string | null = null;
-      let currentLimit: 'tokenLimit' | 'rateLimit' | null = null;
+      let currentLimitArray: 'tokenLimits' | 'rateLimits' | null = null;
+      let currentLimitObj: { amount?: number; quantity?: number; unit?: 'minute' | 'hour' | 'day' } = {};
 
       for (const line of lines) {
         const trimmed = line.trim();
@@ -74,32 +89,71 @@ spec:
           data.level = parseInt(trimmed.split('level:')[1].trim(), 10);
         } else if (trimmed === 'groups:') {
           currentSection = 'groups';
+          currentLimitArray = null;
         } else if (trimmed === 'models:') {
           currentSection = 'models';
+          currentLimitArray = null;
         } else if (trimmed === 'limits:') {
           currentSection = 'limits';
-        } else if (trimmed === 'tokenLimit:') {
-          currentLimit = 'tokenLimit';
-          data.limits.tokenLimit = { amount: 0, period: 'hour' };
-        } else if (trimmed === 'rateLimit:') {
-          currentLimit = 'rateLimit';
-          data.limits.rateLimit = { amount: 0, period: 'minute' };
+        } else if (trimmed === 'tokenLimits:') {
+          currentLimitArray = 'tokenLimits';
+          data.limits.tokenLimits = [];
+        } else if (trimmed === 'rateLimits:') {
+          currentLimitArray = 'rateLimits';
+          data.limits.rateLimits = [];
+        } else if (trimmed.startsWith('- amount:') && currentLimitArray) {
+          // Save previous object if it exists
+          if (currentLimitObj.amount !== undefined) {
+            const limitArray = data.limits[currentLimitArray];
+            if (limitArray) {
+              limitArray.push({
+                id: `${currentLimitArray}-${Date.now()}-${limitArray.length}`,
+                amount: currentLimitObj.amount,
+                quantity: currentLimitObj.quantity || 1,
+                unit: currentLimitObj.unit || 'hour',
+              });
+            }
+          }
+          // Start new object
+          currentLimitObj = { amount: parseInt(trimmed.split('- amount:')[1].trim(), 10) };
+        } else if (trimmed.startsWith('amount:') && currentLimitArray && !trimmed.startsWith('- amount:')) {
+          currentLimitObj.amount = parseInt(trimmed.split('amount:')[1].trim(), 10);
+        } else if (trimmed.startsWith('quantity:') && currentLimitArray) {
+          currentLimitObj.quantity = parseInt(trimmed.split('quantity:')[1].trim(), 10);
+        } else if (trimmed.startsWith('unit:') && currentLimitArray) {
+          currentLimitObj.unit = trimmed.split('unit:')[1].trim() as 'minute' | 'hour' | 'day';
         } else if (trimmed.startsWith('- ') && currentSection === 'groups') {
           data.groups.push(trimmed.substring(2));
         } else if (trimmed.startsWith('- ') && currentSection === 'models') {
           data.models.push(trimmed.substring(2));
-        } else if (trimmed.startsWith('amount:') && currentLimit) {
-          const amount = parseInt(trimmed.split('amount:')[1].trim(), 10);
-          if (data.limits[currentLimit]) {
-            data.limits[currentLimit]!.amount = amount;
-          }
-        } else if (trimmed.startsWith('period:') && currentLimit) {
-          const period = trimmed.split('period:')[1].trim() as 'minute' | 'hour' | 'day';
-          if (data.limits[currentLimit]) {
-            data.limits[currentLimit]!.period = period;
-          }
         } else if (trimmed.startsWith('apiKeyExpirationDays:')) {
+          // Save any pending limit object
+          if (currentLimitArray && currentLimitObj.amount !== undefined) {
+            const limitArray = data.limits[currentLimitArray];
+            if (limitArray) {
+              limitArray.push({
+                id: `${currentLimitArray}-${Date.now()}-${limitArray.length}`,
+                amount: currentLimitObj.amount,
+                quantity: currentLimitObj.quantity || 1,
+                unit: currentLimitObj.unit || 'hour',
+              });
+            }
+            currentLimitObj = {};
+          }
           data.limits.apiKeyExpirationDays = parseInt(trimmed.split('apiKeyExpirationDays:')[1].trim(), 10);
+        }
+      }
+
+      // Save any remaining limit object
+      if (currentLimitArray && currentLimitObj.amount !== undefined) {
+        const limitArray = data.limits[currentLimitArray];
+        if (limitArray) {
+          limitArray.push({
+            id: `${currentLimitArray}-${Date.now()}-${limitArray.length}`,
+            amount: currentLimitObj.amount,
+            quantity: currentLimitObj.quantity || 1,
+            unit: currentLimitObj.unit || 'hour',
+          });
         }
       }
 

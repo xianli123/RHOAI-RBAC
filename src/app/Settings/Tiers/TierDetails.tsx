@@ -4,69 +4,56 @@ import {
   PageSection,
   Content,
   ContentVariants,
-  Tabs,
-  Tab,
-  TabTitleText,
   Breadcrumb,
   BreadcrumbItem,
   Alert,
   PageBreadcrumb,
-  Badge,
-  Tooltip,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggle,
+  Flex,
+  FlexItem,
+  Tabs,
+  Tab,
+  TabTitleText,
 } from '@patternfly/react-core';
-import { CodeEditor, Language } from '@patternfly/react-code-editor';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 import { getTierById } from './mockData';
 import { TierDetailsTab } from './components/TierDetailsTab';
-
-type TabKey = 'details' | 'yaml';
-
-// ConfigMap YAML used for all tiers
-const TIER_CONFIG_YAML = `apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tier-to-group-mapping
-  namespace: maas-api
-data:
-  tiers: |
-    - name: free
-      description: Free tier for basic users
-      level: 1
-      groups:
-      - system:authenticated
-    - name: premium
-      description: Premium tier
-      level: 10
-      groups:
-      - premium-users
-    - name: enterprise
-      description: Enterprise tier
-      level: 20
-      groups:
-      - enterprise-users`;
+import { DeleteTierModal } from './components/DeleteTierModal';
 
 const TierDetails: React.FunctionComponent = () => {
-  const { tierId, tab } = useParams<{ tierId: string; tab?: string }>();
+  const { tierId } = useParams<{ tierId: string }>();
   const navigate = useNavigate();
-  const [activeTabKey, setActiveTabKey] = React.useState<TabKey>((tab as TabKey) || 'details');
+  const [isActionsOpen, setIsActionsOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [activeTabKey, setActiveTabKey] = React.useState<number>(0);
 
   useDocumentTitle('Tier Details');
 
   const tier = tierId ? getTierById(tierId) : undefined;
 
-  React.useEffect(() => {
-    if (tab && ['details', 'yaml'].includes(tab)) {
-      setActiveTabKey(tab as TabKey);
-    }
-  }, [tab]);
+  const handleEditTier = () => {
+    navigate(`/settings/tiers/${tierId}/edit`);
+  };
+
+  const handleDeleteTier = () => {
+    setIsDeleteModalOpen(true);
+    setIsActionsOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    // Delete the tier and navigate back to the list
+    console.log('Tier deleted:', tierId);
+    navigate('/settings/tiers');
+  };
 
   const handleTabSelect = (
     _event: React.MouseEvent<any> | React.KeyboardEvent | MouseEvent,
     tabIndex: string | number
   ) => {
-    const newTab = tabIndex as TabKey;
-    setActiveTabKey(newTab);
-    navigate(`/settings/tiers/${tierId}/${newTab}`, { replace: true });
+    setActiveTabKey(tabIndex as number);
   };
 
   if (!tier) {
@@ -92,12 +79,39 @@ const TierDetails: React.FunctionComponent = () => {
     <>
       {breadcrumb}
       <PageSection>
-        <Content component={ContentVariants.h1}>{tier.name}</Content>
-        {tier.description && (
-          <Content component={ContentVariants.p} style={{ marginTop: '0.5rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
-            {tier.description}
-          </Content>
-        )}
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <FlexItem>
+            <Content component={ContentVariants.h1}>{tier.name}</Content>
+          </FlexItem>
+          <FlexItem>
+            <Dropdown
+              isOpen={isActionsOpen}
+              onOpenChange={(isOpen: boolean) => setIsActionsOpen(isOpen)}
+              toggle={(toggleRef: React.Ref<HTMLButtonElement>) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsActionsOpen(!isActionsOpen)}
+                  isExpanded={isActionsOpen}
+                  variant="secondary"
+                  id="tier-details-actions-toggle"
+                >
+                  Actions
+                </MenuToggle>
+              )}
+              popperProps={{ position: 'right' }}
+              id="tier-details-actions-dropdown"
+            >
+              <DropdownList>
+                <DropdownItem key="edit" onClick={handleEditTier} id="tier-details-edit-action">
+                  Edit tier
+                </DropdownItem>
+                <DropdownItem key="delete" onClick={handleDeleteTier} id="tier-details-delete-action">
+                  Delete tier
+                </DropdownItem>
+              </DropdownList>
+            </Dropdown>
+          </FlexItem>
+        </Flex>
       </PageSection>
 
       <PageSection type="tabs">
@@ -108,45 +122,18 @@ const TierDetails: React.FunctionComponent = () => {
           role="region"
           id="tier-details-tabs"
         >
-          <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} aria-label="Details tab">
+          <Tab eventKey={0} title={<TabTitleText>Details</TabTitleText>} aria-label="Details tab">
             <TierDetailsTab tier={tier} />
-          </Tab>
-          <Tab 
-            eventKey="yaml" 
-            title={<TabTitleText>YAML</TabTitleText>} 
-            aria-label="YAML tab"
-            isAriaDisabled
-            tooltip={<Tooltip content="Out of scope for 3.2/3.3" />}
-          >
-            <PageSection>
-              {tier.isReadOnly && tier.gitSource && (
-                <Alert 
-                  variant="info" 
-                  isInline 
-                  title="This resource is managed in git"
-                  id="tier-git-managed-alert"
-                  style={{ marginBottom: '1rem' }}
-                >
-                  To make changes please edit in the{' '}
-                  <a href={tier.gitSource} target="_blank" rel="noopener noreferrer">
-                    git source
-                  </a>{' '}
-                  directly. Editing in this Web Console is disabled.
-                </Alert>
-              )}
-              <CodeEditor
-                id="tier-yaml-code-editor"
-                code={TIER_CONFIG_YAML}
-                language={Language.yaml}
-                isDarkTheme
-                isLineNumbersVisible
-                isReadOnly
-                height="400px"
-              />
-            </PageSection>
           </Tab>
         </Tabs>
       </PageSection>
+
+      <DeleteTierModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        tier={tier}
+        onDelete={handleConfirmDelete}
+      />
     </>
   );
 };

@@ -4,14 +4,12 @@ In the future this file will contain a continuously-updated list of tasks that r
 
 ## Remaining tasks
 
-- TODO: In the Deploy Model Wizard -> "Make available as an AI asset" checkbox, we should display a dropdown when checked that lists the different Tiers that are available from the Tiers list
-- maybe model deployemnts could add a thing to display/associate a tier
-- Add an option to the Model Deployments wizard checkbox thing to associate a tier, might need to be ablank box and they associate the name, can do conditional dropdown oif they're an admin
-- Make an Edit screen that's the same as the form
-- Add delete modal to stirp part of YAM:
-- Create Tier - add the ability to add multipel time windows, little plus icon pattern thing
-- Get rid of theDefault Expiration in Tier Creation
-- Create API Key modal may not have a Description
+
+
+TBD
+- [ ] Create API Key modal may not have a Description
+Get rid of theDefault Expiration in Tier Creation
+- [ ] Maybe model deployemnts could add a thing to display/associate a tier
 
 Model Deployments
 - Add "Make available as AI Asset" as a right-click option that brings the user to the "Add AI Asset" modal with options pre-filled
