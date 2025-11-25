@@ -192,11 +192,11 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         Groups
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        All users in these groups will have access to this tier's models and inherit its limits.
+        Users in these groups will have access to this tier's models.
       </div>
       <DescriptionList>
         <DescriptionListGroup>
-          <DescriptionListTerm>Assigned groups</DescriptionListTerm>
+          <DescriptionListTerm>Groups</DescriptionListTerm>
           <DescriptionListDescription>
             {renderGroupsList(tier.groups)}
           </DescriptionListDescription>
@@ -209,7 +209,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         Models
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        These AI asset models will be available to users who can access this tier.
+        These models will be available to users who can access this tier.
       </div>
       <DescriptionList>
         <DescriptionListGroup>
@@ -226,7 +226,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         Limits
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        These limits apply to all API keys created by users in this tier's groups.
+        These limits will apply to every API key created by users in this tier's groups.
       </div>
       <DescriptionList>
         <DescriptionListGroup>
