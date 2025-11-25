@@ -6,18 +6,30 @@ In the future an AI workflow should automatically suggest updates to this file b
 
 ## History
 
-2025-11-25
-- Met with Andrew Ballantyne and Celestine Tan to discuss some additional design updates for 3.2/3.3 based on latest understanding of what's doable in the backend. It was unfortunately not recorded but the list of updates to the prototype that we agreed upon are below.
-- [ ] In the Deploy Model Wizard -> "Make available as an AI asset" checkbox, we should display a dropdown below it when checked that lists the different Tiers that are available from the Tiers list, with a description below it saying that the model will be made available to users who can access this Tier. The last option of the dropdown should be "Custom..." and selecting that option should then display a new plain text field box for "Custom tier" below the dropdown field with a description below it saying to enter the exact names of the tiers (comma separated) that they would like the model to be available to.
-- [ ] In the Tiers list, the kebab menu item to "Edit tier" should instead go to a page that's identical to the "Create tier" page/form but the title of the form should be "Edit tier" and the values of the tier that was selected should populate into the form's fields. You should probably reuse the existing "Create tier" page/form and add some logic to show either Create or Edit at the top based on where the user clicks from.
-- [ ] In the Tiers list, add a kebab menu action at the bottom to "Delete tier" which should open up a new "Delete tier" modal (make it as a new tsx file) that should be very similar to the other delete modals asking the user to write the name before enabling the delete button and warning them that this could affect any apps that are using API keys associated with this Tier.
-- [ ] In the Tier Details page, include a secondary "Actions" button in the top-right aligned with the Tier name. It should have actions to "Edit tier" (clicking that button should go to the "Edit tier" form) and "Delete tier" (which should surface the "Delete tier" modal)
-- [ ] In the Tier Details page, remove the YAML tab entirely
-- [ ] In the "Create Tier" form, remove the section for "Default expiration"
-- [ ] In the "Create Tier" form, for the token and request rate limit sections, both of those should support specifying the quantity of time units, so like "[textbox] tokens per [textbox] [time unit dropdown]" and "[textbox] requests per [textbox] [time unit dropdown]"
-- [ ] In the "Create Tier" form, for both the token and request rate limit sections, we should support the ability to add additional rows basically using the PatternFly Field Builder examples from here: https://www.patternfly.org/component-groups/helpers/field-builder/
+2024-11-25
+- UI MaaS Kickoff meeting
+- Recording: https://drive.google.com/file/d/1ieSuDXqJctsVa635dbOvNAG6Nyo9UeeM/view
+- Chat: https://drive.google.com/file/d/1F9XEe_KbVf8lsTIX1mrzeoUz_v-cKy8D/view
+- Gemini notes: https://docs.google.com/document/d/1CDNcuzp5mC3JHiBcYK_4KBWM-_BtdMyOxV2cC7BJkvk/edit?tab=t.prd8h459zps5
+- During this meeting Andrew Ballantyne walked through the scope of the "MaaS Admin UI" (primarily Tiers and API Keys) for 3.2/3.3 with the Zaffre team, using the UXD prototype to help guide the discussion and visualize what we needed to build in the upcoming sprints. This was the culmination of many meetings and discussions and design updates captured in this history file. Some details and role/permission-related open questions remain around Tiers and how they're configured, but the broad strokes of the experience and the backend APIs required to power them are more settled now for 3.2/3.3.
+- UX-wise the biggest gap right now is what the AI asset endpoints experience will be like in 3.2/3.3 after the recent decisions to make "MaaS models" the only ones shown on that page, and how the new Tier system and API key capabilities may impact the experience we shipped in 3.0. UXD will meet and iterate on that area tomorrow to help future conversations across the Zaffre & Crimson UI teams, and various PMs.
+- A few prototype updates to make based on the discussion:
+- [ ] The microcopy of the "Create tier" page and maybe a ? icon in the Limits column of the Tiers list should clarify that these limits are applied to inividual users as they connect to endpoints, rather than across the entire group of users.
+- [ ] In the "Create tier" form, the Groups field should reuse an existing component that exists elsewhere already within the Console (somewhere in Settings I believe, it supports typeahead search and also specifying group names manually, it was shown off somewhere in the recording but it's also in one of the demo clusters)
+- [ ] In the Tiers list page, add the ability to sort the columns
 
-2025-11-25
+2025-11-24
+- Met with Andrew Ballantyne and Celestine Tan to discuss some additional design updates for 3.2/3.3 based on latest understanding of what's doable in the backend. It was unfortunately not recorded but the list of updates to the prototype that we agreed upon are below.
+- [x] In the Deploy Model Wizard -> "Make available as an AI asset" checkbox, we should display a dropdown below it when checked that lists the different Tiers that are available from the Tiers list, with a description below it saying that the model will be made available to users who can access this Tier. The last option of the dropdown should be "Custom..." and selecting that option should then display a new plain text field box for "Custom tier" below the dropdown field with a description below it saying to enter the exact names of the tiers (comma separated) that they would like the model to be available to.
+- [x] In the Tiers list, the kebab menu item to "Edit tier" should instead go to a page that's identical to the "Create tier" page/form but the title of the form should be "Edit tier" and the values of the tier that was selected should populate into the form's fields. You should probably reuse the existing "Create tier" page/form and add some logic to show either Create or Edit at the top based on where the user clicks from.
+- [x] In the Tiers list, add a kebab menu action at the bottom to "Delete tier" which should open up a new "Delete tier" modal (make it as a new tsx file) that should be very similar to the other delete modals asking the user to write the name before enabling the delete button and warning them that this could affect any apps that are using API keys associated with this Tier.
+- [x] In the Tier Details page, include a secondary "Actions" button in the top-right aligned with the Tier name. It should have actions to "Edit tier" (clicking that button should go to the "Edit tier" form) and "Delete tier" (which should surface the "Delete tier" modal)
+- [x] In the Tier Details page, remove the YAML tab entirely
+- [x] In the "Create Tier" form, remove the section for "Default expiration"
+- [x] In the "Create Tier" form, for the token and request rate limit sections, both of those should support specifying the quantity of time units, so like "[textbox] tokens per [textbox] [time unit dropdown]" and "[textbox] requests per [textbox] [time unit dropdown]"
+- [x] In the "Create Tier" form, for both the token and request rate limit sections, we should support the ability to add additional rows basically using the PatternFly Field Builder examples from here: https://www.patternfly.org/component-groups/helpers/field-builder/
+
+2025-11-24
 - Made a variety of updates to the 3.2/3.3 prototype based on recent discussions about what's viable in that timeframe. API Key management is now simplified.
 
 2025-11-24
