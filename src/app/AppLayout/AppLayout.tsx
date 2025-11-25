@@ -22,6 +22,9 @@ import {
   Page,
   PageSidebar,
   PageSidebarBody,
+  Select,
+  SelectList,
+  SelectOption,
   SkipToContent,
   Tooltip
 } from '@patternfly/react-core';
@@ -46,6 +49,19 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
   const navigate = useNavigate();
+  
+  // Fidelity switcher state
+  const [fidelitySelectOpen, setFidelitySelectOpen] = React.useState(false);
+  const [fidelity, setFidelity] = React.useState<'high' | 'low'>('high');
+
+  // Effect to toggle fidelity class on body
+  React.useEffect(() => {
+    if (fidelity === 'low') {
+      document.body.classList.add('fidelity-low');
+    } else {
+      document.body.classList.remove('fidelity-low');
+    }
+  }, [fidelity]);
   
   // Clear local storage handler
   const handleClearLocalStorage = () => {
@@ -449,6 +465,45 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
             }} 
           />
         </Tooltip>
+        <span style={{ margin: '0 0.25rem' }}>|</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          Fidelity:
+          <Select
+            id="fidelity-select"
+            isOpen={fidelitySelectOpen}
+            selected={fidelity}
+            onSelect={(_event, value) => {
+              setFidelity(value as 'high' | 'low');
+              setFidelitySelectOpen(false);
+            }}
+            onOpenChange={(isOpen) => setFidelitySelectOpen(isOpen)}
+            toggle={(toggleRef) => (
+              <MenuToggle
+                ref={toggleRef}
+                onClick={() => setFidelitySelectOpen(!fidelitySelectOpen)}
+                isExpanded={fidelitySelectOpen}
+                variant="plain"
+                aria-label="Fidelity switcher"
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0 0.5rem',
+                  minHeight: '1.5rem',
+                  color: 'white',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {fidelity === 'high' ? 'High' : 'Low'}
+                  <CaretDownIcon />
+                </span>
+              </MenuToggle>
+            )}
+          >
+            <SelectList>
+              <SelectOption value="high">High</SelectOption>
+              <SelectOption value="low">Low</SelectOption>
+            </SelectList>
+          </Select>
+        </span>
         <span style={{ margin: '0 0.25rem' }}>|</span>
         <a
           href="https://gitlab.cee.redhat.com/uxd/prototypes/rhoai"
