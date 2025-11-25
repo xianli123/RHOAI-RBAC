@@ -184,24 +184,6 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
               : `${tier.limits.apiKeyExpirationDays} days`}
           </DescriptionListDescription>
         </DescriptionListGroup>
-
-        {tier.gitSource && (
-          <DescriptionListGroup>
-            <DescriptionListTerm>Git source</DescriptionListTerm>
-            <DescriptionListDescription>
-              <a href={tier.gitSource} target="_blank" rel="noopener noreferrer" id="git-source-link">
-                {tier.gitSource}
-              </a>
-            </DescriptionListDescription>
-          </DescriptionListGroup>
-        )}
-
-        {!tier.gitSource && (
-          <DescriptionListGroup>
-            <DescriptionListTerm>Git source</DescriptionListTerm>
-            <DescriptionListDescription>None</DescriptionListDescription>
-          </DescriptionListGroup>
-        )}
       </DescriptionList>
 
       <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
