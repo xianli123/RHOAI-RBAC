@@ -257,8 +257,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     </Masthead>
   );
 
-  const location = useLocation();
-
   const renderNavItem = (route: IAppRoute, index: number, groupId?: string) => {
     const IconComponent = route.icon;
     const itemId = `${groupId ? `${groupId}_` : ''}${route.label}-${index}`;
