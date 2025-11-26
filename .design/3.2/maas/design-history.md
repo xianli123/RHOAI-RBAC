@@ -38,6 +38,14 @@ In the future an AI workflow should automatically suggest updates to this file b
 - We reviewed the intended scope and technical viability of MaaS-related features of the OpenShift AI Dashboard for 3.2/3.3
 - One gap identified was the ability to see which Tiers a particular model / AI asset was available through. This would likely be included in a Model Details page which is being worked on separately, likely something for 3.4
 
+2024-11-24
+- Title: Connectivity Link/MaaS catchup re: Dev Portal plans and APIs
+- Doc: https://docs.google.com/document/d/1j1jT282ZexlnR6t-0I-8HhJuuX2k0dj_tKGIGMjpP94/edit
+- Recording: https://drive.google.com/file/d/1HLEgjEOHMn8kv8pJM292OUlwAiBuvwrt/view
+- Chat: https://drive.google.com/file/d/1J-i6xP-wAc3Q0S21wPdtNO8a198trYpL/view
+- Gemini notes: https://docs.google.com/document/d/1EJ2wbjJLGrBrkt9tVXny03VOOREJ4CMt_GCaL9JOTz8/edit
+- Initial introductions and review of Kuadrant/RHCL APIs including PlanPolicy, which is similar to MaaS Tiers. A follow-up is planned to review some of the key MaaS APIs so far, and whether closer alignment on APIs would be possible given that users may use RHDH, RHCL, and RHOAI in tandem.
+
 2025-11-18
 - Title: MaaS Team Sync
 - [Gemini notes](https://docs.google.com/document/d/10wMJYU24BNtVZFPksrfaVpTndEGXGPbxNpaF_kPlpoU/edit)
