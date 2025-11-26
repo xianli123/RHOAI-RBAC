@@ -29,6 +29,7 @@ import {
   Td,
   ActionsColumn,
   IAction,
+  ThProps,
 } from '@patternfly/react-table';
 import { PlusIcon, FilterIcon } from '@patternfly/react-icons';
 import { mockTiers, getGroupById, getModelById } from './mockData';
@@ -42,6 +43,8 @@ const Tiers: React.FunctionComponent = () => {
   const [filterInput, setFilterInput] = React.useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [tierToDelete, setTierToDelete] = React.useState<Tier | null>(null);
+  const [activeSortIndex, setActiveSortIndex] = React.useState<number | null>(null);
+  const [activeSortDirection, setActiveSortDirection] = React.useState<'asc' | 'desc' | null>(null);
 
   const getGroupsSummary = (tier: Tier): React.ReactNode => {
     if (tier.groups.length === 0) {
@@ -129,6 +132,36 @@ const Tiers: React.FunctionComponent = () => {
     navigate(`/settings/tiers/${tier.id}`);
   };
 
+  const getSortableRowValues = (tier: Tier): (string | number)[] => {
+    return [
+      tier.name.toLowerCase(), // Column 0: Name
+      tier.level, // Column 1: Level
+      tier.groups.length, // Column 2: Groups
+      tier.models.length, // Column 3: Models
+      // Column 4: Limits - we'll sort by total token limits
+      (tier.limits.tokenLimits?.[0]?.amount || 0) + (tier.limits.rateLimits?.[0]?.amount || 0),
+    ];
+  };
+
+  const getSortedTiers = (tiersToSort: Tier[]) => {
+    if (activeSortIndex === null || activeSortDirection === null) {
+      return tiersToSort;
+    }
+
+    return [...tiersToSort].sort((a, b) => {
+      const aValue = getSortableRowValues(a)[activeSortIndex];
+      const bValue = getSortableRowValues(b)[activeSortIndex];
+
+      if (aValue < bValue) {
+        return activeSortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return activeSortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
   const getFilteredTiers = () => {
     if (!filterInput.trim()) {
       return mockTiers;
@@ -141,7 +174,20 @@ const Tiers: React.FunctionComponent = () => {
     });
   };
 
-  const filteredTiers = getFilteredTiers();
+  const getSortParams = (columnIndex: number): ThProps['sort'] => ({
+    sortBy: {
+      index: activeSortIndex || 0,
+      direction: activeSortDirection || 'asc',
+      defaultDirection: 'asc',
+    },
+    onSort: (_event, index, direction) => {
+      setActiveSortIndex(index);
+      setActiveSortDirection(direction);
+    },
+    columnIndex,
+  });
+
+  const filteredTiers = getSortedTiers(getFilteredTiers());
 
   return (
     <PageSection>
@@ -225,11 +271,11 @@ const Tiers: React.FunctionComponent = () => {
       <Table aria-label="Tiers table" id="tiers-table">
             <Thead>
               <Tr>
-                <Th>Name</Th>
-                <Th>Level</Th>
-                <Th>Groups</Th>
-                <Th>Models</Th>
-                <Th>Limits</Th>
+                <Th sort={getSortParams(0)}>Name</Th>
+                <Th sort={getSortParams(1)}>Level</Th>
+                <Th sort={getSortParams(2)}>Groups</Th>
+                <Th sort={getSortParams(3)}>Models</Th>
+                <Th sort={getSortParams(4)}>Limits</Th>
                 <Th></Th>
               </Tr>
             </Thead>
