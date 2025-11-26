@@ -718,11 +718,11 @@ const DeployModelWizard: React.FunctionComponent = () => {
                     </SelectOption>
                   ))}
                 <SelectOption 
-                  value="Custom..."
+                  value="Other..."
                   hasCheckbox
-                  isSelected={wizardData.selectedTiers.includes('Custom...')}
+                  isSelected={wizardData.selectedTiers.includes('Other...')}
                 >
-                  Custom...
+                  Other...
                 </SelectOption>
               </SelectList>
             </Select>
@@ -734,7 +734,7 @@ const DeployModelWizard: React.FunctionComponent = () => {
                 </HelperText>
               </FormHelperText>
             </FormGroup>
-            {wizardData.selectedTiers.includes('Custom...') && (
+            {wizardData.selectedTiers.includes('Other...') && (
               <div style={{ marginTop: '1rem' }}>
                 <TextInput
                   id="custom-tier-names"
