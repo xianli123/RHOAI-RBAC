@@ -718,76 +718,60 @@ const WorkloadMetrics: React.FunctionComponent = () => {
           style={{ marginTop: '24px', backgroundColor: 'transparent' }}
         >
           <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
-              <FlexItem>
-                <Card isCompact id="job-created-card-2" style={{ height: '100px' }}>
-                  <CardTitle id="job-created-title-2">Job created</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      If submitted
-                    </div>
-                  </CardBody>
-                </Card>
+            <Flex>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Job created <Badge isRead id="job-created-badge-2">2</Badge>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    If submitted
+                  </div>
+                </div>
               </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
+              <Divider orientation={{ default: 'vertical' }} />
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Local Queue <Badge isRead id="local-queue-badge-2">3</Badge>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    Namespace
+                  </div>
+                </div>
               </FlexItem>
-              <FlexItem>
-                <Card isCompact id="local-queue-card-2" style={{ height: '100px' }}>
-                  <CardTitle id="local-queue-title-2">Local Queue</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Namespace
-                    </div>
-                  </CardBody>
-                </Card>
+              <Divider orientation={{ default: 'vertical' }} />
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Cluster Queue <Badge isRead id="cluster-queue-badge-2">5</Badge>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    Quota check<br />5 blocked (quota)
+                  </div>
+                </div>
               </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
+              <Divider orientation={{ default: 'vertical' }} />
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Resource flavor <Badge isRead id="resource-flavor-badge-2">5</Badge>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    Quota hardware match<br />5 stuck (no hardware)
+                  </div>
+                </div>
               </FlexItem>
-              <FlexItem>
-                <Card isCompact id="cluster-queue-card-2" style={{ height: '100px' }}>
-                  <CardTitle id="cluster-queue-title-2">Cluster Queue</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Quota check<br />5 blocked (quota)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem>
-                <Card isCompact id="resource-flavor-card-2" style={{ height: '100px' }}>
-                  <CardTitle id="resource-flavor-title-2">Resource flavor</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Quota hardware match<br />5 stuck (no hardware)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem>
-                <Card isCompact id="admitted-card-2" style={{ height: '100px' }}>
-                  <CardTitle id="admitted-title-2">Admitted</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Running
-                    </div>
-                  </CardBody>
-                </Card>
+              <Divider orientation={{ default: 'vertical' }} />
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Admitted <Badge isRead id="admitted-badge-2">8</Badge>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    Running
+                  </div>
+                </div>
               </FlexItem>
             </Flex>
           </div>
