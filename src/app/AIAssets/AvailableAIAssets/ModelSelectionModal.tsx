@@ -82,7 +82,7 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
       <ModalBody>
         <div style={{ marginBottom: '1.5rem' }}>
           <p>
-            Choose the models you want to make available in this playground from your AI available assets. You can add additional models by making them available from the{' '}
+            Choose the models you want to make available in this playground. You can add additional models by making them available from the{' '}
             <Button 
               variant="link" 
               isInline 
