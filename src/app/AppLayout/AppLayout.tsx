@@ -51,6 +51,9 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Research mode - controlled by RESEARCH_MODE environment variable
+  const isResearchMode = process.env.RESEARCH_MODE === 'true';
+  
   // Fidelity switcher state
   const [fidelitySelectOpen, setFidelitySelectOpen] = React.useState(false);
   const [fidelity, setFidelity] = React.useState<'high' | 'low'>(() => {
@@ -116,15 +119,25 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           />
         </MastheadToggle>
         <MastheadBrand style={{ display: 'flex', alignItems: 'center' }}>
-          <img 
-            src={logoSrc}
-            alt={logoAlt}
-            style={{ 
-              height: '36px', 
-              width: 'auto', 
-              maxWidth: '200px' // Prevent logo from being too wide
-            }}
-          />
+          {isResearchMode ? (
+            <span style={{ 
+              fontSize: '1.25rem', 
+              fontWeight: 600,
+              color: theme === 'dark' ? '#ffffff' : '#151515'
+            }}>
+              AI Platform
+            </span>
+          ) : (
+            <img 
+              src={logoSrc}
+              alt={logoAlt}
+              style={{ 
+                height: '36px', 
+                width: 'auto', 
+                maxWidth: '200px' // Prevent logo from being too wide
+              }}
+            />
+          )}
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
@@ -449,109 +462,111 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       {/* Apollo Canvas Masthead */}
       {/* <ApolloCanvasMasthead /> */}
       
-      {/* UXD Prototype Banner */}
-      <div style={{
-        backgroundColor: '#FF6F00',
-        color: 'white',
-        textAlign: 'center',
-        padding: '0.25rem',
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        letterSpacing: '0.5px',
-        flexShrink: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem'
-      }}>
-        UXD PROTOTYPE
-        <Tooltip
-          content={
-            <div>
-               This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features of 3.2. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
-            </div>
-          }
-          position="bottom"
-        >
-          <InfoCircleIcon 
-            style={{ 
-              fontSize: '0.75rem', 
-              cursor: 'pointer',
-              opacity: 0.8 
-            }} 
-          />
-        </Tooltip>
-        <span style={{ margin: '0 0.25rem' }}>|</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          Fidelity:
-          <Select
-            id="fidelity-select"
-            isOpen={fidelitySelectOpen}
-            selected={fidelity}
-            onSelect={(_event, value) => {
-              setFidelity(value as 'high' | 'low');
-              setFidelitySelectOpen(false);
-            }}
-            onOpenChange={(isOpen) => setFidelitySelectOpen(isOpen)}
-            toggle={(toggleRef) => (
-              <MenuToggle
-                ref={toggleRef}
-                onClick={() => setFidelitySelectOpen(!fidelitySelectOpen)}
-                isExpanded={fidelitySelectOpen}
-                variant="plain"
-                aria-label="Fidelity switcher"
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '0 0.5rem',
-                  minHeight: '1.5rem',
-                  color: 'white',
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {fidelity === 'high' ? 'High' : 'Low'}
-                  <CaretDownIcon />
-                </span>
-              </MenuToggle>
-            )}
+      {/* UXD Prototype Banner - Hidden in research mode */}
+      {!isResearchMode && (
+        <div style={{
+          backgroundColor: '#FF6F00',
+          color: 'white',
+          textAlign: 'center',
+          padding: '0.25rem',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          flexShrink: 0,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
+        }}>
+          UXD PROTOTYPE
+          <Tooltip
+            content={
+              <div>
+                 This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features of 3.2. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
+              </div>
+            }
+            position="bottom"
           >
-            <SelectList>
-              <SelectOption value="high">High</SelectOption>
-              <SelectOption value="low">Low</SelectOption>
-            </SelectList>
-          </Select>
-        </span>
-        <span style={{ margin: '0 0.25rem' }}>|</span>
-        <a
-          href="https://gitlab.cee.redhat.com/uxd/prototypes/rhoai"
-          target="_blank"
-          rel="noopener noreferrer"
-          id="repo-link"
-          style={{
-            color: 'white',
-            textDecoration: 'underline',
-            fontWeight: 600,
-            letterSpacing: '0.5px'
-          }}
-        >
-          Code
-        </a>
-        <span style={{ margin: '0 0.25rem' }}>|</span>
-        <a
-          href="https://gitlab.cee.redhat.com/uxd/prototypes/rhoai/-/commits/3.2"
-          target="_blank"
-          rel="noopener noreferrer"
-          id="changelog-link"
-          style={{
-            color: 'white',
-            textDecoration: 'underline',
-            fontWeight: 600,
-            letterSpacing: '0.5px'
-          }}
-        >
-          Changelog
-        </a>
-      </div>
+            <InfoCircleIcon 
+              style={{ 
+                fontSize: '0.75rem', 
+                cursor: 'pointer',
+                opacity: 0.8 
+              }} 
+            />
+          </Tooltip>
+          <span style={{ margin: '0 0.25rem' }}>|</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            Fidelity:
+            <Select
+              id="fidelity-select"
+              isOpen={fidelitySelectOpen}
+              selected={fidelity}
+              onSelect={(_event, value) => {
+                setFidelity(value as 'high' | 'low');
+                setFidelitySelectOpen(false);
+              }}
+              onOpenChange={(isOpen) => setFidelitySelectOpen(isOpen)}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setFidelitySelectOpen(!fidelitySelectOpen)}
+                  isExpanded={fidelitySelectOpen}
+                  variant="plain"
+                  aria-label="Fidelity switcher"
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '0 0.5rem',
+                    minHeight: '1.5rem',
+                    color: 'white',
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {fidelity === 'high' ? 'High' : 'Low'}
+                    <CaretDownIcon />
+                  </span>
+                </MenuToggle>
+              )}
+            >
+              <SelectList>
+                <SelectOption value="high">High</SelectOption>
+                <SelectOption value="low">Low</SelectOption>
+              </SelectList>
+            </Select>
+          </span>
+          <span style={{ margin: '0 0.25rem' }}>|</span>
+          <a
+            href="https://gitlab.cee.redhat.com/uxd/prototypes/rhoai"
+            target="_blank"
+            rel="noopener noreferrer"
+            id="repo-link"
+            style={{
+              color: 'white',
+              textDecoration: 'underline',
+              fontWeight: 600,
+              letterSpacing: '0.5px'
+            }}
+          >
+            Code
+          </a>
+          <span style={{ margin: '0 0.25rem' }}>|</span>
+          <a
+            href="https://gitlab.cee.redhat.com/uxd/prototypes/rhoai/-/commits/3.2"
+            target="_blank"
+            rel="noopener noreferrer"
+            id="changelog-link"
+            style={{
+              color: 'white',
+              textDecoration: 'underline',
+              fontWeight: 600,
+              letterSpacing: '0.5px'
+            }}
+          >
+            Changelog
+          </a>
+        </div>
+      )}
       
       <Page
         mainContainerId={pageId}

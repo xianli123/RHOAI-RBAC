@@ -99,5 +99,17 @@ ENV_1=http://1.myendpoint.com
 ENV_2=http://2.myendpoint.com
 ```
 
-
 With that in place, you can use the values in your code like `console.log(process.env.ENV_1);`
+
+## Research Mode
+The prototype supports a research mode that prepares it for user research sessions by hiding internal development indicators. To enable research mode, create a `.env` file in the root directory with:
+
+```sh
+RESEARCH_MODE=true
+```
+
+When research mode is enabled:
+- The logo changes from the branded logo to simple "AI Platform" text
+- The orange "UXD PROTOTYPE" banner at the top is completely hidden
+
+To disable research mode, set `RESEARCH_MODE=false` or remove the environment variable entirely.
