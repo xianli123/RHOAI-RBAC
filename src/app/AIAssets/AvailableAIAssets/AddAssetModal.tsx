@@ -8,6 +8,7 @@ import {
   HelperText,
   HelperTextItem,
   MenuToggle,
+  MenuToggleElement,
   Modal,
   ModalBody,
   ModalFooter,
@@ -18,10 +19,9 @@ import {
   TextArea,
   TextInput
 } from '@patternfly/react-core';
+import { mockTiers } from '../../Settings/Tiers/mockData';
 
 type AssetType = 'Model' | 'MCP Server' | '';
-type ModelLocation = 'Internal' | 'External' | '';
-type AccessControlType = 'All users' | 'User' | 'Group' | 'Service Account';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -34,12 +34,6 @@ interface AddAssetModalProps {
   setAssetType: (value: AssetType) => void;
   isAssetTypeOpen: boolean;
   setIsAssetTypeOpen: (value: boolean) => void;
-  
-  // Model Location
-  modelLocation: ModelLocation;
-  setModelLocation: (value: ModelLocation) => void;
-  isModelLocationOpen: boolean;
-  setIsModelLocationOpen: (value: boolean) => void;
   
   // Project fields
   project: string;
@@ -73,15 +67,13 @@ interface AddAssetModalProps {
   isToolsOpen: boolean;
   setIsToolsOpen: (value: boolean) => void;
   
-  // Access Control fields
-  accessControlType: AccessControlType;
-  setAccessControlType: (value: AccessControlType) => void;
-  isAccessControlTypeOpen: boolean;
-  setIsAccessControlTypeOpen: (value: boolean) => void;
-  accessControlName: string;
-  setAccessControlName: (value: string) => void;
-  isAccessControlNameOpen: boolean;
-  setIsAccessControlNameOpen: (value: boolean) => void;
+  // Tiers fields (replacing Access Control)
+  selectedTiers: string[];
+  setSelectedTiers: (value: string[]) => void;
+  isTierSelectOpen: boolean;
+  setIsTierSelectOpen: (value: boolean) => void;
+  customTierNames: string;
+  setCustomTierNames: (value: string) => void;
   
   // Description
   assetDescription: string;
@@ -97,10 +89,6 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   setAssetType,
   isAssetTypeOpen,
   setIsAssetTypeOpen,
-  modelLocation,
-  setModelLocation,
-  isModelLocationOpen,
-  setIsModelLocationOpen,
   project,
   setProject,
   isProjectOpen,
@@ -125,31 +113,15 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
   setTools,
   isToolsOpen,
   setIsToolsOpen,
-  accessControlType,
-  setAccessControlType,
-  isAccessControlTypeOpen,
-  setIsAccessControlTypeOpen,
-  accessControlName,
-  setAccessControlName,
-  isAccessControlNameOpen,
-  setIsAccessControlNameOpen,
+  selectedTiers,
+  setSelectedTiers,
+  isTierSelectOpen,
+  setIsTierSelectOpen,
+  customTierNames,
+  setCustomTierNames,
   assetDescription,
   setAssetDescription
 }) => {
-  // Helper function to get access control names based on type
-  const getAccessControlNames = (type: AccessControlType): string[] => {
-    switch (type) {
-      case 'User':
-        return ['john.doe', 'jane.smith', 'bob.wilson', 'alice.johnson'];
-      case 'Group':
-        return ['dev-team', 'qa-team', 'prod-team', 'data-science-team'];
-      case 'Service Account':
-        return ['prod-service-account', 'dev-service-account', 'ci-service-account'];
-      default:
-        return [];
-    }
-  };
-
   const handleAssetTypeChange = (value: AssetType) => {
     setAssetType(value);
     setIsAssetTypeOpen(false);
@@ -158,24 +130,6 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     setModelDeployment('');
     setMcpServer('');
     setTools('');
-  };
-
-  const handleModelLocationChange = (value: ModelLocation) => {
-    setModelLocation(value);
-    setIsModelLocationOpen(false);
-    // Reset conditional fields when location changes
-    setProject('');
-    setModelDeployment('');
-    setExternalProvider('');
-    setExternalProviderAPIKey('');
-    setSelectedExternalModels(new Set());
-  };
-
-  const handleAccessControlTypeChange = (value: AccessControlType) => {
-    setAccessControlType(value);
-    setIsAccessControlTypeOpen(false);
-    // Reset access control name when type changes
-    setAccessControlName('');
   };
 
   const handleExternalModelToggle = (modelId: string, checked: boolean) => {
@@ -243,42 +197,6 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
 
           {assetType === 'Model' && (
             <>
-              <FormGroup 
-                label="Model location" 
-                fieldId="model-location-select"
-                isRequired
-              >
-                <Select
-                  id="model-location-select"
-                  isOpen={isModelLocationOpen}
-                  selected={modelLocation}
-                  onSelect={(_event, value) => handleModelLocationChange(value as ModelLocation)}
-                  onOpenChange={setIsModelLocationOpen}
-                  toggle={(toggleRef) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => setIsModelLocationOpen(!isModelLocationOpen)}
-                      isExpanded={isModelLocationOpen}
-                      style={{ width: '100%' }}
-                      id="model-location-toggle"
-                    >
-                      {modelLocation || 'Select model location'}
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption value="Internal" id="location-internal">
-                      Internal (on-cluster)
-                    </SelectOption>
-                    <SelectOption value="External" id="location-external">
-                      External
-                    </SelectOption>
-                  </SelectList>
-                </Select>
-              </FormGroup>
-
-              {modelLocation === 'Internal' && (
-                <>
                   <FormGroup 
                     label="Project" 
                     fieldId="add-asset-project-select"
@@ -363,154 +281,153 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
                           Adding this as an AI asset will make it available to other users outside of the namespace/project.
                         </HelperTextItem>
                       </HelperText>
-                    </FormHelperText>
-                  </FormGroup>
-                </>
-              )}
+                  </FormHelperText>
+                </FormGroup>
 
-              {modelLocation === 'External' && (
-                <>
-                  <FormGroup 
-                    label="External provider" 
-                    fieldId="external-provider-select"
-                    isRequired
-                  >
-                    <Select
-                      id="external-provider-select"
-                      isOpen={isExternalProviderOpen}
-                      selected={externalProvider}
-                      onSelect={(_event, value) => {
-                        setExternalProvider(value as string);
-                        setIsExternalProviderOpen(false);
-                      }}
-                      onOpenChange={setIsExternalProviderOpen}
-                      toggle={(toggleRef) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => setIsExternalProviderOpen(!isExternalProviderOpen)}
-                          isExpanded={isExternalProviderOpen}
-                          style={{ width: '100%' }}
-                          id="external-provider-toggle"
-                        >
-                          {externalProvider || 'Select external provider'}
-                        </MenuToggle>
-                      )}
+              {/* External provider descoped from 3.2/3.3 but likely to arrive in 3.4 */}
+          {/* {modelLocation === 'External' && (
+            <>
+              <FormGroup 
+                label="External provider" 
+                fieldId="external-provider-select"
+                isRequired
+              >
+                <Select
+                  id="external-provider-select"
+                  isOpen={isExternalProviderOpen}
+                  selected={externalProvider}
+                  onSelect={(_event, value) => {
+                    setExternalProvider(value as string);
+                    setIsExternalProviderOpen(false);
+                  }}
+                  onOpenChange={setIsExternalProviderOpen}
+                  toggle={(toggleRef) => (
+                    <MenuToggle
+                      ref={toggleRef}
+                      onClick={() => setIsExternalProviderOpen(!isExternalProviderOpen)}
+                      isExpanded={isExternalProviderOpen}
+                      style={{ width: '100%' }}
+                      id="external-provider-toggle"
                     >
-                      <SelectList>
-                        <SelectOption value="OpenAI" id="provider-openai">
-                          OpenAI
-                        </SelectOption>
-                        <SelectOption value="Anthropic" id="provider-anthropic">
-                          Anthropic
-                        </SelectOption>
-                      </SelectList>
-                    </Select>
-                  </FormGroup>
-
-                  <FormGroup 
-                    label="API key" 
-                    fieldId="external-provider-api-key"
-                    isRequired
-                  >
-                    <TextInput
-                      id="external-provider-api-key"
-                      type="password"
-                      value={externalProviderAPIKey}
-                      onChange={(_event, value) => setExternalProviderAPIKey(value)}
-                      placeholder="Enter your API key"
-                    />
-                    <FormHelperText>
-                      <HelperText>
-                        <HelperTextItem>
-                          Your API key from {externalProvider || 'the external provider'} to authenticate requests.
-                        </HelperTextItem>
-                      </HelperText>
-                    </FormHelperText>
-                  </FormGroup>
-
-                  {externalProviderAPIKey && (
-                    <FormGroup 
-                      label="Available models" 
-                      fieldId="external-models-select"
-                      isRequired
-                    >
-                      <div style={{ 
-                        border: '1px solid var(--pf-v5-global--BorderColor--100)', 
-                        borderRadius: '4px', 
-                        padding: '1rem',
-                        maxHeight: '300px',
-                        overflowY: 'auto'
-                      }}>
-                        <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6a6e73' }}>
-                          Select the models you want to add as AI assets:
-                        </p>
-                        {externalProvider === 'OpenAI' && (
-                          <>
-                            <Checkbox
-                              id="external-model-gpt4"
-                              label="GPT-4"
-                              description="Most capable model, best for complex tasks"
-                              isChecked={selectedExternalModels.has('gpt-4')}
-                              onChange={(_event, checked) => handleExternalModelToggle('gpt-4', checked)}
-                              style={{ marginBottom: '0.5rem' }}
-                            />
-                            <Checkbox
-                              id="external-model-gpt4-turbo"
-                              label="GPT-4 Turbo"
-                              description="Fast and efficient variant of GPT-4"
-                              isChecked={selectedExternalModels.has('gpt-4-turbo')}
-                              onChange={(_event, checked) => handleExternalModelToggle('gpt-4-turbo', checked)}
-                              style={{ marginBottom: '0.5rem' }}
-                            />
-                            <Checkbox
-                              id="external-model-gpt35-turbo"
-                              label="GPT-3.5 Turbo"
-                              description="Fast and cost-effective for simpler tasks"
-                              isChecked={selectedExternalModels.has('gpt-3.5-turbo')}
-                              onChange={(_event, checked) => handleExternalModelToggle('gpt-3.5-turbo', checked)}
-                            />
-                          </>
-                        )}
-                        {externalProvider === 'Anthropic' && (
-                          <>
-                            <Checkbox
-                              id="external-model-claude-3-opus"
-                              label="Claude 3 Opus"
-                              description="Most intelligent model for complex tasks"
-                              isChecked={selectedExternalModels.has('claude-3-opus')}
-                              onChange={(_event, checked) => handleExternalModelToggle('claude-3-opus', checked)}
-                              style={{ marginBottom: '0.5rem' }}
-                            />
-                            <Checkbox
-                              id="external-model-claude-3-sonnet"
-                              label="Claude 3 Sonnet"
-                              description="Balanced performance and intelligence"
-                              isChecked={selectedExternalModels.has('claude-3-sonnet')}
-                              onChange={(_event, checked) => handleExternalModelToggle('claude-3-sonnet', checked)}
-                              style={{ marginBottom: '0.5rem' }}
-                            />
-                            <Checkbox
-                              id="external-model-claude-3-haiku"
-                              label="Claude 3 Haiku"
-                              description="Fast and cost-effective for quick tasks"
-                              isChecked={selectedExternalModels.has('claude-3-haiku')}
-                              onChange={(_event, checked) => handleExternalModelToggle('claude-3-haiku', checked)}
-                            />
-                          </>
-                        )}
-                      </div>
-                      <FormHelperText>
-                        <HelperText>
-                          <HelperTextItem>
-                            Selected models will be added as AI assets and available for use.
-                          </HelperTextItem>
-                        </HelperText>
-                      </FormHelperText>
-                    </FormGroup>
+                      {externalProvider || 'Select external provider'}
+                    </MenuToggle>
                   )}
-                </>
+                >
+                  <SelectList>
+                    <SelectOption value="OpenAI" id="provider-openai">
+                      OpenAI
+                    </SelectOption>
+                    <SelectOption value="Anthropic" id="provider-anthropic">
+                      Anthropic
+                    </SelectOption>
+                  </SelectList>
+                </Select>
+              </FormGroup>
+
+              <FormGroup 
+                label="API key" 
+                fieldId="external-provider-api-key"
+                isRequired
+              >
+                <TextInput
+                  id="external-provider-api-key"
+                  type="password"
+                  value={externalProviderAPIKey}
+                  onChange={(_event, value) => setExternalProviderAPIKey(value)}
+                  placeholder="Enter your API key"
+                />
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>
+                      Your API key from {externalProvider || 'the external provider'} to authenticate requests.
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              </FormGroup>
+
+              {externalProviderAPIKey && (
+                <FormGroup 
+                  label="Available models" 
+                  fieldId="external-models-select"
+                  isRequired
+                >
+                  <div style={{ 
+                    border: '1px solid var(--pf-v5-global--BorderColor--100)', 
+                    borderRadius: '4px', 
+                    padding: '1rem',
+                    maxHeight: '300px',
+                    overflowY: 'auto'
+                  }}>
+                    <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6a6e73' }}>
+                      Select the models you want to add as AI assets:
+                    </p>
+                    {externalProvider === 'OpenAI' && (
+                      <>
+                        <Checkbox
+                          id="external-model-gpt4"
+                          label="GPT-4"
+                          description="Most capable model, best for complex tasks"
+                          isChecked={selectedExternalModels.has('gpt-4')}
+                          onChange={(_event, checked) => handleExternalModelToggle('gpt-4', checked)}
+                          style={{ marginBottom: '0.5rem' }}
+                        />
+                        <Checkbox
+                          id="external-model-gpt4-turbo"
+                          label="GPT-4 Turbo"
+                          description="Fast and efficient variant of GPT-4"
+                          isChecked={selectedExternalModels.has('gpt-4-turbo')}
+                          onChange={(_event, checked) => handleExternalModelToggle('gpt-4-turbo', checked)}
+                          style={{ marginBottom: '0.5rem' }}
+                        />
+                        <Checkbox
+                          id="external-model-gpt35-turbo"
+                          label="GPT-3.5 Turbo"
+                          description="Fast and cost-effective for simpler tasks"
+                          isChecked={selectedExternalModels.has('gpt-3.5-turbo')}
+                          onChange={(_event, checked) => handleExternalModelToggle('gpt-3.5-turbo', checked)}
+                        />
+                      </>
+                    )}
+                    {externalProvider === 'Anthropic' && (
+                      <>
+                        <Checkbox
+                          id="external-model-claude-3-opus"
+                          label="Claude 3 Opus"
+                          description="Most intelligent model for complex tasks"
+                          isChecked={selectedExternalModels.has('claude-3-opus')}
+                          onChange={(_event, checked) => handleExternalModelToggle('claude-3-opus', checked)}
+                          style={{ marginBottom: '0.5rem' }}
+                        />
+                        <Checkbox
+                          id="external-model-claude-3-sonnet"
+                          label="Claude 3 Sonnet"
+                          description="Balanced performance and intelligence"
+                          isChecked={selectedExternalModels.has('claude-3-sonnet')}
+                          onChange={(_event, checked) => handleExternalModelToggle('claude-3-sonnet', checked)}
+                          style={{ marginBottom: '0.5rem' }}
+                        />
+                        <Checkbox
+                          id="external-model-claude-3-haiku"
+                          label="Claude 3 Haiku"
+                          description="Fast and cost-effective for quick tasks"
+                          isChecked={selectedExternalModels.has('claude-3-haiku')}
+                          onChange={(_event, checked) => handleExternalModelToggle('claude-3-haiku', checked)}
+                        />
+                      </>
+                    )}
+                  </div>
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>
+                        Selected models will be added as AI assets and available for use.
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                </FormGroup>
               )}
             </>
+          )} */}
+        </>
           )}
 
           {assetType === 'MCP Server' && (
@@ -597,83 +514,135 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
             </>
           )}
 
-          {((assetType === 'Model' && modelLocation !== '') || (assetType === 'MCP Server' && mcpServer !== '')) && (
+          {((assetType === 'Model' && project !== '' && modelDeployment !== '') || (assetType === 'MCP Server' && mcpServer !== '')) && (
             <>
               <FormGroup 
                 label="Availability" 
-                fieldId="add-asset-access-control-type-select"
+                fieldId="add-asset-tiers-heading"
+              >
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>
+                      Select a tier to make this asset available to other users. Users who can access the selected tier(s) will be able to use this asset.
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              </FormGroup>
+
+              <FormGroup 
+                label="Tiers" 
+                fieldId="add-asset-tier-select"
                 isRequired
               >
                 <Select
-                  id="add-asset-access-control-type-select"
-                  isOpen={isAccessControlTypeOpen}
-                  selected={accessControlType}
-                  onSelect={(_event, value) => handleAccessControlTypeChange(value as AccessControlType)}
-                  onOpenChange={setIsAccessControlTypeOpen}
-                  toggle={(toggleRef) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => setIsAccessControlTypeOpen(!isAccessControlTypeOpen)}
-                      isExpanded={isAccessControlTypeOpen}
-                      style={{ width: '100%' }}
-                      id="add-asset-access-control-type-toggle"
-                    >
-                      {accessControlType}
-                    </MenuToggle>
-                  )}
+                  id="add-asset-tier-select"
+                  isOpen={isTierSelectOpen}
+                  selected={selectedTiers}
+                  onSelect={(_event, value) => {
+                    const tierValue = value as string;
+                    if (tierValue === 'Other...') {
+                      // Toggle Other option
+                      if (selectedTiers.includes('Other...')) {
+                        setSelectedTiers(selectedTiers.filter(t => t !== 'Other...'));
+                        setCustomTierNames('');
+                      } else {
+                        setSelectedTiers([...selectedTiers, 'Other...']);
+                      }
+                    } else {
+                      // Toggle tier selection
+                      if (selectedTiers.includes(tierValue)) {
+                        setSelectedTiers(selectedTiers.filter(t => t !== tierValue));
+                      } else {
+                        setSelectedTiers([...selectedTiers, tierValue]);
+                      }
+                    }
+                  }}
+                  onOpenChange={(isOpen) => setIsTierSelectOpen(isOpen)}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => {
+                    // Get display names for selected tiers
+                    const selectedDisplayNames = selectedTiers
+                      .filter(tierId => tierId !== 'Other...')
+                      .map(tierId => {
+                        const tier = mockTiers.find(t => t.id === tierId);
+                        return tier ? tier.name : tierId;
+                      });
+                    
+                    // Add "Other..." if it's selected
+                    if (selectedTiers.includes('Other...')) {
+                      selectedDisplayNames.push('Other...');
+                    }
+                    
+                    const displayText = selectedDisplayNames.length > 0 
+                      ? selectedDisplayNames.join(', ') 
+                      : 'Select tiers';
+                    
+                    return (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsTierSelectOpen(!isTierSelectOpen)}
+                        isExpanded={isTierSelectOpen}
+                        id="add-asset-tier-select-toggle"
+                        style={{ width: '100%' }}
+                      >
+                        {displayText}
+                      </MenuToggle>
+                    );
+                  }}
                 >
                   <SelectList>
-                    <SelectOption value="All users" id="access-control-all-users">
-                      All users
-                    </SelectOption>
-                    <SelectOption value="User" id="access-control-user">
-                      User
-                    </SelectOption>
-                    <SelectOption value="Group" id="access-control-group">
-                      Group
-                    </SelectOption>
-                    <SelectOption value="Service Account" id="access-control-service-account">
-                      Service Account
+                    {mockTiers
+                      .filter(tier => tier.status === 'Active')
+                      .map(tier => (
+                        <SelectOption 
+                          key={tier.id}
+                          value={tier.id}
+                          hasCheckbox
+                          isSelected={selectedTiers.includes(tier.id)}
+                          id={`add-asset-tier-${tier.id}`}
+                        >
+                          {tier.name}
+                        </SelectOption>
+                      ))}
+                    <SelectOption 
+                      value="Other..."
+                      hasCheckbox
+                      isSelected={selectedTiers.includes('Other...')}
+                      id="add-asset-tier-other"
+                    >
+                      Other...
                     </SelectOption>
                   </SelectList>
                 </Select>
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>
+                      The asset will be made available to users who can access these tiers
+                    </HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
               </FormGroup>
 
-              {accessControlType !== 'All users' && (
+              {selectedTiers.includes('Other...') && (
                 <FormGroup 
-                  label={accessControlType === 'User' ? 'Username' : accessControlType === 'Group' ? 'Group name' : 'Service account name'}
-                  fieldId="add-asset-access-control-name-select"
+                  label="Custom tier names" 
+                  fieldId="add-asset-custom-tier-names"
                   isRequired
                 >
-                  <Select
-                    id="add-asset-access-control-name-select"
-                    isOpen={isAccessControlNameOpen}
-                    selected={accessControlName}
-                    onSelect={(_event, value) => {
-                      setAccessControlName(value as string);
-                      setIsAccessControlNameOpen(false);
-                    }}
-                    onOpenChange={setIsAccessControlNameOpen}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsAccessControlNameOpen(!isAccessControlNameOpen)}
-                        isExpanded={isAccessControlNameOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-access-control-name-toggle"
-                      >
-                        {accessControlName || `Select ${accessControlType === 'User' ? 'user' : accessControlType === 'Group' ? 'group' : 'service account'}`}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      {getAccessControlNames(accessControlType).map((name) => (
-                        <SelectOption key={name} value={name} id={`access-control-name-${name}`}>
-                          {name}
-                        </SelectOption>
-                      ))}
-                    </SelectList>
-                  </Select>
+                  <TextInput
+                    id="add-asset-custom-tier-names"
+                    type="text"
+                    value={customTierNames}
+                    onChange={(_event, value) => setCustomTierNames(value)}
+                    placeholder="Enter tier names (comma separated)"
+                    aria-label="Custom tier names"
+                  />
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>
+                        Enter the exact names of additional tiers (comma separated) that you would like the asset to be available to
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
                 </FormGroup>
               )}
             </>

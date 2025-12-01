@@ -185,8 +185,8 @@ const EndpointPopover: React.FunctionComponent<{
 
   const handlePopoverClose = () => {
     setIsPopoverOpen(false);
-    // Clear generated token for MaaS models when popover closes
-    if ((model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') && type === 'external') {
+    // Clear generated token when popover closes
+    if (type === 'external') {
       onClearGeneratedToken?.(model.id);
     }
   };
@@ -223,70 +223,46 @@ const EndpointPopover: React.FunctionComponent<{
           <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
             API Key
           </label>
-          {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
-            // MaaS model token generation
-            generatedTokens?.has(model.id) ? (
-              <div>
-                <Alert
-                  variant="info"
-                  title="Important: Copy and store this token"
-                  isInline
-                  style={{ marginBottom: '0.5rem' }}
-                >
-                  This token cannot be viewed again after you close this dialog.
-                </Alert>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <TextInput
-                    value={generatedTokens.get(model.id) || ''}
-                    readOnly
-                    aria-label="Generated API Key"
-                    style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
-                  />
-                  <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
-                    <Button
-                      variant="plain"
-                      size="sm"
-                      aria-label="Copy token"
-                      onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, tokenId)}
-                      style={{ padding: '4px' }}
-                    >
-                      {copiedItems.has(tokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
-                    </Button>
-                  </Tooltip>
-                </div>
+          {generatedTokens?.has(model.id) ? (
+            <div>
+              <Alert
+                variant="info"
+                title="Important: Copy and store this token"
+                isInline
+                style={{ marginBottom: '0.5rem' }}
+              >
+                This token cannot be viewed again after you close this dialog.
+              </Alert>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <TextInput
+                  value={generatedTokens.get(model.id) || ''}
+                  readOnly
+                  aria-label="Generated API Key"
+                  style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                />
+                <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    aria-label="Copy token"
+                    onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, tokenId)}
+                    style={{ padding: '4px' }}
+                  >
+                    {copiedItems.has(tokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                  </Button>
+                </Tooltip>
               </div>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => onGenerateToken?.(model.id)}
-                isLoading={isGeneratingToken?.has(model.id)}
-                isDisabled={isGeneratingToken?.has(model.id)}
-              >
-                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
-              </Button>
-            )
+            </div>
           ) : (
-            // Regular model token display
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <TextInput
-              value={token || ''}
-              readOnly
-              aria-label="API Key"
-              style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
-            />
-            <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
-              <Button
-                variant="plain"
-                size="sm"
-                aria-label="Copy token"
-                onClick={() => handleCopyWithFeedback(token!, tokenId)}
-                style={{ padding: '4px' }}
-              >
-                {copiedItems.has(tokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
-              </Button>
-            </Tooltip>
-          </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onGenerateToken?.(model.id)}
+              isLoading={isGeneratingToken?.has(model.id)}
+              isDisabled={isGeneratingToken?.has(model.id)}
+            >
+              {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API key'}
+            </Button>
           )}
         </div>
       )}
@@ -334,8 +310,8 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
 
   const handlePopoverClose = () => {
     setIsPopoverOpen(false);
-    // Clear generated token for MaaS models when popover closes
-    if ((model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') && model.externalEndpoint) {
+    // Clear generated token when popover closes
+    if (model.externalEndpoint) {
       onClearGeneratedToken?.(model.id);
     }
   };
@@ -375,68 +351,21 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
             <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
               API Key
             </label>
-            {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
-              // MaaS model token generation
-              generatedTokens?.has(model.id) ? (
-                <div>
-                  <Alert
-                    variant="info"
-                    title="Important: Copy and store this token"
-                    isInline
-                    style={{ marginBottom: '0.5rem' }}
-                  >
-                    This token cannot be viewed again after you close this dialog.
-                  </Alert>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <TextInput
-                      value={generatedTokens.get(model.id) || ''}
-                      readOnly
-                      aria-label="Generated API Key"
-                      style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
-                    />
-                    <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
-                      <Button
-                        variant="plain"
-                        size="sm"
-                        aria-label="Copy token"
-                        onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, externalTokenId)}
-                        style={{ padding: '4px' }}
-                      >
-                        {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
-                      </Button>
-                    </Tooltip>
-                  </div>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <Button
-                      variant="link"
-                      isInline
-                      onClick={() => setIsUsageModalOpen(true)}
-                      id={`view-usage-example-${model.id}-generated`}
-                      style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
-                    >
-                      View usage example
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => onGenerateToken?.(model.id)}
-                  isLoading={isGeneratingToken?.has(model.id)}
-                  isDisabled={isGeneratingToken?.has(model.id)}
+            {generatedTokens?.has(model.id) ? (
+              <div>
+                <Alert
+                  variant="info"
+                  title="Important: Copy and store this token"
+                  isInline
+                  style={{ marginBottom: '0.5rem' }}
                 >
-                  {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
-                </Button>
-              )
-            ) : (
-              // Regular model token display
-              <>
+                  This token cannot be viewed again after you close this dialog.
+                </Alert>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <TextInput
-                    value={model.externalToken || ''}
+                    value={generatedTokens.get(model.id) || ''}
                     readOnly
-                    aria-label="API Key"
+                    aria-label="Generated API Key"
                     style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
                   />
                   <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
@@ -444,7 +373,7 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                       variant="plain"
                       size="sm"
                       aria-label="Copy token"
-                      onClick={() => handleCopyWithFeedback(model.externalToken!, externalTokenId)}
+                      onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, externalTokenId)}
                       style={{ padding: '4px' }}
                     >
                       {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
@@ -456,13 +385,23 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                     variant="link"
                     isInline
                     onClick={() => setIsUsageModalOpen(true)}
-                    id={`view-usage-example-${model.id}-regular`}
+                    id={`view-usage-example-${model.id}-generated`}
                     style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
                   >
                     View usage example
                   </Button>
                 </div>
-              </>
+              </div>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onGenerateToken?.(model.id)}
+                isLoading={isGeneratingToken?.has(model.id)}
+                isDisabled={isGeneratingToken?.has(model.id)}
+              >
+                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API key'}
+              </Button>
             )}
           </div>
         </>
@@ -1019,13 +958,9 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   
   // Add Asset modal state
   type AssetType = 'Model' | 'MCP Server' | '';
-  type ModelLocation = 'Internal' | 'External' | '';
-  type AccessControlType = 'All users' | 'User' | 'Group' | 'Service Account';
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = React.useState(false);
   const [assetType, setAssetType] = React.useState<AssetType>('');
   const [isAssetTypeOpen, setIsAssetTypeOpen] = React.useState(false);
-  const [modelLocation, setModelLocation] = React.useState<ModelLocation>('');
-  const [isModelLocationOpen, setIsModelLocationOpen] = React.useState(false);
   const [externalProvider, setExternalProvider] = React.useState('');
   const [isExternalProviderOpen, setIsExternalProviderOpen] = React.useState(false);
   const [externalProviderAPIKey, setExternalProviderAPIKey] = React.useState('');
@@ -1039,10 +974,9 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [tools, setTools] = React.useState('');
   const [isToolsOpen, setIsToolsOpen] = React.useState(false);
   const [assetDescription, setAssetDescription] = React.useState('');
-  const [accessControlType, setAccessControlType] = React.useState<AccessControlType>('All users');
-  const [isAccessControlTypeOpen, setIsAccessControlTypeOpen] = React.useState(false);
-  const [accessControlName, setAccessControlName] = React.useState('');
-  const [isAccessControlNameOpen, setIsAccessControlNameOpen] = React.useState(false);
+  const [selectedTiers, setSelectedTiers] = React.useState<string[]>([]);
+  const [isTierSelectOpen, setIsTierSelectOpen] = React.useState(false);
+  const [customTierNames, setCustomTierNames] = React.useState('');
 
   // Initialize state from localStorage
   React.useEffect(() => {
@@ -1098,9 +1032,21 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [modelsFilterDropdownOpen, setModelsFilterDropdownOpen] = React.useState<boolean>(false);
   
   // MaaS models filter state (separate from regular models)
+  const [maasFilters, setMaasFilters] = React.useState<{
+    name: string[];
+    keyword: string[];
+    useCase: string[];
+  }>({
+    name: [],
+    keyword: [],
+    useCase: []
+  });
   const [maasFilterAttribute, setMaasFilterAttribute] = React.useState<'name' | 'keyword' | 'useCase'>('name');
   const [maasFilterInput, setMaasFilterInput] = React.useState<string>('');
   const [maasFilterDropdownOpen, setMaasFilterDropdownOpen] = React.useState<boolean>(false);
+  const [maasViewMode, setMaasViewMode] = React.useState<'cards' | 'table'>('table');
+  const [maasPerPage, setMaasPerPage] = React.useState(10);
+  const [maasCurrentPage, setMaasCurrentPage] = React.useState(1);
 
   // Filter state for MCP servers
   const [mcpFilters, setMcpFilters] = React.useState<{
@@ -1118,7 +1064,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
 
 
   // Filter helper functions
-  const addFilter = (category: 'models' | 'mcp', filterType: string, value: string) => {
+  const addFilter = (category: 'models' | 'mcp' | 'maas', filterType: string, value: string) => {
     if (category === 'models') {
       setModelsFilters(prev => ({
         ...prev,
@@ -1126,6 +1072,13 @@ const AvailableAIAssets: React.FunctionComponent = () => {
       }));
       setModelsFilterInput('');
       setCurrentPage(1); // Reset pagination when filters change
+    } else if (category === 'maas') {
+      setMaasFilters(prev => ({
+        ...prev,
+        [filterType]: [...prev[filterType as keyof typeof prev], value]
+      }));
+      setMaasFilterInput('');
+      setMaasCurrentPage(1); // Reset pagination when filters change
     } else {
       setMcpFilters(prev => ({
         ...prev,
@@ -1136,13 +1089,19 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     }
   };
 
-  const removeFilter = (category: 'models' | 'mcp', filterType: string, value: string) => {
+  const removeFilter = (category: 'models' | 'mcp' | 'maas', filterType: string, value: string) => {
     if (category === 'models') {
       setModelsFilters(prev => ({
         ...prev,
         [filterType]: prev[filterType as keyof typeof prev].filter(item => item !== value)
       }));
       setCurrentPage(1); // Reset pagination when filters change
+    } else if (category === 'maas') {
+      setMaasFilters(prev => ({
+        ...prev,
+        [filterType]: prev[filterType as keyof typeof prev].filter(item => item !== value)
+      }));
+      setMaasCurrentPage(1); // Reset pagination when filters change
     } else {
       setMcpFilters(prev => ({
         ...prev,
@@ -1152,11 +1111,15 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     }
   };
 
-  const clearAllFilters = (category: 'models' | 'mcp') => {
+  const clearAllFilters = (category: 'models' | 'mcp' | 'maas') => {
     if (category === 'models') {
       setModelsFilters({ name: [], keyword: [], useCase: [], type: [] });
       setModelsFilterInput('');
       setCurrentPage(1); // Reset pagination when filters change
+    } else if (category === 'maas') {
+      setMaasFilters({ name: [], keyword: [], useCase: [] });
+      setMaasFilterInput('');
+      setMaasCurrentPage(1); // Reset pagination when filters change
     } else {
       setMcpFilters({ name: [], keyword: [], description: [] });
       setMcpFilterInput('');
@@ -1164,8 +1127,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     }
   };
 
-  const getFilterPlaceholder = (category: 'models' | 'mcp', attribute: string) => {
-    if (category === 'models') {
+  const getFilterPlaceholder = (category: 'models' | 'mcp' | 'maas', attribute: string) => {
+    if (category === 'models' || category === 'maas') {
       switch (attribute) {
         case 'name': return 'Filter by name';
         case 'keyword': return 'Filter by keyword...';
@@ -1241,20 +1204,20 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     const matchesProjectFilter = true;
 
     // Name filters
-    const matchesNameFilters = modelsFilters.name.length === 0 || 
-      modelsFilters.name.some(filter => model.name.toLowerCase().includes(filter.toLowerCase()));
+    const matchesNameFilters = maasFilters.name.length === 0 || 
+      maasFilters.name.some(filter => model.name.toLowerCase().includes(filter.toLowerCase()));
 
     // Keyword filters
-    const matchesKeywordFilters = modelsFilters.keyword.length === 0 || 
-      modelsFilters.keyword.some(filter => 
+    const matchesKeywordFilters = maasFilters.keyword.length === 0 || 
+      maasFilters.keyword.some(filter => 
         model.name.toLowerCase().includes(filter.toLowerCase()) ||
         (model.description?.toLowerCase() || '').includes(filter.toLowerCase()) ||
         model.useCase.toLowerCase().includes(filter.toLowerCase())
       );
 
     // Use case filters
-    const matchesUseCaseFilters = modelsFilters.useCase.length === 0 || 
-      modelsFilters.useCase.some(filter => model.useCase.toLowerCase().includes(filter.toLowerCase()));
+    const matchesUseCaseFilters = maasFilters.useCase.length === 0 || 
+      maasFilters.useCase.some(filter => model.useCase.toLowerCase().includes(filter.toLowerCase()));
 
     return matchesProjectFilter && matchesNameFilters && matchesKeywordFilters && matchesUseCaseFilters;
   });
@@ -1378,8 +1341,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
 
   const getPaginatedMaaSModels = () => {
     const sortedModels = getSortedMaaSModels();
-    const start = (currentPage - 1) * perPage;
-    const end = start + perPage;
+    const start = (maasCurrentPage - 1) * maasPerPage;
+    const end = start + maasPerPage;
     return sortedModels.slice(start, end);
   };
 
@@ -1410,6 +1373,10 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         setModelsCardAnimations(new Array(modelCount).fill(true));
       }, 50);
     }
+  };
+
+  const handleMaasViewModeChange = (mode: 'cards' | 'table') => {
+    setMaasViewMode(mode);
   };
 
   // Handle MCP view mode change with animation
@@ -1475,8 +1442,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     setModelDeployment('');
     setMcpServer('');
     setTools('');
-    setAccessControlType('All users');
-    setAccessControlName('');
+    setSelectedTiers([]);
+    setCustomTierNames('');
     setAssetDescription('');
   };
 
@@ -2388,11 +2355,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 </Flex>
                 
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <EndpointPopover 
+                  <CombinedEndpointsPopover 
                     model={model}
                     copiedItems={copiedItems}
                     handleCopyWithFeedback={handleCopyWithFeedback}
-                    type="internal"
+                    generatedTokens={generatedTokens}
+                    isGeneratingToken={isGeneratingToken}
+                    onGenerateToken={handleGenerateToken}
+                    onClearGeneratedToken={handleClearGeneratedToken}
                   />
                   
                   {(model.llsStatus === 'not-registered' && !modelsWithEndpoints.has(model.id) && !modelsAddedToPlayground.has(model.id)) && (
@@ -3040,6 +3010,229 @@ const AvailableAIAssets: React.FunctionComponent = () => {
           </Tab>
           <Tab
             eventKey={1}
+            title={<TabTitleText>Models as a service</TabTitleText>}
+            aria-label="Models as a service tab"
+          >
+            <div style={{ paddingTop: '1rem' }}>
+              {/* Filters and Controls for MaaS Models */}
+              <div 
+                className="pf-v5-u-mb-lg"
+                style={{ 
+                  position: 'sticky',
+                  top: '0',
+                  zIndex: 100,
+                  backgroundColor: '#ffffff',
+                  paddingTop: '0.5rem',
+                  paddingBottom: '0.5rem',
+                  borderBottom: '1px solid var(--pf-v5-global--BorderColor--100)'
+                }}
+              >
+                <Toolbar>
+                  <ToolbarContent>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <InputGroup>
+                          <InputGroupItem>
+                            <Dropdown
+                              isOpen={maasFilterDropdownOpen}
+                              onSelect={() => setMaasFilterDropdownOpen(false)}
+                              onOpenChange={(isOpen: boolean) => setMaasFilterDropdownOpen(isOpen)}
+                              toggle={(toggleRef: React.Ref<HTMLButtonElement>) => (
+                                <MenuToggle
+                                  ref={toggleRef}
+                                  onClick={() => setMaasFilterDropdownOpen(!maasFilterDropdownOpen)}
+                                  isExpanded={maasFilterDropdownOpen}
+                                  style={{
+                                    minWidth: '120px',
+                                    backgroundColor: '#f0f0f0',
+                                    borderRight: 'none',
+                                    borderTopRightRadius: 0,
+                                    borderBottomRightRadius: 0
+                                  }}
+                                  id="maas-filter-dropdown-toggle"
+                                >
+                                  <FilterIcon style={{ marginRight: '0.5rem' }} />
+                                  {maasFilterAttribute === 'name' && 'Name'}
+                                  {maasFilterAttribute === 'keyword' && 'Keyword'}
+                                  {maasFilterAttribute === 'useCase' && 'Use Case'}
+                                </MenuToggle>
+                              )}
+                            >
+                              <DropdownList>
+                                <DropdownItem 
+                                  key="name"
+                                  onClick={() => {
+                                    setMaasFilterAttribute('name');
+                                    setMaasFilterInput('');
+                                  }}
+                                >
+                                  Name
+                                </DropdownItem>
+                                <DropdownItem 
+                                  key="keyword"
+                                  onClick={() => {
+                                    setMaasFilterAttribute('keyword');
+                                    setMaasFilterInput('');
+                                  }}
+                                >
+                                  Keyword
+                                </DropdownItem>
+                                <DropdownItem 
+                                  key="useCase"
+                                  onClick={() => {
+                                    setMaasFilterAttribute('useCase');
+                                    setMaasFilterInput('');
+                                  }}
+                                >
+                                  Use Case
+                                </DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </InputGroupItem>
+                          <InputGroupItem isFill>
+                            <SearchInput
+                              placeholder={getFilterPlaceholder('maas', maasFilterAttribute)}
+                              value={maasFilterInput}
+                              onChange={(_event, value) => setMaasFilterInput(value)}
+                              onSearch={() => {
+                                if (maasFilterInput.trim()) {
+                                  addFilter('maas', maasFilterAttribute, maasFilterInput.trim());
+                                }
+                              }}
+                              onClear={() => setMaasFilterInput('')}
+                              style={{ 
+                                borderTopLeftRadius: 0,
+                                borderBottomLeftRadius: 0,
+                                minWidth: '300px'
+                              }}
+                              id="maas-filter-search-input"
+                            />
+                          </InputGroupItem>
+                        </InputGroup>
+                      </ToolbarItem>
+
+                    </ToolbarGroup>
+                    {flags.enableCardTableViewSwitcher && (
+                      <ToolbarGroup align={{ default: 'alignEnd' }}>
+                        <ToolbarItem>
+                          {/* View Toggle */}
+                          <div style={{ display: 'flex' }}>
+                            <Button
+                              variant={maasViewMode === 'cards' ? 'primary' : 'secondary'}
+                              onClick={() => handleMaasViewModeChange('cards')}
+                              style={{ 
+                                fontSize: '0.75rem',
+                                height: '2rem',
+                                paddingLeft: '0.75rem',
+                                paddingRight: '0.75rem',
+                                marginRight: '0.25rem'
+                              }}
+                              icon={<ThIcon style={{ marginRight: '0.5rem' }} />}
+                              id="maas-cards-view-button"
+                            >
+                              Cards
+                            </Button>
+                            <Button
+                              variant={maasViewMode === 'table' ? 'primary' : 'secondary'}
+                              onClick={() => handleMaasViewModeChange('table')}
+                              style={{ 
+                                fontSize: '0.75rem',
+                                height: '2rem',
+                                paddingLeft: '0.75rem',
+                                paddingRight: '0.75rem'
+                              }}
+                              icon={<ListIcon style={{ marginRight: '0.5rem' }} />}
+                              id="maas-table-view-button"
+                            >
+                              Table
+                            </Button>
+                          </div>
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                    )}
+                    <ToolbarGroup align={{ default: 'alignEnd' }}>
+                      <ToolbarItem>
+                        <Pagination
+                          itemCount={getSortedMaaSModels().length}
+                          perPage={maasPerPage}
+                          page={maasCurrentPage}
+                          onSetPage={(_event, pageNumber) => setMaasCurrentPage(pageNumber)}
+                          onPerPageSelect={(_event, newPerPage) => {
+                            setMaasPerPage(newPerPage);
+                            setMaasCurrentPage(1);
+                          }}
+                          variant="top"
+                          isCompact
+                          perPageOptions={[
+                            { title: '5', value: 5 },
+                            { title: '10', value: 10 },
+                            { title: '20', value: 20 },
+                            { title: '50', value: 50 }
+                          ]}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+
+                    {/* Active Filters Row */}
+                    {(maasFilters.name.length > 0 || maasFilters.keyword.length > 0 || maasFilters.useCase.length > 0) && (
+                      <ToolbarGroup>
+                        <ToolbarItem variant="label-group">
+                          <LabelGroup
+                            categoryName="Active filters"
+                            isClosable={false}
+                            numLabels={maasFilters.name.length + maasFilters.keyword.length + maasFilters.useCase.length}
+                          >
+                            {maasFilters.name.map(filter => (
+                              <Label 
+                                key={`name-${filter}`}
+                                variant="outline"
+                                onClose={() => removeFilter('maas', 'name', filter)}
+                              >
+                                {filter}
+                              </Label>
+                            ))}
+                            {maasFilters.keyword.map(filter => (
+                              <Label 
+                                key={`keyword-${filter}`}
+                                variant="outline"
+                                onClose={() => removeFilter('maas', 'keyword', filter)}
+                              >
+                                {filter}
+                              </Label>
+                            ))}
+                            {maasFilters.useCase.map(filter => (
+                              <Label 
+                                key={`useCase-${filter}`}
+                                variant="outline"
+                                onClose={() => removeFilter('maas', 'useCase', filter)}
+                              >
+                                {filter}
+                              </Label>
+                            ))}
+                          </LabelGroup>
+                        </ToolbarItem>
+                        <ToolbarItem>
+                          <Button
+                            variant="link"
+                            onClick={() => clearAllFilters('maas')}
+                            size="sm"
+                            id="maas-clear-filters-button"
+                          >
+                            Clear filters
+                          </Button>
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                    )}
+                  </ToolbarContent>
+                </Toolbar>
+              </div>
+              <div style={{ marginTop: maasViewMode === 'cards' ? '1.5rem' : '0' }}>
+                {maasViewMode === 'table' ? renderMaaSModelsTable() : renderMaaSModelsCards()}
+              </div>
+            </div>
+          </Tab>
+          <Tab
+            eventKey={2}
             title={<TabTitleText>MCP servers</TabTitleText>}
             aria-label="MCP Servers tab"
           >
@@ -3637,10 +3830,6 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         setAssetType={setAssetType}
         isAssetTypeOpen={isAssetTypeOpen}
         setIsAssetTypeOpen={setIsAssetTypeOpen}
-        modelLocation={modelLocation}
-        setModelLocation={setModelLocation}
-        isModelLocationOpen={isModelLocationOpen}
-        setIsModelLocationOpen={setIsModelLocationOpen}
         project={project}
         setProject={setProject}
         isProjectOpen={isAddAssetProjectOpen}
@@ -3665,14 +3854,12 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         setTools={setTools}
         isToolsOpen={isToolsOpen}
         setIsToolsOpen={setIsToolsOpen}
-        accessControlType={accessControlType}
-        setAccessControlType={setAccessControlType}
-        isAccessControlTypeOpen={isAccessControlTypeOpen}
-        setIsAccessControlTypeOpen={setIsAccessControlTypeOpen}
-        accessControlName={accessControlName}
-        setAccessControlName={setAccessControlName}
-        isAccessControlNameOpen={isAccessControlNameOpen}
-        setIsAccessControlNameOpen={setIsAccessControlNameOpen}
+        selectedTiers={selectedTiers}
+        setSelectedTiers={setSelectedTiers}
+        isTierSelectOpen={isTierSelectOpen}
+        setIsTierSelectOpen={setIsTierSelectOpen}
+        customTierNames={customTierNames}
+        setCustomTierNames={setCustomTierNames}
         assetDescription={assetDescription}
         setAssetDescription={setAssetDescription}
       />
