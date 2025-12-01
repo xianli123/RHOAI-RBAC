@@ -110,6 +110,9 @@ GENERIC_LOGO=true
 
 # Hide the orange "UXD PROTOTYPE" banner
 PROTOTYPE_BAR=false
+
+# Set default fidelity mode
+DEFAULT_FIDELITY=low
 ```
 
 ### Available Options:
@@ -122,6 +125,11 @@ PROTOTYPE_BAR=false
 - `true` (default): Shows the orange "UXD PROTOTYPE" banner with fidelity controls
 - `false`: Hides the banner completely
 
+**DEFAULT_FIDELITY**
+- `high` (default): Starts with high fidelity mode
+- `low`: Starts with low fidelity mode
+- Note: URL query parameter `?fidelity=low` or `?fidelity=high` will override this setting
+
 You can use these independently or together depending on your needs:
-- For user research: Set both `GENERIC_LOGO=true` and `PROTOTYPE_BAR=false`
+- For user research: Set `GENERIC_LOGO=true`, `PROTOTYPE_BAR=false`, and optionally `DEFAULT_FIDELITY=low`
 - For internal demos: Keep defaults or customize as needed

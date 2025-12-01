@@ -58,9 +58,21 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   // Fidelity switcher state
   const [fidelitySelectOpen, setFidelitySelectOpen] = React.useState(false);
   const [fidelity, setFidelity] = React.useState<'high' | 'low'>(() => {
-    // Initialize from URL query parameter if present
+    // Priority: 1) URL query parameter, 2) Environment variable, 3) Default to 'high'
     const params = new URLSearchParams(location.search);
-    return params.get('fidelity') === 'low' ? 'low' : 'high';
+    const urlFidelity = params.get('fidelity');
+    
+    if (urlFidelity === 'low' || urlFidelity === 'high') {
+      return urlFidelity;
+    }
+    
+    // Check environment variable for default fidelity
+    const defaultFidelity = process.env.DEFAULT_FIDELITY;
+    if (defaultFidelity === 'low' || defaultFidelity === 'high') {
+      return defaultFidelity;
+    }
+    
+    return 'high';
   });
 
   // Effect to toggle fidelity class on body and update URL
