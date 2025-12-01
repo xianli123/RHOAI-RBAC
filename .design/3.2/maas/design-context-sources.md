@@ -1,18 +1,8 @@
 # Context Sources
 
-The sources below contain information about MaaS that are useful on an ongoing basis.
+The sources below contain information about this feature that are useful on an ongoing basis.
 
-NOTE: in the future we likely need to automatically grab the creation date and date last modified of each document/source, since the information in older docs is less relevant than newer ones. Need to figure out a good way of tracking this and gradually de-emphasizing older docs to the AI model.
-
-## Notebooks
-
-source: https://notebooklm.google.com/notebook/7c5d493a-85b8-438d-b1d9-aeab507c63a7
-- description: UXD Orientation NotebookLM for Models-as-a-Service (MaaS)
-
-## Miro
-
-source: https://miro.com/app/board/uXjVIgQDVWw=/
-- description: Journey map of the MaaS end user experience, from 3.0 to 3.2/3.3
+NOTE: in the future we will likely use MCP servers for each source to automatically grab the creation date and last modified date of each document/source, since the information in older docs is generally less relevant than newer ones. We still to figure out a good way of tracking this and gradually de-emphasizing older docs to the AI model.
 
 ## Slack
 
@@ -25,11 +15,11 @@ source: https://redhat.enterprise.slack.com/archives/C094HF5KD6E
 
 ## Docs
 
-source: https://docs.google.com/document/d/142X3mx_SIdSWMvgf3ppSW83J__ZtQ4EDmOiF0IKZYJc/edit?pli=1&tab=t.grnrd6dljv81
+source: https://docs.google.com/document/d/142X3mx_SIdSWMvgf3ppSW83J__ZtQ4EDmOiF0IKZYJc/edit
 - title: Models-as-a-Service Worksheet North Star
-source: https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit?tab=t.0
+source: https://docs.google.com/document/d/1aKyE3KC29v1ndWFqLfAp533eb04JPCYkBL8iHShV08E/edit
 - title: MaaS Coordination doc for 3.2/3.3
-source: https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit?tab=t.3mrf1syv46a
+source: https://docs.google.com/document/d/1ApBP2VcMUELEY0lIx6M5761oHmjEdpKwvMpivIUZD7A/edit
 - title: Feature Refinement-RHOAISTRAT-638-MaaS Admin UI
 - description: MaaS Admin UI refinement doc for 3.2/3.3
 source: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCBj3bwq02fE0mGOEtVwjBw/edit
@@ -51,7 +41,7 @@ source: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCBj3bwq02fE0mGO
 - title: UXD MaaS Orientation doc
 - description: A UXD-oriented intruction to MaaS, likely to be deprecated by AI in the future with continuosly-updated information
 
-## Decks
+## Slides
 
 source: https://docs.google.com/presentation/d/1ORtU9uYWKxlOngo1Xj7atkLPYdUMUTZrua5v0OOtdOY/edit?slide=id.g2e86baf0a21_0_0#slide=id.g2e86baf0a21_0_0
 - title: RHAI MaaS Master Deck
@@ -61,6 +51,25 @@ source: https://docs.google.com/presentation/d/1ms_my1WI4l_-zBe6wBCAoeUA2dNnQAVi
 - title: MaaS: path to DevPreview
 - date: 2025-09-03
 - description: Summary of Dev Preview strategy and plan for MaaS in RHOAI, confirms that group filtering of models is a thing for the future and by default we can list models to everyone
+
+## Notebooks
+
+source: https://notebooklm.google.com/notebook/7c5d493a-85b8-438d-b1d9-aeab507c63a7
+- description: UXD Orientation NotebookLM for Models-as-a-Service (MaaS)
+
+## Diagrams
+
+source: https://miro.com/app/board/uXjVIgQDVWw=/
+- description: Journey map of the MaaS end user experience, from 3.0 to 3.2/3.3
+source: https://miro.com/app/board/uXjVIh6zvD0=/
+- title: MaaS Architecture
+- description: Architectural diagrams for how the MaaS feature may work, lots of variations
+source: https://miro.com/app/board/uXjVJut8fcE=/
+- title: DP MaaS Entity Relations 11/25
+- description: Diagrams of how the various MaaS APIs and entities relate to one another for Dev Preview, Tech Preview, and potentially GA
+source: https://docs.google.com/drawings/d/1z3c-8lvXUjzBTCIHLZzIN5LROKHwc9AQ6ygqqZcYMT8/edit
+- title: MaaS Tiers relationships
+- description: mid-November diagrams of how the various Tier-related APIs might relate to one another
 
 ## Repositories
 
@@ -142,5 +151,3 @@ source: https://litemaas-litemaas.apps.prod.rhoai.rh-aiservices-bu.com/home
 - description: MaaS demo UI powered by LiteLLM and created by the AI Customer Adoption and Innovation Team (CAI)
 source: http://18.223.29.178:3000
 - description: MaaS demo UI for policy management and observability, created by Noy
-source: https://miro.com/app/board/uXjVIh6zvD0=/
-- description: MaaS Architecture diagrams
