@@ -65,12 +65,13 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   const [isAttributeSelectOpen, setIsAttributeSelectOpen] = React.useState(false);
   const [selectedAttribute, setSelectedAttribute] = React.useState<string>('Status');
   const [isFilterSelectOpen, setIsFilterSelectOpen] = React.useState(false);
-  const [selectedFilters, setSelectedFilters] = React.useState<string[]>([]);
+  const [selectedStatusFilters, setSelectedStatusFilters] = React.useState<string[]>([]);
+  const [selectedPriorityFilters, setSelectedPriorityFilters] = React.useState<string[]>([]);
+  const [selectedHardwareFilters, setSelectedHardwareFilters] = React.useState<string[]>([]);
   const [searchValue, setSearchValue] = React.useState('');
   const [openKebabIndex, setOpenKebabIndex] = React.useState<number | null>(null);
   const [isAdmissionMetricsExpanded, setIsAdmissionMetricsExpanded] = React.useState(true);
   const [isAdmissionFlowExpanded, setIsAdmissionFlowExpanded] = React.useState(true);
-  const [isAdmissionFlow2Expanded, setIsAdmissionFlow2Expanded] = React.useState(true);
   const [isResourceAvailabilityExpanded, setIsResourceAvailabilityExpanded] = React.useState(true);
   const [isWorkloadsExpanded, setIsWorkloadsExpanded] = React.useState(true);
 
@@ -84,6 +85,25 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   };
   
   const currentFilterOptions = filterOptionsByAttribute[selectedAttribute] || [];
+  
+  // Get current selected filters based on attribute
+  const getCurrentSelectedFilters = () => {
+    switch(selectedAttribute) {
+      case 'Status': return selectedStatusFilters;
+      case 'Priority': return selectedPriorityFilters;
+      case 'Hardware profile': return selectedHardwareFilters;
+      default: return [];
+    }
+  };
+  
+  const currentSelectedFilters = getCurrentSelectedFilters();
+  
+  // Get all active filters across all categories
+  const allActiveFilters = [
+    ...selectedStatusFilters.map(f => ({ category: 'Status', value: f })),
+    ...selectedPriorityFilters.map(f => ({ category: 'Priority', value: f })),
+    ...selectedHardwareFilters.map(f => ({ category: 'Hardware profile', value: f })),
+  ];
 
   // Helper function to create ECharts sparkline options
   const getSparklineOptions = (data: Array<{ x: number; y: number }>, color: string) => ({
@@ -141,7 +161,6 @@ const WorkloadMetrics: React.FunctionComponent = () => {
     if (value && typeof value === 'string') {
       setSelectedAttribute(value);
       setIsAttributeSelectOpen(false);
-      setSelectedFilters([]); // Clear selected filters when changing attribute
     }
   };
 
@@ -151,18 +170,44 @@ const WorkloadMetrics: React.FunctionComponent = () => {
 
   const onFilterSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
     if (value && typeof value === 'string') {
-      setSelectedFilters((prev) =>
-        prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-      );
+      switch(selectedAttribute) {
+        case 'Status':
+          setSelectedStatusFilters((prev) =>
+            prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+          );
+          break;
+        case 'Priority':
+          setSelectedPriorityFilters((prev) =>
+            prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+          );
+          break;
+        case 'Hardware profile':
+          setSelectedHardwareFilters((prev) =>
+            prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+          );
+          break;
+      }
     }
   };
 
   const clearFilters = () => {
-    setSelectedFilters([]);
+    setSelectedStatusFilters([]);
+    setSelectedPriorityFilters([]);
+    setSelectedHardwareFilters([]);
   };
 
-  const clearFilter = (filter: string) => {
-    setSelectedFilters((prev) => prev.filter((item) => item !== filter));
+  const clearFilter = (category: string, filter: string) => {
+    switch(category) {
+      case 'Status':
+        setSelectedStatusFilters((prev) => prev.filter((item) => item !== filter));
+        break;
+      case 'Priority':
+        setSelectedPriorityFilters((prev) => prev.filter((item) => item !== filter));
+        break;
+      case 'Hardware profile':
+        setSelectedHardwareFilters((prev) => prev.filter((item) => item !== filter));
+        break;
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -316,10 +361,27 @@ const WorkloadMetrics: React.FunctionComponent = () => {
     },
   ];
 
-  // Filter jobs based on search value
-  const filteredJobs = jobData.filter(job => 
-    job.name.toLowerCase().includes(searchValue.toLowerCase())
-  );
+  // Filter jobs based on search value and all active filters
+  const filteredJobs = jobData.filter(job => {
+    // Search filter
+    const matchesSearch = job.name.toLowerCase().includes(searchValue.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = selectedStatusFilters.length === 0 || 
+      selectedStatusFilters.includes(job.status);
+    
+    // Priority filter (match on priority name, e.g., "Critical" from "Critical\n2000")
+    const jobPriorityName = job.priority.split('\n')[0];
+    const matchesPriority = selectedPriorityFilters.length === 0 || 
+      selectedPriorityFilters.some(filter => filter.split('\n')[0] === jobPriorityName);
+    
+    // Hardware profile filter (match on hardware profile name)
+    const jobHardwareName = job.hardwareProfile.split('\n')[0];
+    const matchesHardware = selectedHardwareFilters.length === 0 || 
+      selectedHardwareFilters.some(filter => filter.split('\n')[0] === jobHardwareName);
+    
+    return matchesSearch && matchesStatus && matchesPriority && matchesHardware;
+  });
 
   // Mock chart data for metric cards
   const admissionsRateData = [
@@ -379,7 +441,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   <PageSection>
         <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
           <FlexItem>
-            <Content component={ContentVariants.h1} id="workload-metrics-title">Workload metrics</Content>
+            <Content component={ContentVariants.h1} id="workload-metrics-title">Workload metrics (Option A)</Content>
           </FlexItem>
           <FlexItem>
             <Badge 
@@ -490,7 +552,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
             <Select
               id="filter-options-select"
               isOpen={isFilterSelectOpen}
-              selected={selectedFilters}
+              selected={currentSelectedFilters}
               onSelect={onFilterSelect}
               onOpenChange={setIsFilterSelectOpen}
               toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
@@ -512,7 +574,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                     <SelectOption
                       key={option}
                       value={option}
-                      isSelected={selectedFilters.includes(option)}
+                      isSelected={currentSelectedFilters.includes(option)}
                       id={`filter-option-${index}`}
                     >
                       {lines.length > 1 ? (
@@ -532,20 +594,50 @@ const WorkloadMetrics: React.FunctionComponent = () => {
         </Flex>
 
         {/* Active filters */}
-        {selectedFilters.length > 0 && (
+        {allActiveFilters.length > 0 && (
           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginTop: '16px' }}>
-            <FlexItem>
-              <LabelGroup categoryName={selectedAttribute} id="filter-label-group">
-                {selectedFilters.map((filter) => {
-                  const displayText = filter.split('\n')[0]; // Show only first line in label
-                  return (
-                    <Label key={filter} onClose={() => clearFilter(filter)} id={`filter-label-${filter}`} color="grey">
-                      {displayText}
-                    </Label>
-                  );
-                })}
-              </LabelGroup>
-            </FlexItem>
+            {selectedStatusFilters.length > 0 && (
+              <FlexItem>
+                <LabelGroup categoryName="Status" id="filter-label-group-status">
+                  {selectedStatusFilters.map((filter) => {
+                    const displayText = filter.split('\n')[0];
+                    return (
+                      <Label key={filter} onClose={() => clearFilter('Status', filter)} id={`filter-label-status-${filter}`} color="grey">
+                        {displayText}
+                      </Label>
+                    );
+                  })}
+                </LabelGroup>
+              </FlexItem>
+            )}
+            {selectedPriorityFilters.length > 0 && (
+              <FlexItem>
+                <LabelGroup categoryName="Priority" id="filter-label-group-priority">
+                  {selectedPriorityFilters.map((filter) => {
+                    const displayText = filter.split('\n')[0];
+                    return (
+                      <Label key={filter} onClose={() => clearFilter('Priority', filter)} id={`filter-label-priority-${filter}`} color="grey">
+                        {displayText}
+                      </Label>
+                    );
+                  })}
+                </LabelGroup>
+              </FlexItem>
+            )}
+            {selectedHardwareFilters.length > 0 && (
+              <FlexItem>
+                <LabelGroup categoryName="Hardware profile" id="filter-label-group-hardware">
+                  {selectedHardwareFilters.map((filter) => {
+                    const displayText = filter.split('\n')[0];
+                    return (
+                      <Label key={filter} onClose={() => clearFilter('Hardware profile', filter)} id={`filter-label-hardware-${filter}`} color="grey">
+                        {displayText}
+                      </Label>
+                    );
+                  })}
+                </LabelGroup>
+              </FlexItem>
+            )}
             <FlexItem>
               <Button variant="link" onClick={clearFilters} id="clear-filters-button">
                 Clear all filters
@@ -640,7 +732,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
 
         {/* Admission flow */}
         <ExpandableSection
-          toggleText="Admission flow (Option 1)"
+          toggleText="Admission flow"
           isExpanded={isAdmissionFlowExpanded}
           onToggle={(_event, isExpanded) => setIsAdmissionFlowExpanded(isExpanded)}
           displaySize="lg"
@@ -648,13 +740,20 @@ const WorkloadMetrics: React.FunctionComponent = () => {
           style={{ marginTop: '24px', backgroundColor: 'transparent' }}
         >
           <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
-              <FlexItem>
-                <Card isCompact id="job-created-card" style={{ height: '100px' }}>
-                  <CardTitle id="job-created-title">Job created</CardTitle>
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <Card isCompact id="job-created-card" style={{ height: '100px', width: '100%' }}>
+                  <CardTitle id="job-created-title">
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <Icon status="info">
+                        <InfoCircleIcon />
+                      </Icon>
+                      Job created
+                    </span>
+                  </CardTitle>
                   <CardBody>
                     <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      If submitted
+                      2 jobs awaiting processing
                     </div>
                   </CardBody>
                 </Card>
@@ -664,12 +763,53 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                   <ArrowRightIcon />
                 </Icon>
               </FlexItem>
-              <FlexItem>
-                <Card isCompact id="local-queue-card" style={{ height: '100px' }}>
-                  <CardTitle id="local-queue-title">Local Queue</CardTitle>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <Card isCompact id="local-queue-card" style={{ height: '100px', width: '100%' }}>
+                  <CardTitle id="local-queue-title">
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <Icon status="info">
+                        <InfoCircleIcon />
+                      </Icon>
+                      Local Queue
+                    </span>
+                  </CardTitle>
                   <CardBody>
                     <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Namespace
+                      3 jobs in namespace queue
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <Card isCompact id="cluster-queue-card" style={{ height: '100px', width: '100%' }}>
+                  <CardTitle id="cluster-queue-title">
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <Icon status="warning">
+                        <ExclamationTriangleIcon />
+                      </Icon>
+                      Cluster Queue
+                    </span>
+                  </CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      5 jobs blocked (quota)
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <Card isCompact id="resource-flavor-card" style={{ height: '100px', width: '100%' }}>
+                  <CardTitle id="resource-flavor-title">
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <Icon status="warning">
+                        <ExclamationTriangleIcon />
+                      </Icon>
+                      Hardware profile
+                    </span>
+                  </CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      5 jobs stuck (no hardware)
                     </div>
                   </CardBody>
                 </Card>
@@ -679,42 +819,19 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                   <ArrowRightIcon />
                 </Icon>
               </FlexItem>
-              <FlexItem>
-                <Card isCompact id="cluster-queue-card" style={{ height: '100px' }}>
-                  <CardTitle id="cluster-queue-title">Cluster Queue</CardTitle>
+              <FlexItem flex={{ default: 'flex_1' }}>
+                <Card isCompact id="admitted-card" style={{ height: '100px', width: '100%' }}>
+                  <CardTitle id="admitted-title">
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <Icon status="success">
+                        <CheckCircleIcon />
+                      </Icon>
+                      Admitted
+                    </span>
+                  </CardTitle>
                   <CardBody>
                     <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Quota check<br />5 blocked (quota)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem>
-                <Card isCompact id="resource-flavor-card" style={{ height: '100px' }}>
-                  <CardTitle id="resource-flavor-title">Resource flavor</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Quota hardware match<br />5 stuck (no hardware)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem>
-                <Card isCompact id="admitted-card" style={{ height: '100px' }}>
-                  <CardTitle id="admitted-title">Admitted</CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      Running
+                      8 jobs running
                     </div>
                   </CardBody>
                 </Card>
@@ -722,76 +839,6 @@ const WorkloadMetrics: React.FunctionComponent = () => {
             </Flex>
           </div>
         </ExpandableSection>
-
-        {/* Admission flow 2 */}
-        <ExpandableSection
-          toggleText="Admission flow (Option 2)"
-          isExpanded={isAdmissionFlow2Expanded}
-          onToggle={(_event, isExpanded) => setIsAdmissionFlow2Expanded(isExpanded)}
-          displaySize="lg"
-          id="admission-flow-2-expandable"
-          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
-        >
-          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
-            <Flex>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Job created <Badge isRead id="job-created-badge-2">2</Badge>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    If submitted
-                  </div>
-                </div>
-              </FlexItem>
-              <Divider orientation={{ default: 'vertical' }} />
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Local Queue <Badge isRead id="local-queue-badge-2">3</Badge>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    Namespace
-                  </div>
-                </div>
-              </FlexItem>
-              <Divider orientation={{ default: 'vertical' }} />
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Cluster Queue <Badge isRead id="cluster-queue-badge-2">5</Badge>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    Quota check<br />5 blocked (quota)
-                  </div>
-                </div>
-              </FlexItem>
-              <Divider orientation={{ default: 'vertical' }} />
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Resource flavor <Badge isRead id="resource-flavor-badge-2">5</Badge>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    Quota hardware match<br />5 stuck (no hardware)
-                  </div>
-                </div>
-              </FlexItem>
-              <Divider orientation={{ default: 'vertical' }} />
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Admitted <Badge isRead id="admitted-badge-2">8</Badge>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    Running
-                  </div>
-                </div>
-              </FlexItem>
-            </Flex>
-          </div>
-        </ExpandableSection>
-
         {/* Resource availability */}
         <ExpandableSection
           toggleText="Resource availability"
@@ -805,7 +852,10 @@ const WorkloadMetrics: React.FunctionComponent = () => {
             <Grid hasGutter>
               <GridItem span={4}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>GPU</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>GPU</div>
+                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
+                    6/8 slices used
+                  </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="GPU utilization"
@@ -819,14 +869,14 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                       width={200}
                     />
                   </div>
-                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '8px' }}>
-                    6/8 slices used
-                  </div>
                 </div>
               </GridItem>
               <GridItem span={4}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>CPU</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>CPU</div>
+                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
+                    10/14 cores used
+                  </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="CPU utilization"
@@ -840,14 +890,14 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                       width={200}
                     />
                   </div>
-                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '8px' }}>
-                    10/14 cores used
-                  </div>
                 </div>
               </GridItem>
               <GridItem span={4}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>Memory</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>Memory</div>
+                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
+                    64/96 GB used
+                  </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="Memory utilization"
@@ -860,9 +910,6 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                       height={200}
                       width={200}
                     />
-                  </div>
-                  <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginTop: '8px' }}>
-                    64/96 GB used
                   </div>
                 </div>
               </GridItem>

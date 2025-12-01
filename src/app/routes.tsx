@@ -57,6 +57,7 @@ import { Evaluations } from '@app/DevelopTrain/Evaluations/Evaluations';
 import { Experiments } from '@app/DevelopTrain/Experiments/Experiments';
 import { Dashboard } from '@app/ObserveMonitor/Dashboard/Dashboard';
 import { WorkloadMetrics } from '@app/ObserveMonitor/WorkloadMetrics/WorkloadMetrics';
+import { WorkloadMetricsB } from '@app/ObserveMonitor/WorkloadMetrics/WorkloadMetricsB';
 import { TrainingJobs } from '@app/ObserveMonitor/TrainingJobs/TrainingJobs';
 import { LearningResources } from '@app/LearningResources/LearningResources';
 import { Applications } from '@app/Applications/Applications';
@@ -358,9 +359,17 @@ const routes: AppRouteConfig[] = [
       {
         element: <WorkloadMetrics />,
         exact: true,
-        label: 'Workload metrics',
-        path: '/observe-monitor/workload-metrics',
-        title: 'RHOAI 3.1 Console | Observe & Monitor - Workload Metrics',
+        label: 'Workload metrics (Option A)',
+        path: '/observe-monitor/workload-metrics-a',
+        title: 'RHOAI 3.1 Console | Observe & Monitor - Workload Metrics (Option A)',
+        inProgress: true,
+      } as any,
+      {
+        element: <WorkloadMetricsB />,
+        exact: true,
+        label: 'Workload metrics (Option B)',
+        path: '/observe-monitor/workload-metrics-b',
+        title: 'RHOAI 3.1 Console | Observe & Monitor - Workload Metrics (Option B)',
         inProgress: true,
       } as any,
     ],
