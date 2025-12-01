@@ -1,4 +1,5 @@
 import * as React from 'react';
+import ReactECharts from 'echarts-for-react';
 import {
   PageSection,
   Content,
@@ -38,7 +39,6 @@ import {
   ChartDonut,
   ChartDonutUtilization,
   ChartThemeColor,
-  ChartArea,
 } from '@patternfly/react-charts/victory';
 import {
   SearchIcon,
@@ -70,6 +70,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   const [openKebabIndex, setOpenKebabIndex] = React.useState<number | null>(null);
   const [isAdmissionMetricsExpanded, setIsAdmissionMetricsExpanded] = React.useState(true);
   const [isAdmissionFlowExpanded, setIsAdmissionFlowExpanded] = React.useState(true);
+  const [isAdmissionFlow2Expanded, setIsAdmissionFlow2Expanded] = React.useState(true);
   const [isResourceAvailabilityExpanded, setIsResourceAvailabilityExpanded] = React.useState(true);
   const [isWorkloadsExpanded, setIsWorkloadsExpanded] = React.useState(true);
 
@@ -83,6 +84,43 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   };
   
   const currentFilterOptions = filterOptionsByAttribute[selectedAttribute] || [];
+
+  // Helper function to create ECharts sparkline options
+  const getSparklineOptions = (data: Array<{ x: number; y: number }>, color: string) => ({
+    grid: {
+      left: '0%',
+      right: '0%',
+      top: 5,
+      bottom: 5,
+      containLabel: false,
+    },
+    xAxis: {
+      type: 'category',
+      show: false,
+      data: data.map(d => d.x),
+      boundaryGap: false,
+    },
+    yAxis: {
+      type: 'value',
+      show: false,
+    },
+    series: [
+      {
+        data: data.map(d => d.y),
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        lineStyle: {
+          color: color,
+          width: 2,
+        },
+        areaStyle: {
+          color: color,
+          opacity: 0.5,
+        },
+      },
+    ],
+  });
 
   const onProjectToggle = () => {
     setIsProjectSelectOpen(!isProjectSelectOpen);
@@ -521,15 +559,11 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
                   Target: 0.200/s
                 </div>
-                <div style={{ height: '60px', marginTop: '8px' }}>
-                  <ChartArea
-                    height={60}
-                    width={200}
-                    data={admissionsRateData}
-                    padding={{ top: 10, bottom: 10, left: 0, right: 0 }}
-                    style={{
-                      data: { fill: '#73BCF7', opacity: 0.5, stroke: '#73BCF7' }
-                    }}
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getSparklineOptions(admissionsRateData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
                   />
                 </div>
               </div>
@@ -542,15 +576,11 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
                   Target: {'<'}50ms
                 </div>
-                <div style={{ height: '60px', marginTop: '8px' }}>
-                  <ChartArea
-                    height={60}
-                    width={200}
-                    data={admissionsLatencyData}
-                    padding={{ top: 10, bottom: 10, left: 0, right: 0 }}
-                    style={{
-                      data: { fill: '#73BCF7', opacity: 0.5, stroke: '#73BCF7' }
-                    }}
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getSparklineOptions(admissionsLatencyData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
                   />
                 </div>
               </div>
@@ -563,15 +593,11 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
                   Waiting of resources
                 </div>
-                <div style={{ height: '60px', marginTop: '8px' }}>
-                  <ChartArea
-                    height={60}
-                    width={200}
-                    data={pendingWorkloadsData}
-                    padding={{ top: 10, bottom: 10, left: 0, right: 0 }}
-                    style={{
-                      data: { fill: '#F4C145', opacity: 0.5, stroke: '#F4C145' }
-                    }}
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getSparklineOptions(pendingWorkloadsData, '#F4C145')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
                   />
                 </div>
               </div>
@@ -584,15 +610,11 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
                   Admitted & Executing
                 </div>
-                <div style={{ height: '60px', marginTop: '8px' }}>
-                  <ChartArea
-                    height={60}
-                    width={200}
-                    data={activeWorkloadsData}
-                    padding={{ top: 10, bottom: 10, left: 0, right: 0 }}
-                    style={{
-                      data: { fill: '#73BCF7', opacity: 0.5, stroke: '#73BCF7' }
-                    }}
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getSparklineOptions(activeWorkloadsData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
                   />
                 </div>
               </div>
@@ -603,14 +625,14 @@ const WorkloadMetrics: React.FunctionComponent = () => {
 
         {/* Admission flow */}
         <ExpandableSection
-          toggleText="Admission flow"
+          toggleText="Admission flow (Option 1)"
           isExpanded={isAdmissionFlowExpanded}
           onToggle={(_event, isExpanded) => setIsAdmissionFlowExpanded(isExpanded)}
           displaySize="lg"
           id="admission-flow-expandable"
           style={{ marginTop: '24px', backgroundColor: 'transparent' }}
         >
-          <div style={{ padding: '24px', backgroundColor: 'var(--pf-t--global--background--color--primary)' }}>
+          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
             <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
               <FlexItem>
                 <Card isCompact id="job-created-card" style={{ height: '100px' }}>
@@ -675,6 +697,91 @@ const WorkloadMetrics: React.FunctionComponent = () => {
               <FlexItem>
                 <Card isCompact id="admitted-card" style={{ height: '100px' }}>
                   <CardTitle id="admitted-title">Admitted</CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      Running
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+            </Flex>
+          </div>
+        </ExpandableSection>
+
+        {/* Admission flow 2 */}
+        <ExpandableSection
+          toggleText="Admission flow (Option 2)"
+          isExpanded={isAdmissionFlow2Expanded}
+          onToggle={(_event, isExpanded) => setIsAdmissionFlow2Expanded(isExpanded)}
+          displaySize="lg"
+          id="admission-flow-2-expandable"
+          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
+        >
+          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
+              <FlexItem>
+                <Card isCompact id="job-created-card-2" style={{ height: '100px' }}>
+                  <CardTitle id="job-created-title-2">Job created</CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      If submitted
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem>
+                <Icon size="lg">
+                  <ArrowRightIcon />
+                </Icon>
+              </FlexItem>
+              <FlexItem>
+                <Card isCompact id="local-queue-card-2" style={{ height: '100px' }}>
+                  <CardTitle id="local-queue-title-2">Local Queue</CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      Namespace
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem>
+                <Icon size="lg">
+                  <ArrowRightIcon />
+                </Icon>
+              </FlexItem>
+              <FlexItem>
+                <Card isCompact id="cluster-queue-card-2" style={{ height: '100px' }}>
+                  <CardTitle id="cluster-queue-title-2">Cluster Queue</CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      Quota check<br />5 blocked (quota)
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem>
+                <Icon size="lg">
+                  <ArrowRightIcon />
+                </Icon>
+              </FlexItem>
+              <FlexItem>
+                <Card isCompact id="resource-flavor-card-2" style={{ height: '100px' }}>
+                  <CardTitle id="resource-flavor-title-2">Resource flavor</CardTitle>
+                  <CardBody>
+                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      Quota hardware match<br />5 stuck (no hardware)
+                    </div>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+              <FlexItem>
+                <Icon size="lg">
+                  <ArrowRightIcon />
+                </Icon>
+              </FlexItem>
+              <FlexItem>
+                <Card isCompact id="admitted-card-2" style={{ height: '100px' }}>
+                  <CardTitle id="admitted-title-2">Admitted</CardTitle>
                   <CardBody>
                     <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
                       Running
