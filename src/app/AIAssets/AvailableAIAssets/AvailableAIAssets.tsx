@@ -3008,14 +3008,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
               </div>
             </div>
           </Tab>
-          <Tab
+          {/* <Tab
             eventKey={1}
             title={<TabTitleText>Models as a service</TabTitleText>}
             aria-label="Models as a service tab"
           >
             <div style={{ paddingTop: '1rem' }}>
               {/* Filters and Controls for MaaS Models */}
-              <div 
+              {/* <div 
                 className="pf-v5-u-mb-lg"
                 style={{ 
                   position: 'sticky',
@@ -3116,7 +3116,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                       <ToolbarGroup align={{ default: 'alignEnd' }}>
                         <ToolbarItem>
                           {/* View Toggle */}
-                          <div style={{ display: 'flex' }}>
+                          {/* <div style={{ display: 'flex' }}>
                             <Button
                               variant={maasViewMode === 'cards' ? 'primary' : 'secondary'}
                               onClick={() => handleMaasViewModeChange('cards')}
@@ -3174,7 +3174,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                     </ToolbarGroup>
 
                     {/* Active Filters Row */}
-                    {(maasFilters.name.length > 0 || maasFilters.keyword.length > 0 || maasFilters.useCase.length > 0) && (
+                    {/* {(maasFilters.name.length > 0 || maasFilters.keyword.length > 0 || maasFilters.useCase.length > 0) && (
                       <ToolbarGroup>
                         <ToolbarItem variant="label-group">
                           <LabelGroup
@@ -3230,7 +3230,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 {maasViewMode === 'table' ? renderMaaSModelsTable() : renderMaaSModelsCards()}
               </div>
             </div>
-          </Tab>
+          </Tab> */}
           <Tab
             eventKey={2}
             title={<TabTitleText>MCP servers</TabTitleText>}
