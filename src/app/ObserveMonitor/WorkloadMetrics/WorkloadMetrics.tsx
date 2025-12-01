@@ -377,7 +377,22 @@ const WorkloadMetrics: React.FunctionComponent = () => {
         `}
       </style>
   <PageSection>
-        <Content component={ContentVariants.h1} id="workload-metrics-title">Workload metrics</Content>
+        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+          <FlexItem>
+            <Content component={ContentVariants.h1} id="workload-metrics-title">Workload metrics</Content>
+          </FlexItem>
+          <FlexItem>
+            <Badge 
+              id="workload-metrics-status-badge"
+              style={{
+                '--pf-v6-c-badge--BackgroundColor': '#F32BC4',
+                '--pf-v6-c-badge--Color': '#ffffff',
+              } as React.CSSProperties}
+            >
+              WIP
+            </Badge>
+          </FlexItem>
+        </Flex>
         <Content component={ContentVariants.p} id="workload-metrics-subtitle">
           Monitor the metrics of your active resources.
     </Content>

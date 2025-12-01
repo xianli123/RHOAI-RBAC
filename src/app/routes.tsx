@@ -361,7 +361,8 @@ const routes: AppRouteConfig[] = [
         label: 'Workload metrics',
         path: '/observe-monitor/workload-metrics',
         title: 'RHOAI 3.1 Console | Observe & Monitor - Workload Metrics',
-      },
+        inProgress: true,
+      } as any,
     ],
   },
   {
