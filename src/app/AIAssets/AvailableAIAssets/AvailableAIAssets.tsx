@@ -1161,19 +1161,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
 
   // Enhanced filter functions for regular models (excluding MaaS)
   const filteredModels = getRegularModels().filter(model => {
-    // Project-based filtering
-    const matchesProjectFilter = (() => {
-      if (selectedProject === 'Project X') {
-        // For Project X, show all models
-        return true;
-      } else if (selectedProject === 'Project Y') {
-        // For Project Y, show granite-7b-code:1.1 and gpt-oss-120b-FP8-Dynamic:1.4.0 (MaaS models are in their own tab)
-        return model.name === 'granite-7b-code:1.1' || 
-               model.name === 'gpt-oss-120b-FP8-Dynamic:1.4.0';
-      }
-      // Default: show all models
-      return true;
-    })();
+    // Note: Project selection does not filter models in the Models tab
 
     // Name filters
     const matchesNameFilters = modelsFilters.name.length === 0 || 
@@ -1195,7 +1183,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         model.useCase.toLowerCase().includes(filter.toLowerCase())
       );
 
-    return matchesProjectFilter && matchesNameFilters && matchesKeywordFilters && matchesUseCaseFilters;
+    return matchesNameFilters && matchesKeywordFilters && matchesUseCaseFilters;
   });
 
   // Enhanced filter functions for MaaS models
