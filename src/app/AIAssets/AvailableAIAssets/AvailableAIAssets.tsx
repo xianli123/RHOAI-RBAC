@@ -1504,8 +1504,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     console.log('Model details:', model?.name);
     console.log('Current modelsAddedToPlayground:', Array.from(modelsAddedToPlayground));
     
-    // Option 1: Show empty state if playground isn't enabled
-    if (selectedOption === 'option1') {
+    // Option 1: Show empty state only if Project Y is selected
+    if (selectedOption === 'option1' && selectedProject === 'Project Y') {
       setShowEmptyState(true);
       setSelectedModelsForPlayground(new Set([modelId]));
       setIsModelSelectionModalOpen(true);
@@ -1515,7 +1515,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     // Removed addingModelId state
     // Pre-select the clicked model
     setSelectedModelsForPlayground(new Set([modelId]));
-    // Show model selection modal first
+    // Show model selection modal first (without empty state)
+    setShowEmptyState(false);
     setIsModelSelectionModalOpen(true);
   };
 
@@ -2033,8 +2034,23 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 </Td>
                 <Td>
                   <Flex spaceItems={{ default: 'spaceItemsXs' }}>
-                    {/* Option 1: Always show "Add to playground" for all models */}
-                    {selectedOption === 'option1' && (
+                    {/* Option 1: Show "Try in playground" for Mistral when Project X is selected */}
+                    {selectedOption === 'option1' && model.name === 'mistral-7b-instruct:9.1.1' && selectedProject === 'Project X' && (
+                      <FlexItem>
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayground(model.id, 'model');
+                          }}
+                        >
+                          Try in playground
+                        </Button>
+                      </FlexItem>
+                    )}
+                    {/* Option 1: Show "Add to playground" for all other cases */}
+                    {selectedOption === 'option1' && !(model.name === 'mistral-7b-instruct:9.1.1' && selectedProject === 'Project X') && (
                       <FlexItem>
                         <Button 
                           variant="link" 
@@ -2455,8 +2471,21 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                     onClearGeneratedToken={handleClearGeneratedToken}
                   />
                   
-                  {/* Option 1: Always show "Add to playground" for all models */}
-                  {selectedOption === 'option1' && (
+                  {/* Option 1: Show "Try in playground" for Mistral when Project X is selected */}
+                  {selectedOption === 'option1' && model.name === 'mistral-7b-instruct:9.1.1' && selectedProject === 'Project X' && (
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayground(model.id, 'model');
+                      }}
+                    >
+                      Try in playground
+                    </Button>
+                  )}
+                  {/* Option 1: Show "Add to playground" for all other cases */}
+                  {selectedOption === 'option1' && !(model.name === 'mistral-7b-instruct:9.1.1' && selectedProject === 'Project X') && (
                     <Button 
                       variant="link" 
                       onClick={(e) => {
