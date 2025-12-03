@@ -2949,7 +2949,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                           bodyContent={
                             <div>
                               <div style={{ marginBottom: '1rem' }}>
-                                <Label id="tier-wip-label" color="purple">
+                                <Label id="tier-wip-label" color="pink">
                                   Work in progress
                                 </Label>
                               </div>
@@ -2960,56 +2960,39 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                                 const highestTier = getCurrentUserHighestTier();
                                 if (highestTier) {
                                   return (
-                                    <DescriptionList id="tier-description-list" isCompact>
-                                      <DescriptionListGroup id="tier-name-group">
-                                        <DescriptionListTerm id="tier-name-term">Current Tier</DescriptionListTerm>
-                                        <DescriptionListDescription id="tier-name-description">
-                                          <strong>{highestTier.name}</strong>
-                                        </DescriptionListDescription>
-                                      </DescriptionListGroup>
-                                      <DescriptionListGroup id="tier-description-group">
-                                        <DescriptionListTerm id="tier-description-term">Description</DescriptionListTerm>
-                                        <DescriptionListDescription id="tier-description-text">
-                                          {highestTier.description}
-                                        </DescriptionListDescription>
-                                      </DescriptionListGroup>
+                                    <div>
+                                      <div style={{ marginBottom: '1rem' }}>
+                                        <div><strong>{highestTier.name}</strong></div>
+                                        <div style={{ marginTop: '0.5rem' }}>{highestTier.description}</div>
+                                      </div>
                                       {highestTier.limits.tokenLimits && highestTier.limits.tokenLimits.length > 0 && (
-                                        <DescriptionListGroup id="tier-token-limit-group">
-                                          <DescriptionListTerm id="tier-token-limit-term">Token Limit</DescriptionListTerm>
-                                          <DescriptionListDescription id="tier-token-limit-description">
-                                            {highestTier.limits.tokenLimits.map((limit, index) => (
-                                              <div key={limit.id || index}>
-                                                {limit.amount.toLocaleString()} tokens per {limit.quantity} {limit.unit}
-                                                {limit.quantity > 1 ? 's' : ''}
-                                              </div>
-                                            ))}
-                                          </DescriptionListDescription>
-                                        </DescriptionListGroup>
+                                        <div style={{ marginBottom: '0.5rem' }}>
+                                          {highestTier.limits.tokenLimits.map((limit, index) => (
+                                            <div key={limit.id || index}>
+                                              Token limit: {limit.amount.toLocaleString()} tokens per {limit.quantity} {limit.unit}
+                                              {limit.quantity > 1 ? 's' : ''}
+                                            </div>
+                                          ))}
+                                        </div>
                                       )}
                                       {highestTier.limits.rateLimits && highestTier.limits.rateLimits.length > 0 && (
-                                        <DescriptionListGroup id="tier-rate-limit-group">
-                                          <DescriptionListTerm id="tier-rate-limit-term">Rate Limit</DescriptionListTerm>
-                                          <DescriptionListDescription id="tier-rate-limit-description">
-                                            {highestTier.limits.rateLimits.map((limit, index) => (
-                                              <div key={limit.id || index}>
-                                                {limit.amount.toLocaleString()} requests per {limit.quantity} {limit.unit}
-                                                {limit.quantity > 1 ? 's' : ''}
-                                              </div>
-                                            ))}
-                                          </DescriptionListDescription>
-                                        </DescriptionListGroup>
+                                        <div style={{ marginBottom: '0.5rem' }}>
+                                          {highestTier.limits.rateLimits.map((limit, index) => (
+                                            <div key={limit.id || index}>
+                                              Rate limit: {limit.amount.toLocaleString()} requests per {limit.quantity} {limit.unit}
+                                              {limit.quantity > 1 ? 's' : ''}
+                                            </div>
+                                          ))}
+                                        </div>
                                       )}
                                       {highestTier.limits.apiKeyExpirationDays !== undefined && (
-                                        <DescriptionListGroup id="tier-api-key-expiration-group">
-                                          <DescriptionListTerm id="tier-api-key-expiration-term">API Key Expiration</DescriptionListTerm>
-                                          <DescriptionListDescription id="tier-api-key-expiration-description">
-                                            {highestTier.limits.apiKeyExpirationDays < 1 
-                                              ? `${Math.round(highestTier.limits.apiKeyExpirationDays * 24)} hours`
-                                              : `${Math.round(highestTier.limits.apiKeyExpirationDays)} days`}
-                                          </DescriptionListDescription>
-                                        </DescriptionListGroup>
+                                        <div>
+                                          API key expiration: {highestTier.limits.apiKeyExpirationDays < 1 
+                                            ? `${Math.round(highestTier.limits.apiKeyExpirationDays * 24)} hours`
+                                            : `${Math.round(highestTier.limits.apiKeyExpirationDays)} days`}
+                                        </div>
                                       )}
-                                    </DescriptionList>
+                                    </div>
                                   );
                                 }
                                 return (
