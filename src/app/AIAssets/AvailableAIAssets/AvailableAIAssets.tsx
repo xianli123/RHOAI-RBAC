@@ -2948,6 +2948,11 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                           headerContent="Tier information"
                           bodyContent={
                             <div>
+                              <div style={{ marginBottom: '1rem' }}>
+                                <Label id="tier-wip-label" color="purple">
+                                  Work in progress
+                                </Label>
+                              </div>
                               <p style={{ marginBottom: '1rem' }}>
                                 This list of models is based on your current highest Tier that determines which ones you can access.
                               </p>
@@ -3017,15 +3022,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                           }
                           position="bottom"
                         >
-                          <Button
-                            id="tier-info-badge"
-                            variant="plain"
+                          <Label
+                            id="tier-info-label"
+                            icon={<OutlinedQuestionCircleIcon />}
+                            color="grey"
+                            isClickable
                           >
-                            <Badge id="tier-info-badge-content">
-                              <OutlinedQuestionCircleIcon style={{ marginRight: '0.25rem' }} />
-                              Tier information
-                            </Badge>
-                          </Button>
+                            Tier information
+                          </Label>
                         </Popover>
                       </ToolbarItem>
 
