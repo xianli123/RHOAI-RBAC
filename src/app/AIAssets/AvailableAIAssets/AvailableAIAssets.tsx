@@ -1677,7 +1677,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
           }
         }
         
-        navigate('/gen-ai-studio/ai-playground', { 
+        navigate('/gen-ai-studio/playground', { 
           state: { 
             preselectedModel: model.name,
             modelEndpoint: model.internalEndpoint,
@@ -1702,7 +1702,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
             : [...selectedServerNames, server.name] // Add clicked server to selected ones
           : [server.name]; // No servers selected, just use clicked server
         
-        navigate('/gen-ai-studio/ai-playground', { 
+        navigate('/gen-ai-studio/playground', { 
           state: { 
             preselectedMCPs: serversToPreselect
           }
@@ -3486,7 +3486,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                               return server ? server.name : '';
                             }).filter(Boolean);
                             
-                            navigate('/gen-ai-studio/ai-playground', { 
+                            navigate('/gen-ai-studio/playground', { 
                               state: { 
                                 preselectedMCPs: selectedServerNames
                               }

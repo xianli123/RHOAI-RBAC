@@ -259,7 +259,7 @@ const Guardrails: React.FunctionComponent = () => {
     
     // Navigate back to Agent Builder if in agent builder mode
     if (flags.agentBuilderMode) {
-      navigate('/gen-ai-studio/ai-playground');
+      navigate('/gen-ai-studio/playground');
     }
   };
 

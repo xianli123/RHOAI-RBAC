@@ -258,7 +258,7 @@ const ModelDetails: React.FunctionComponent<ModelDetailsProps> = () => {
       }, 800);
     } else {
       // Model is already registered, go directly to playground
-      navigate('/gen-ai-studio/ai-playground', { 
+      navigate('/gen-ai-studio/playground', { 
         state: { 
           preselectedModel: model.name,
           modelEndpoint: model.internalEndpoint,

@@ -169,7 +169,7 @@ const MVPServers: React.FunctionComponent = () => {
       }
       setPlaygroundServers(currentServers);
       // Navigate to playground with the server parameter
-      navigate(`/gen-ai-studio/ai-playground?addServer=${encodeURIComponent(serverName)}`);
+      navigate(`/gen-ai-studio/playground?addServer=${encodeURIComponent(serverName)}`);
     }
   };
 
