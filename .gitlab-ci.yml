@@ -35,13 +35,24 @@ build:
     - export PATH="$PWD/node_modules/.bin:$PATH"
     - echo "Verifying build tools are available..."
     - which tsc || echo "TypeScript compiler not found - will use npx fallback"
-    - echo "Running Vite build process..."
+    - echo "Setting base path for Vite build..."
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "3.2" ]; then
+        # 3.2 branch: deploy to root
+        export VITE_BASE_PATH="/"
+        echo "Building for root deployment (base: /)"
+      else
+        # Other branches: deploy to subdirectory (ensure leading and trailing slashes)
+        export VITE_BASE_PATH="/${PAGES_PREFIX}/"
+        echo "Building for subdirectory deployment (base: /${PAGES_PREFIX}/)"
+      fi
+    - echo "Running Vite build process with base path: $VITE_BASE_PATH"
     - npm run build
     - echo "Preparing files for GitLab Pages..."
     # GitLab Pages expects files in a 'public' directory
     - |
-      if [ -z "$PAGES_PREFIX" ] || [ "$CI_COMMIT_BRANCH" == "3.2" ]; then
-        # 3.2 branch or main: files at root
+      if [ "$CI_COMMIT_BRANCH" == "3.2" ]; then
+        # 3.2 branch: files at root
         mv dist public
         echo "Deployed to root"
       else
