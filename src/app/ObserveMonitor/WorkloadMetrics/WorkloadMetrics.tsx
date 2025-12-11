@@ -34,7 +34,7 @@ import {
   ExpandableSection,
   Divider,
 } from '@patternfly/react-core';
-import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
+import { Table, Thead, Tbody, Tr, Th, Td, ThProps } from '@patternfly/react-table';
 import {
   ChartDonut,
   ChartDonutUtilization,
@@ -57,6 +57,10 @@ import {
   OutlinedQuestionCircleIcon,
   FolderIcon,
   ExternalLinkAltIcon,
+  AngleLeftIcon,
+  AngleRightIcon,
+  AngleDoubleLeftIcon,
+  AngleDoubleRightIcon,
 } from '@patternfly/react-icons';
 
 const WorkloadMetrics: React.FunctionComponent = () => {
@@ -74,6 +78,10 @@ const WorkloadMetrics: React.FunctionComponent = () => {
   const [isAdmissionFlowExpanded, setIsAdmissionFlowExpanded] = React.useState(true);
   const [isResourceAvailabilityExpanded, setIsResourceAvailabilityExpanded] = React.useState(true);
   const [isWorkloadsExpanded, setIsWorkloadsExpanded] = React.useState(true);
+  
+  // Sorting state for workloads table
+  const [activeSortIndex, setActiveSortIndex] = React.useState<number | null>(null);
+  const [activeSortDirection, setActiveSortDirection] = React.useState<'asc' | 'desc'>('asc');
 
   const projectOptions = ['All projects', 'Project-A', 'Project-B', 'Project-C'];
   const attributeOptions = ['Status', 'Priority', 'Hardware profile'];
@@ -105,8 +113,8 @@ const WorkloadMetrics: React.FunctionComponent = () => {
     ...selectedHardwareFilters.map(f => ({ category: 'Hardware profile', value: f })),
   ];
 
-  // Helper function to create ECharts sparkline options
-  const getSparklineOptions = (data: Array<{ x: number; y: number }>, color: string) => ({
+  // Helper function to create ECharts bar chart options (24-hour rolling window)
+  const getBarChartOptions = (data: Array<{ x: string | number; y: number }>, color: string) => ({
     grid: {
       left: '0%',
       right: '0%',
@@ -118,25 +126,27 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       type: 'category',
       show: false,
       data: data.map(d => d.x),
-      boundaryGap: false,
+      boundaryGap: true,
     },
     yAxis: {
       type: 'value',
       show: false,
     },
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any) => {
+        const item = params[0];
+        return `${item.name}: ${item.value}`;
+      },
+    },
     series: [
       {
         data: data.map(d => d.y),
-        type: 'line',
-        smooth: true,
-        symbol: 'none',
-        lineStyle: {
+        type: 'bar',
+        barWidth: '60%',
+        itemStyle: {
           color: color,
-          width: 2,
-        },
-        areaStyle: {
-          color: color,
-          opacity: 0.5,
+          borderRadius: [2, 2, 0, 0],
         },
       },
     ],
@@ -257,8 +267,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
     );
   };
 
-  // Sample data for the table
-  // Sample data for the table
+  // Sample data for the table with resource usage
   const jobData = [
     {
       id: 'gpt-finetune-run',
@@ -270,6 +279,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'Reserved (1000)',
       waitTime: '--',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
     },
     {
       id: 'inference-prod-v1',
@@ -281,6 +293,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'Critical (2000)',
       waitTime: '12s',
       hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
     },
     {
       id: 'ray-tune-experiment',
@@ -292,6 +307,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'On Demand (100)',
       waitTime: '45s',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
     },
     {
       id: 'notebook-interactive',
@@ -303,6 +321,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'On Demand (100)',
       waitTime: '5m',
       hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
     },
     {
       id: 'batch-process-nightly',
@@ -314,6 +335,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'On Demand (100)',
       waitTime: '2h 10m',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
     },
     {
       id: 'massive-model-test',
@@ -325,6 +349,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'On Demand (100)',
       waitTime: '10m',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
     },
     {
       id: 'long-run-analysis',
@@ -336,6 +363,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'On Demand (100)',
       waitTime: '--',
       hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
     },
     {
       id: 'data-prep-daily',
@@ -347,6 +377,9 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'Standard (500)',
       waitTime: '--',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
     },
     {
       id: 'broken-code-v4',
@@ -358,12 +391,304 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       priority: 'Reserved (1000)',
       waitTime: '--',
       hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    // Additional workloads for pagination demo
+    {
+      id: 'llm-eval-batch',
+      name: 'llm-eval-batch',
+      project: 'Project-A',
+      type: 'Train job',
+      status: 'Running',
+      queuePosition: '--',
+      priority: 'Critical (2000)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'sentiment-analysis-v2',
+      name: 'sentiment-analysis-v2',
+      project: 'Project-B',
+      type: 'Inference',
+      status: 'Admitted',
+      queuePosition: '--',
+      priority: 'Standard (500)',
+      waitTime: '8s',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'image-classifier-train',
+      name: 'image-classifier-train',
+      project: 'Project-C',
+      type: 'Train job',
+      status: 'Pending',
+      queuePosition: 'Position #2\n(~ 8 min)',
+      priority: 'On Demand (100)',
+      waitTime: '1m 30s',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'data-pipeline-etl',
+      name: 'data-pipeline-etl',
+      project: 'Project-A',
+      type: 'Ray job',
+      status: 'Running',
+      queuePosition: '--',
+      priority: 'Standard (500)',
+      waitTime: '--',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'model-serving-api',
+      name: 'model-serving-api',
+      project: 'Project-B',
+      type: 'Inference',
+      status: 'Running',
+      queuePosition: '--',
+      priority: 'Critical (2000)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'hyperparameter-sweep',
+      name: 'hyperparameter-sweep',
+      project: 'Project-C',
+      type: 'Ray job',
+      status: 'Queued',
+      queuePosition: 'Position #3\n(~ 12 min)',
+      priority: 'On Demand (100)',
+      waitTime: '3m 45s',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'notebook-exploration',
+      name: 'notebook-exploration',
+      project: 'Project-A',
+      type: 'Notebook',
+      status: 'Admitted',
+      queuePosition: '--',
+      priority: 'On Demand (100)',
+      waitTime: '25s',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'feature-engineering',
+      name: 'feature-engineering',
+      project: 'Project-B',
+      type: 'Train job',
+      status: 'Complete',
+      queuePosition: '--',
+      priority: 'Standard (500)',
+      waitTime: '--',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'model-validation-suite',
+      name: 'model-validation-suite',
+      project: 'Project-C',
+      type: 'Train job',
+      status: 'Failed',
+      queuePosition: '--',
+      priority: 'On Demand (100)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'rag-indexing-job',
+      name: 'rag-indexing-job',
+      project: 'Project-A',
+      type: 'Ray job',
+      status: 'Pending',
+      queuePosition: 'Position #4\n(~ 15 min)',
+      priority: 'Standard (500)',
+      waitTime: '2m 10s',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'embeddings-generator',
+      name: 'embeddings-generator',
+      project: 'Project-B',
+      type: 'Inference',
+      status: 'Running',
+      queuePosition: '--',
+      priority: 'Reserved (1000)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'drift-detection-daily',
+      name: 'drift-detection-daily',
+      project: 'Project-C',
+      type: 'Train job',
+      status: 'Queued',
+      queuePosition: 'Position #6\n(~ 25 min)',
+      priority: 'On Demand (100)',
+      waitTime: '8m 20s',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'notebook-demo-env',
+      name: 'notebook-demo-env',
+      project: 'Project-A',
+      type: 'Notebook',
+      status: 'Preempted',
+      queuePosition: 'Position #2\n(Paused)',
+      priority: 'On Demand (100)',
+      waitTime: '1h 5m',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'benchmark-runner',
+      name: 'benchmark-runner',
+      project: 'Project-B',
+      type: 'Train job',
+      status: 'Complete',
+      queuePosition: '--',
+      priority: 'Critical (2000)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'text-summarizer-v3',
+      name: 'text-summarizer-v3',
+      project: 'Project-C',
+      type: 'Inference',
+      status: 'Admitted',
+      queuePosition: '--',
+      priority: 'Standard (500)',
+      waitTime: '15s',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'anomaly-detector',
+      name: 'anomaly-detector',
+      project: 'Project-A',
+      type: 'Ray job',
+      status: 'Evicted',
+      queuePosition: '--',
+      priority: 'On Demand (100)',
+      waitTime: '--',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'chatbot-finetune',
+      name: 'chatbot-finetune',
+      project: 'Project-B',
+      type: 'Train job',
+      status: 'Inadmissible',
+      queuePosition: '--',
+      priority: 'Reserved (1000)',
+      waitTime: '15m',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'vector-db-sync',
+      name: 'vector-db-sync',
+      project: 'Project-C',
+      type: 'Ray job',
+      status: 'Running',
+      queuePosition: '--',
+      priority: 'Standard (500)',
+      waitTime: '--',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
+    },
+    {
+      id: 'multimodal-trainer',
+      name: 'multimodal-trainer',
+      project: 'Project-A',
+      type: 'Train job',
+      status: 'Pending',
+      queuePosition: 'Position #7\n(~ 30 min)',
+      priority: 'On Demand (100)',
+      waitTime: '12m 45s',
+      hardwareProfile: 'High Performance\nnvidia.com/mig-7g.80gb',
+      gpuSlices: 2,
+      cpuCores: 4,
+      memoryGB: 16,
+    },
+    {
+      id: 'qa-inference-test',
+      name: 'qa-inference-test',
+      project: 'Project-B',
+      type: 'Inference',
+      status: 'Complete',
+      queuePosition: '--',
+      priority: 'On Demand (100)',
+      waitTime: '--',
+      hardwareProfile: 'Standard\nnvidia.com/mig-3g.20gb',
+      gpuSlices: 1,
+      cpuCores: 2,
+      memoryGB: 8,
     },
   ];
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
 
-  // Filter jobs based on search value and all active filters
+  // Filter jobs based on project, search value, and all active filters
+  // This filtered list is used for ALL sections (metrics, flow, resources, table)
   const filteredJobs = jobData.filter(job => {
-    // Search filter
+    // Project filter
+    const matchesProject = selectedProject === 'All projects' || job.project === selectedProject;
+    
+    // Search filter (only applies to workloads table)
     const matchesSearch = job.name.toLowerCase().includes(searchValue.toLowerCase());
     
     // Status filter
@@ -380,49 +705,184 @@ const WorkloadMetrics: React.FunctionComponent = () => {
     const matchesHardware = selectedHardwareFilters.length === 0 || 
       selectedHardwareFilters.some(filter => filter.split('\n')[0] === jobHardwareName);
     
-    return matchesSearch && matchesStatus && matchesPriority && matchesHardware;
+    return matchesProject && matchesSearch && matchesStatus && matchesPriority && matchesHardware;
   });
 
-  // Mock chart data for metric cards
-  const admissionsRateData = [
-    { x: 1, y: 0.19 },
-    { x: 2, y: 0.20 },
-    { x: 3, y: 0.21 },
-    { x: 4, y: 0.19 },
-    { x: 5, y: 0.18 },
-    { x: 6, y: 0.17 },
-    { x: 7, y: 0.16 },
-  ];
+  // Column keys for sorting
+  const columnKeys = ['name', 'project', 'type', 'status', 'queuePosition', 'priority', 'waitTime', 'hardwareProfile'] as const;
+  
+  // Sort handler
+  const getSortParams = (columnIndex: number): ThProps['sort'] => ({
+    sortBy: {
+      index: activeSortIndex as number,
+      direction: activeSortDirection,
+      defaultDirection: 'asc',
+    },
+    onSort: (_event, index, direction) => {
+      setActiveSortIndex(index);
+      setActiveSortDirection(direction);
+    },
+    columnIndex,
+  });
 
-  const admissionsLatencyData = [
-    { x: 1, y: 48 },
-    { x: 2, y: 50 },
-    { x: 3, y: 52 },
-    { x: 4, y: 49 },
-    { x: 5, y: 48 },
-    { x: 6, y: 47 },
-    { x: 7, y: 49 },
-  ];
+  // Sort the filtered jobs
+  const sortedJobs = React.useMemo(() => {
+    if (activeSortIndex === null) {
+      return filteredJobs;
+    }
+    
+    const columnKey = columnKeys[activeSortIndex];
+    
+    return [...filteredJobs].sort((a, b) => {
+      const aValue = a[columnKey];
+      const bValue = b[columnKey];
+      
+      // Handle special cases for display values
+      if (columnKey === 'priority') {
+        // Extract numeric value from priority string like "Reserved (1000)"
+        const aMatch = aValue.match(/\((\d+)\)/);
+        const bMatch = bValue.match(/\((\d+)\)/);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+        return activeSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      if (columnKey === 'waitTime') {
+        // Convert wait time to seconds for comparison
+        const parseWaitTime = (time: string): number => {
+          if (time === '--') return 0;
+          let seconds = 0;
+          const hours = time.match(/(\d+)h/);
+          const minutes = time.match(/(\d+)m/);
+          const secs = time.match(/(\d+)s/);
+          if (hours) seconds += parseInt(hours[1]) * 3600;
+          if (minutes) seconds += parseInt(minutes[1]) * 60;
+          if (secs) seconds += parseInt(secs[1]);
+          return seconds;
+        };
+        const aNum = parseWaitTime(aValue);
+        const bNum = parseWaitTime(bValue);
+        return activeSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      // Default string comparison
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (activeSortDirection === 'asc') {
+        return aStr.localeCompare(bStr);
+      }
+      return bStr.localeCompare(aStr);
+    });
+  }, [filteredJobs, activeSortIndex, activeSortDirection]);
 
-  const pendingWorkloadsData = [
-    { x: 1, y: 140 },
-    { x: 2, y: 142 },
-    { x: 3, y: 148 },
-    { x: 4, y: 145 },
-    { x: 5, y: 143 },
-    { x: 6, y: 141 },
-    { x: 7, y: 145 },
-  ];
+  // Pagination logic
+  const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedJobs = sortedJobs.slice(startIndex, endIndex);
+  
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedProject, selectedStatusFilters, selectedPriorityFilters, selectedHardwareFilters, searchValue]);
 
-  const activeWorkloadsData = [
-    { x: 1, y: 85 },
-    { x: 2, y: 83 },
-    { x: 3, y: 82 },
-    { x: 4, y: 81 },
-    { x: 5, y: 79 },
-    { x: 6, y: 78 },
-    { x: 7, y: 80 },
-  ];
+  // Jobs filtered by project and attribute filters only (without search) for metrics sections
+  const filteredJobsForMetrics = jobData.filter(job => {
+    const matchesProject = selectedProject === 'All projects' || job.project === selectedProject;
+    const matchesStatus = selectedStatusFilters.length === 0 || 
+      selectedStatusFilters.includes(job.status);
+    const jobPriorityName = job.priority.split('\n')[0];
+    const matchesPriority = selectedPriorityFilters.length === 0 || 
+      selectedPriorityFilters.some(filter => filter.split('\n')[0] === jobPriorityName);
+    const jobHardwareName = job.hardwareProfile.split('\n')[0];
+    const matchesHardware = selectedHardwareFilters.length === 0 || 
+      selectedHardwareFilters.some(filter => filter.split('\n')[0] === jobHardwareName);
+    
+    return matchesProject && matchesStatus && matchesPriority && matchesHardware;
+  });
+
+  // Calculate Admission Metrics from filtered jobs
+  const pendingStatuses = ['Pending', 'Queued'];
+  const activeStatuses = ['Running', 'Admitted'];
+  const pendingCount = filteredJobsForMetrics.filter(job => pendingStatuses.includes(job.status)).length;
+  const activeCount = filteredJobsForMetrics.filter(job => activeStatuses.includes(job.status)).length;
+  
+  // Calculate admission rate based on filtered jobs (simulated)
+  const baseAdmissionRate = 0.195;
+  const admissionRateMultiplier = filteredJobsForMetrics.length / jobData.length;
+  const admissionsRate = (baseAdmissionRate * admissionRateMultiplier).toFixed(3);
+
+  // Calculate individual status counts from filtered jobs
+  const statusCounts = {
+    running: filteredJobsForMetrics.filter(job => job.status === 'Running').length,
+    admitted: filteredJobsForMetrics.filter(job => job.status === 'Admitted').length,
+    pending: filteredJobsForMetrics.filter(job => job.status === 'Pending').length,
+    queued: filteredJobsForMetrics.filter(job => job.status === 'Queued').length,
+    preempted: filteredJobsForMetrics.filter(job => job.status === 'Preempted').length,
+    inadmissible: filteredJobsForMetrics.filter(job => job.status === 'Inadmissible').length,
+    evicted: filteredJobsForMetrics.filter(job => job.status === 'Evicted').length,
+    complete: filteredJobsForMetrics.filter(job => job.status === 'Complete').length,
+    failed: filteredJobsForMetrics.filter(job => job.status === 'Failed').length,
+  };
+  
+  // Legacy counts for backward compatibility
+  const admittedCount = statusCounts.running + statusCounts.admitted;
+
+  // Calculate Resource Availability from filtered active jobs
+  const activeJobs = filteredJobsForMetrics.filter(job => activeStatuses.includes(job.status));
+  const totalGpuCapacity = 8;
+  const totalCpuCapacity = 14;
+  const totalMemoryCapacity = 96;
+  
+  const usedGpuSlices = activeJobs.reduce((sum, job) => sum + job.gpuSlices, 0);
+  const usedCpuCores = activeJobs.reduce((sum, job) => sum + job.cpuCores, 0);
+  const usedMemoryGB = activeJobs.reduce((sum, job) => sum + job.memoryGB, 0);
+  
+  const gpuPercentage = Math.round((usedGpuSlices / totalGpuCapacity) * 100);
+  const cpuPercentage = Math.round((usedCpuCores / totalCpuCapacity) * 100);
+  const memoryPercentage = Math.round((usedMemoryGB / totalMemoryCapacity) * 100);
+
+  // Generate 24-hour labels (past 24 hours)
+  const generate24HourLabels = (): string[] => {
+    const labels: string[] = [];
+    const now = new Date();
+    for (let i = 23; i >= 0; i--) {
+      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+      labels.push(`${hour.getHours()}:00`);
+    }
+    return labels;
+  };
+  const hourLabels = generate24HourLabels();
+
+  // Dynamic chart data based on filtered jobs - 24 hour rolling window
+  const rateValue = parseFloat(admissionsRate);
+  const baseRateMultipliers = [0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.55, 0.7, 0.85, 0.95, 1.0, 1.05, 1.1, 1.15, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85, 0.8, 0.85, 0.9];
+  const admissionsRateData = hourLabels.map((label, i) => ({
+    x: label,
+    y: Math.round(rateValue * baseRateMultipliers[i] * 1000) / 1000,
+  }));
+
+  // Admission lead time data (24 hour rolling window)
+  const baseLeadTimeValues = [42, 45, 48, 52, 55, 50, 47, 44, 46, 49, 51, 53, 50, 48, 45, 47, 50, 52, 49, 46, 44, 47, 49, 49];
+  const admissionsLeadTimeData = hourLabels.map((label, i) => ({
+    x: label,
+    y: baseLeadTimeValues[i],
+  }));
+
+  // Pending workloads data (24 hour rolling window)
+  const basePendingMultipliers = [0.6, 0.5, 0.4, 0.35, 0.3, 0.35, 0.4, 0.5, 0.7, 0.85, 0.95, 1.0, 1.1, 1.15, 1.2, 1.15, 1.1, 1.0, 0.9, 0.85, 0.8, 0.75, 0.7, 0.8];
+  const pendingWorkloadsData = hourLabels.map((label, i) => ({
+    x: label,
+    y: Math.max(1, Math.round(pendingCount * basePendingMultipliers[i])),
+  }));
+
+  // Active workloads data (24 hour rolling window)
+  const baseActiveMultipliers = [0.5, 0.45, 0.4, 0.35, 0.3, 0.35, 0.45, 0.6, 0.75, 0.9, 1.0, 1.05, 1.1, 1.1, 1.05, 1.0, 0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.55, 0.6];
+  const activeWorkloadsData = hourLabels.map((label, i) => ({
+    x: label,
+    y: Math.max(1, Math.round(activeCount * baseActiveMultipliers[i])),
+  }));
 
   return (
     <>
@@ -648,205 +1108,14 @@ const WorkloadMetrics: React.FunctionComponent = () => {
       </PageSection>
 
       <PageSection>
-        {/* Admission Metrics */}
+        {/* Quota availability - moved above Admission Metrics */}
         <ExpandableSection
-          toggleText="Admission Metrics"
-          isExpanded={isAdmissionMetricsExpanded}
-          onToggle={(_event, isExpanded) => setIsAdmissionMetricsExpanded(isExpanded)}
-          displaySize="lg"
-          id="admission-metrics-expandable"
-          style={{ backgroundColor: 'transparent' }}
-        >
-          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
-            <Flex>
-            <FlexItem flex={{ default: 'flex_1' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="admissions-rate-title">Admissions rate</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>0.195/s</div>
-                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Target: 0.200/s
-                </div>
-                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
-                  <ReactECharts
-                    option={getSparklineOptions(admissionsRateData, '#73BCF7')}
-                    style={{ height: '60px', width: '100%' }}
-                    opts={{ renderer: 'svg' }}
-                  />
-                </div>
-              </div>
-            </FlexItem>
-            <Divider orientation={{ default: 'vertical' }} />
-            <FlexItem flex={{ default: 'flex_1' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="admissions-latency-title">Admissions latency</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>49.3 ms</div>
-                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Target: {'<'}50ms
-                </div>
-                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
-                  <ReactECharts
-                    option={getSparklineOptions(admissionsLatencyData, '#73BCF7')}
-                    style={{ height: '60px', width: '100%' }}
-                    opts={{ renderer: 'svg' }}
-                  />
-                </div>
-              </div>
-            </FlexItem>
-            <Divider orientation={{ default: 'vertical' }} />
-            <FlexItem flex={{ default: 'flex_1' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="pending-workloads-title">Pending workloads</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>145 pending</div>
-                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Waiting of resources
-                </div>
-                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
-                  <ReactECharts
-                    option={getSparklineOptions(pendingWorkloadsData, '#F4C145')}
-                    style={{ height: '60px', width: '100%' }}
-                    opts={{ renderer: 'svg' }}
-                  />
-                </div>
-              </div>
-            </FlexItem>
-            <Divider orientation={{ default: 'vertical' }} />
-            <FlexItem flex={{ default: 'flex_1' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="active-workloads-title">Active workloads</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>80 active</div>
-                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Admitted & Executing
-                </div>
-                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
-                  <ReactECharts
-                    option={getSparklineOptions(activeWorkloadsData, '#73BCF7')}
-                    style={{ height: '60px', width: '100%' }}
-                    opts={{ renderer: 'svg' }}
-                  />
-                </div>
-              </div>
-            </FlexItem>
-          </Flex>
-          </div>
-        </ExpandableSection>
-
-        {/* Admission flow */}
-        <ExpandableSection
-          toggleText="Admission flow"
-          isExpanded={isAdmissionFlowExpanded}
-          onToggle={(_event, isExpanded) => setIsAdmissionFlowExpanded(isExpanded)}
-          displaySize="lg"
-          id="admission-flow-expandable"
-          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
-        >
-          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card isCompact id="job-created-card" style={{ height: '100px', width: '100%' }}>
-                  <CardTitle id="job-created-title">
-                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Icon status="info">
-                        <InfoCircleIcon />
-                      </Icon>
-                      Job created
-                    </span>
-                  </CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      2 jobs awaiting processing
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card isCompact id="local-queue-card" style={{ height: '100px', width: '100%' }}>
-                  <CardTitle id="local-queue-title">
-                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Icon status="info">
-                        <InfoCircleIcon />
-                      </Icon>
-                      Local Queue
-                    </span>
-                  </CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      3 jobs in namespace queue
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card isCompact id="cluster-queue-card" style={{ height: '100px', width: '100%' }}>
-                  <CardTitle id="cluster-queue-title">
-                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Icon status="warning">
-                        <ExclamationTriangleIcon />
-                      </Icon>
-                      Cluster Queue
-                    </span>
-                  </CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      5 jobs blocked (quota)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card isCompact id="resource-flavor-card" style={{ height: '100px', width: '100%' }}>
-                  <CardTitle id="resource-flavor-title">
-                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Icon status="warning">
-                        <ExclamationTriangleIcon />
-                      </Icon>
-                      Hardware profile
-                    </span>
-                  </CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      5 jobs stuck (no hardware)
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-              <FlexItem>
-                <Icon size="lg">
-                  <ArrowRightIcon />
-                </Icon>
-              </FlexItem>
-              <FlexItem flex={{ default: 'flex_1' }}>
-                <Card isCompact id="admitted-card" style={{ height: '100px', width: '100%' }}>
-                  <CardTitle id="admitted-title">
-                    <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Icon status="success">
-                        <CheckCircleIcon />
-                      </Icon>
-                      Admitted
-                    </span>
-                  </CardTitle>
-                  <CardBody>
-                    <div style={{ fontSize: '12px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      8 jobs running
-                    </div>
-                  </CardBody>
-                </Card>
-              </FlexItem>
-            </Flex>
-          </div>
-        </ExpandableSection>
-        {/* Resource availability */}
-        <ExpandableSection
-          toggleText="Resource availability"
+          toggleText="Quota availability"
           isExpanded={isResourceAvailabilityExpanded}
           onToggle={(_event, isExpanded) => setIsResourceAvailabilityExpanded(isExpanded)}
           displaySize="lg"
-          id="resource-availability-expandable"
-          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
+          id="quota-availability-expandable"
+          style={{ backgroundColor: 'transparent' }}
         >
           <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
             <Grid hasGutter>
@@ -854,17 +1123,17 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>GPU</div>
                   <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
-                    6/8 slices used
+                    {usedGpuSlices}/{totalGpuCapacity} slices used
                   </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="GPU utilization"
-                      ariaDesc="75% of GPU slices are currently used"
+                      ariaDesc={`${gpuPercentage}% of GPU slices are currently used`}
                       constrainToVisibleArea
-                      data={{ x: 'GPU slices used', y: 75 }}
+                      data={{ x: 'GPU slices used', y: gpuPercentage }}
                       labels={({ datum }) => `${datum.x}: ${datum.y}%`}
                       subTitle="slices used"
-                      title="75%"
+                      title={`${gpuPercentage}%`}
                       height={200}
                       width={200}
                     />
@@ -875,17 +1144,17 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>CPU</div>
                   <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
-                    10/14 cores used
+                    {usedCpuCores}/{totalCpuCapacity} cores used
                   </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="CPU utilization"
-                      ariaDesc="70% of CPU cores are currently used"
+                      ariaDesc={`${cpuPercentage}% of CPU cores are currently used`}
                       constrainToVisibleArea
-                      data={{ x: 'CPU cores used', y: 70 }}
+                      data={{ x: 'CPU cores used', y: cpuPercentage }}
                       labels={({ datum }) => `${datum.x}: ${datum.y}%`}
                       subTitle="cores used"
-                      title="70%"
+                      title={`${cpuPercentage}%`}
                       height={200}
                       width={200}
                     />
@@ -896,17 +1165,17 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>Memory</div>
                   <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '12px' }}>
-                    64/96 GB used
+                    {usedMemoryGB}/{totalMemoryCapacity} GB used
                   </div>
                   <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <ChartDonutUtilization
                       ariaTitle="Memory utilization"
-                      ariaDesc="65% of memory is currently used"
+                      ariaDesc={`${memoryPercentage}% of memory is currently used`}
                       constrainToVisibleArea
-                      data={{ x: 'Memory used', y: 65 }}
+                      data={{ x: 'Memory used', y: memoryPercentage }}
                       labels={({ datum }) => `${datum.x}: ${datum.y}%`}
                       subTitle="GB used"
-                      title="65%"
+                      title={`${memoryPercentage}%`}
                       height={200}
                       width={200}
                     />
@@ -914,6 +1183,273 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                 </div>
               </GridItem>
             </Grid>
+          </div>
+        </ExpandableSection>
+
+        {/* Admission Metrics */}
+        <ExpandableSection
+          toggleText="Admission Metrics (past 24 hours)"
+          isExpanded={isAdmissionMetricsExpanded}
+          onToggle={(_event, isExpanded) => setIsAdmissionMetricsExpanded(isExpanded)}
+          displaySize="lg"
+          id="admission-metrics-expandable"
+          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
+        >
+          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
+            <Flex>
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="admissions-rate-title">Admissions rate</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{admissionsRate}/s</div>
+                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                  Target: 0.200/s
+                </div>
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getBarChartOptions(admissionsRateData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
+                  />
+                </div>
+              </div>
+            </FlexItem>
+            <Divider orientation={{ default: 'vertical' }} />
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="admission-lead-time-title">Admission lead time</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>49.3 ms</div>
+                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                  Target: {'<'}50ms
+                </div>
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getBarChartOptions(admissionsLeadTimeData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
+                  />
+                </div>
+              </div>
+            </FlexItem>
+            <Divider orientation={{ default: 'vertical' }} />
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="pending-workloads-title">Pending workloads</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{pendingCount} pending</div>
+                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                  Waiting for resources
+                </div>
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getBarChartOptions(pendingWorkloadsData, '#F4C145')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
+                  />
+                </div>
+              </div>
+            </FlexItem>
+            <Divider orientation={{ default: 'vertical' }} />
+            <FlexItem flex={{ default: 'flex_1' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }} id="active-workloads-title">Active workloads</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activeCount} active</div>
+                <div style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                  Admitted & Executing
+                </div>
+                <div style={{ height: '60px', marginTop: '8px', width: '100%' }}>
+                  <ReactECharts
+                    option={getBarChartOptions(activeWorkloadsData, '#73BCF7')}
+                    style={{ height: '60px', width: '100%' }}
+                    opts={{ renderer: 'svg' }}
+                  />
+                </div>
+              </div>
+            </FlexItem>
+          </Flex>
+          </div>
+        </ExpandableSection>
+
+        {/* Workload status overview - Aggregate Status Cards */}
+        <ExpandableSection
+          toggleText="Workload status overview"
+          isExpanded={isAdmissionFlowExpanded}
+          onToggle={(_event, isExpanded) => setIsAdmissionFlowExpanded(isExpanded)}
+          displaySize="lg"
+          id="admission-flow-expandable"
+          style={{ marginTop: '24px', backgroundColor: 'transparent' }}
+        >
+          <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
+            <Flex spaceItems={{ default: 'spaceItemsLg' }} flexWrap={{ default: 'wrap' }}>
+              {/* Running - Brand icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-running-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.running}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="custom" style={{ color: 'var(--pf-t--global--icon--color--brand--default)' }}>
+                          <InProgressIcon style={{ animation: 'spin 2s linear infinite' }} />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Running</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Admitted - Subtle icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-admitted-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.admitted}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="custom" style={{ color: 'var(--pf-t--global--icon--color--subtle)' }}>
+                          <CheckIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Admitted</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Pending - Info icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-pending-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.pending}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="info">
+                          <PendingIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Pending</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Queued - Subtle icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-queued-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.queued}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="custom" style={{ color: 'var(--pf-t--global--icon--color--subtle)' }}>
+                          <OutlinedClockIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Queued</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Preempted - Warning icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-preempted-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.preempted}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="warning">
+                          <ExclamationTriangleIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Preempted</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Inadmissible - Warning icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-inadmissible-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.inadmissible}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="warning">
+                          <ExclamationTriangleIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Inadmissible</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Evicted - Warning icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-evicted-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.evicted}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="warning">
+                          <ExclamationTriangleIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Evicted</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Complete - Success icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-complete-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.complete}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="success">
+                          <CheckCircleIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Complete</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+
+              {/* Failed - Danger icon color */}
+              <FlexItem>
+                <Card isCompact isClickable id="status-failed-card" style={{ minWidth: '120px', textAlign: 'center', border: 'none', boxShadow: 'none' }}>
+                  <CardBody style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>{statusCounts.failed}</div>
+                    <Flex justifyContent={{ default: 'justifyContentCenter' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                      <FlexItem>
+                        <Icon status="danger">
+                          <ExclamationCircleIcon />
+                        </Icon>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>Failed</span>
+                      </FlexItem>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              </FlexItem>
+            </Flex>
           </div>
         </ExpandableSection>
   </PageSection>
@@ -948,20 +1484,73 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                   />
                 </ToolbarItem>
                 <ToolbarItem variant="pagination" align={{ default: 'alignEnd' }} style={{ alignSelf: 'center' }}>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                    <FlexItem>
                   <span style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                    {filteredJobs.length > 0 ? `1 - ${filteredJobs.length} of ${filteredJobs.length}` : '0 of 0'}
+                        {sortedJobs.length > 0 ? `${startIndex + 1} - ${Math.min(endIndex, sortedJobs.length)} of ${sortedJobs.length}` : '0 of 0'}
                   </span>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button 
+                        variant="plain" 
+                        isDisabled={currentPage === 1}
+                        onClick={() => setCurrentPage(1)}
+                        aria-label="First page"
+                        id="pagination-first-btn"
+                      >
+                        <AngleDoubleLeftIcon />
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button 
+                        variant="plain" 
+                        isDisabled={currentPage === 1}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        aria-label="Previous page"
+                        id="pagination-prev-btn"
+                      >
+                        <AngleLeftIcon />
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
+                      <span style={{ fontSize: '14px' }}>
+                        {currentPage} of {totalPages || 1}
+                      </span>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button 
+                        variant="plain" 
+                        isDisabled={currentPage >= totalPages}
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        aria-label="Next page"
+                        id="pagination-next-btn"
+                      >
+                        <AngleRightIcon />
+                      </Button>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button 
+                        variant="plain" 
+                        isDisabled={currentPage >= totalPages}
+                        onClick={() => setCurrentPage(totalPages)}
+                        aria-label="Last page"
+                        id="pagination-last-btn"
+                      >
+                        <AngleDoubleRightIcon />
+                      </Button>
+                    </FlexItem>
+                  </Flex>
                 </ToolbarItem>
               </ToolbarContent>
             </Toolbar>
             <Table aria-label="Workload jobs table" variant="compact" id="jobs-table">
                 <Thead>
                   <Tr>
-                    <Th id="job-name-header">Job name</Th>
-                    <Th id="project-header">Project</Th>
-                    <Th id="type-header">Type</Th>
-                    <Th id="status-header">Status</Th>
-                    <Th id="queue-position-header">
+                    <Th id="job-name-header" sort={getSortParams(0)}>Job name</Th>
+                    <Th id="project-header" sort={getSortParams(1)}>Project</Th>
+                    <Th id="type-header" sort={getSortParams(2)}>Type</Th>
+                    <Th id="status-header" sort={getSortParams(3)}>Status</Th>
+                    <Th id="queue-position-header" sort={getSortParams(4)}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         Queue position (est. start)
                         <Popover
@@ -975,7 +1564,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                         </Popover>
                       </span>
                     </Th>
-                    <Th id="priority-header">
+                    <Th id="priority-header" sort={getSortParams(5)}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         Priority
                         <Popover
@@ -989,8 +1578,8 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                         </Popover>
                       </span>
                     </Th>
-                    <Th id="wait-time-header">Wait time</Th>
-                    <Th id="hardware-profile-header">
+                    <Th id="wait-time-header" sort={getSortParams(6)}>Wait time</Th>
+                    <Th id="hardware-profile-header" sort={getSortParams(7)}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         Hardware profile
                         <Popover
@@ -1008,7 +1597,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {filteredJobs.map((job, index) => {
+                  {paginatedJobs.map((job, index) => {
                     const queuePositionLines = job.queuePosition.split('\n');
                     const priorityMatch = job.priority.match(/^(.*?)(\(.*\))$/);
                     const hardwareProfileLines = job.hardwareProfile.split('\n');
@@ -1016,7 +1605,7 @@ const WorkloadMetrics: React.FunctionComponent = () => {
                     return (
                       <Tr key={job.id}>
                         <Td dataLabel="Job name">
-                          <Button variant="link" isInline id={`job-link-${index}`}>{job.name}</Button>
+                          <Button variant="link" isInline id={`job-link-${startIndex + index}`}>{job.name}</Button>
                         </Td>
                         <Td dataLabel="Project">{job.project}</Td>
                         <Td dataLabel="Type">{job.type}</Td>
@@ -1086,9 +1675,62 @@ const WorkloadMetrics: React.FunctionComponent = () => {
               <Toolbar id="workloads-bottom-toolbar">
                 <ToolbarContent style={{ alignItems: 'baseline' }}>
                   <ToolbarItem variant="pagination" align={{ default: 'alignEnd' }} style={{ alignSelf: 'center' }}>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
                     <span style={{ fontSize: '14px', color: 'var(--pf-t--global--text--color--subtle)' }}>
-                      {filteredJobs.length > 0 ? `1 - ${filteredJobs.length} of ${filteredJobs.length}` : '0 of 0'}
+                          {sortedJobs.length > 0 ? `${startIndex + 1} - ${Math.min(endIndex, sortedJobs.length)} of ${sortedJobs.length}` : '0 of 0'}
                     </span>
+                      </FlexItem>
+                      <FlexItem>
+                        <Button 
+                          variant="plain" 
+                          isDisabled={currentPage === 1}
+                          onClick={() => setCurrentPage(1)}
+                          aria-label="First page"
+                          id="pagination-bottom-first-btn"
+                        >
+                          <AngleDoubleLeftIcon />
+                        </Button>
+                      </FlexItem>
+                      <FlexItem>
+                        <Button 
+                          variant="plain" 
+                          isDisabled={currentPage === 1}
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          aria-label="Previous page"
+                          id="pagination-bottom-prev-btn"
+                        >
+                          <AngleLeftIcon />
+                        </Button>
+                      </FlexItem>
+                      <FlexItem>
+                        <span style={{ fontSize: '14px' }}>
+                          {currentPage} of {totalPages || 1}
+                        </span>
+                      </FlexItem>
+                      <FlexItem>
+                        <Button 
+                          variant="plain" 
+                          isDisabled={currentPage >= totalPages}
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          aria-label="Next page"
+                          id="pagination-bottom-next-btn"
+                        >
+                          <AngleRightIcon />
+                        </Button>
+                      </FlexItem>
+                      <FlexItem>
+                        <Button 
+                          variant="plain" 
+                          isDisabled={currentPage >= totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                          aria-label="Last page"
+                          id="pagination-bottom-last-btn"
+                        >
+                          <AngleDoubleRightIcon />
+                        </Button>
+                      </FlexItem>
+                    </Flex>
                   </ToolbarItem>
                 </ToolbarContent>
               </Toolbar>
