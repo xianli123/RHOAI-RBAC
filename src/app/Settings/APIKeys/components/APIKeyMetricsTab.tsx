@@ -21,15 +21,7 @@ import {
   InputGroup,
   InputGroupItem,
 } from '@patternfly/react-core';
-import { 
-  Chart, 
-  ChartArea, 
-  ChartAxis,
-  ChartContainer,
-  ChartLegend,
-  ChartThemeColor,
-  ChartTooltip,
-} from '@patternfly/react-charts/victory';
+import ReactECharts from 'echarts-for-react';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { TimeRange } from '../types';
 import { mockMetrics } from '../mockData';
@@ -226,45 +218,56 @@ const APIKeyMetricsTab: React.FunctionComponent<APIKeyMetricsTabProps> = ({ keyI
           <CardTitle>Total Requests</CardTitle>
           <CardBody>
             <div style={{ height: '400px' }}>
-              <Chart
-                ariaDesc="Total requests over time"
-                ariaTitle="Requests chart"
-                containerComponent={
-                  <ChartContainer
-                    responsive={true}
-                  />
-                }
-                height={350}
-                width={1200}
-                legendComponent={
-                  <ChartLegend 
-                    data={[{ name: 'Requests' }]} 
-                    x={50} 
-                    y={20}
-                  />
-                }
-                legendPosition="bottom"
-                padding={{
-                  bottom: 75,
-                  left: 100,
-                  right: 50,
-                  top: 50,
+              <ReactECharts
+                option={{
+                  tooltip: {
+                    trigger: 'axis',
+                    formatter: (params: any) => {
+                      if (params[0]) {
+                        return `Requests: ${params[0].value}`;
+                      }
+                      return '';
+                    }
+                  },
+                  legend: {
+                    data: ['Requests'],
+                    bottom: 0
+                  },
+                  xAxis: {
+                    type: 'category',
+                    data: chartData.map((_, index) => `${index + 1}`),
+                    show: false
+                  },
+                  yAxis: {
+                    type: 'value'
+                  },
+                  series: [{
+                    name: 'Requests',
+                    data: chartData.map((item: any) => item.y),
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {
+                      color: '#8BC1F7',
+                      opacity: 0.6
+                    },
+                    itemStyle: {
+                      color: '#519DE9'
+                    },
+                    lineStyle: {
+                      color: '#519DE9',
+                      width: 2
+                    }
+                  }],
+                  grid: {
+                    left: '10%',
+                    right: '5%',
+                    bottom: '15%',
+                    top: '5%',
+                    containLabel: true
+                  }
                 }}
-                themeColor={ChartThemeColor.blue}
-              >
-                <ChartAxis dependentAxis showGrid />
-                <ChartAxis 
-                  tickFormat={() => ''}
-                />
-                <ChartArea
-                  data={chartData}
-                  interpolation="cardinal"
-                  labelComponent={<ChartTooltip constrainToVisibleArea />}
-                  style={{
-                    data: { fill: '#8BC1F7', fillOpacity: 0.6, stroke: '#519DE9', strokeWidth: 2 }
-                  }}
-                />
-              </Chart>
+                style={{ height: '100%', width: '100%' }}
+              />
             </div>
           </CardBody>
         </Card>

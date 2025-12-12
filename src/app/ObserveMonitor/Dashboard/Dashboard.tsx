@@ -24,6 +24,7 @@ import {
   TabTitleText,
   TabContent,
   TabContentBody,
+  Divider,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { MultiTypeaheadSelect, MultiTypeaheadSelectOption } from '@patternfly/react-templates';
@@ -38,7 +39,9 @@ import {
   ChartThemeColor,
   ChartVoronoiContainer
 } from '@patternfly/react-charts/victory';
-import { TableIcon, KeyIcon, CubeIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
+import { TableIcon, KeyIcon, CubeIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon, AngleRightIcon } from '@patternfly/react-icons';
+import { PatternFlyLineChart } from '@app/components/PatternFlyLineChart';
+import { PatternFlyAreaChart } from '@app/components/PatternFlyAreaChart';
 
 // Mock data for the dashboard
 const usageMetrics = {
@@ -93,6 +96,110 @@ const legendData = [
   { name: 'llm-7b-chat' }, 
   { name: 'mistral-7b-instruct-v2' }, 
   { name: 'stable-diffusion-xl-beta' }
+];
+
+// Request traces table data
+interface TraceData {
+  user: string;
+  userDetails: string;
+  traceId: string;
+  timestamp: string;
+  duration: string;
+  durationColor: string;
+  model: string;
+  status: 'success' | 'warning' | 'unknown';
+  statusIcon: string;
+}
+
+const traceData: TraceData[] = [
+  {
+    user: 'patient_user',
+    userDetails: '204 tokens • 22 tok/s • 243ms TTIF',
+    traceId: 'a4b1c2d3-e4f5-g6h7-i8j9-k811n2n3o4p5',
+    timestamp: '2025-09-16 18:49:01',
+    duration: '4.81s',
+    durationColor: '#3e8635',
+    model: 'granite-7b-instruct-v2',
+    status: 'success',
+    statusIcon: '#3e8635'
+  },
+  {
+    user: 'health_user',
+    userDetails: '156 tokens • 28 tok/s • 198ms TTIF',
+    traceId: 'b5c6d7e8-f9g0-h1i2-j3k4-l5m6n7o8p9q8',
+    timestamp: '2025-09-16 18:48:45',
+    duration: '3.42s',
+    durationColor: '#3e8635',
+    model: 'granite-7b-instruct-v2',
+    status: 'success',
+    statusIcon: '#3e8635'
+  },
+  {
+    user: 'complex_user',
+    userDetails: '312 tokens • 18 tok/s • 456ms TTIF',
+    traceId: 'c7d8e9f8-g1h2-i3j4-k5l6-m7n8o9p0q1r2',
+    timestamp: '2025-09-16 18:48:12',
+    duration: '6.80s',
+    durationColor: '#f0ad00',
+    model: 'granite-7b-instruct-v2',
+    status: 'warning',
+    statusIcon: '#f0ad00'
+  },
+  {
+    user: 'enterprise_user',
+    userDetails: '89 tokens • 35 tok/s • 156ms TTIF',
+    traceId: 'd8e9f0a1-h2i3-j4k5-l6m7-n8o9p0q1r2s3',
+    timestamp: '2025-09-16 18:47:23',
+    duration: '2.15s',
+    durationColor: '#3e8635',
+    model: 'granite-7b-instruct-v2',
+    status: 'success',
+    statusIcon: '#3e8635'
+  },
+  {
+    user: 'system_admin',
+    userDetails: '124 tokens • 31 tok/s • 145ms TTIF',
+    traceId: 'e9f0a1b2-i3j4-k5l6-m7n8-o9p0q1r2s3t4',
+    timestamp: '2025-09-16 17:32:15',
+    duration: '1.89s',
+    durationColor: '#3e8635',
+    model: 'granite-7b-instruct-v2',
+    status: 'success',
+    statusIcon: '#3e8635'
+  },
+  {
+    user: 'dev_team_lead',
+    userDetails: '1,247 tokens • N/A tok/s • No TTIF',
+    traceId: '',
+    timestamp: '2025-09-16 17:25:30',
+    duration: 'N/A',
+    durationColor: '#d2d2d2',
+    model: 'llama-70b-chat',
+    status: 'unknown',
+    statusIcon: '#6a6e73'
+  },
+  {
+    user: 'qa_engineer',
+    userDetails: '892 tokens • N/A tok/s • No TTIF',
+    traceId: '',
+    timestamp: '2025-09-16 17:20:45',
+    duration: 'N/A',
+    durationColor: '#d2d2d2',
+    model: 'mistral-7b-instruct-v2',
+    status: 'unknown',
+    statusIcon: '#6a6e73'
+  },
+  {
+    user: 'analyst_user',
+    userDetails: '456 tokens • N/A tok/s • No TTIF',
+    traceId: '',
+    timestamp: '2025-09-16 17:15:12',
+    duration: 'N/A',
+    durationColor: '#d2d2d2',
+    model: 'granite-7b-instruct-v2',
+    status: 'unknown',
+    statusIcon: '#6a6e73'
+  }
 ];
 
 // Model deployment table data
@@ -333,7 +440,21 @@ const Dashboard: React.FunctionComponent = () => {
   const [groupByOpen, setGroupByOpen] = React.useState(false);
   const [metricsOpen, setMetricsOpen] = React.useState(false);
   const [trendsOpen, setTrendsOpen] = React.useState(false);
-  const [selectedTab, setSelectedTab] = React.useState('Models');
+  const [utilTimeOpen, setUtilTimeOpen] = useState(false);
+  const [utilTimeRange, setUtilTimeRange] = useState('Last 24 hours');
+  const [selectedTab, setSelectedTab] = React.useState('Cluster');
+  
+  // Request traces filter states
+  const [serviceNameOpen, setServiceNameOpen] = useState(false);
+  const [namespaceOpen, setNamespaceOpen] = useState(false);
+  const [modelFilterOpen, setModelFilterOpen] = useState(false);
+  const [timeRangeOpen, setTimeRangeOpen] = useState(false);
+  const [limitTracesOpen, setLimitTracesOpen] = useState(false);
+  const [serviceName, setServiceName] = useState('All Services');
+  const [namespace, setNamespace] = useState('All Namespaces');
+  const [modelFilter, setModelFilter] = useState('All Models');
+  const [timeRange, setTimeRange] = useState('Last 24 hours');
+  const [limitTraces, setLimitTraces] = useState('20');
   
   // Multi-select states
   const [selectedApiKeys, setSelectedApiKeys] = useState<SelectionsType>(['production', 'dev', 'staging', 'test', 'analyst']);
@@ -580,15 +701,123 @@ const Dashboard: React.FunctionComponent = () => {
         <FlexItem>
           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
             <FlexItem>
-              <Title headingLevel="h1" size="2xl">Observe &amp; monitor</Title>
-            </FlexItem>
-            <FlexItem>
-              <Badge>Dashboard</Badge>
+              <Title headingLevel="h1" size="2xl">Dashboard</Title>
             </FlexItem>
           </Flex>
-          <Content component={ContentVariants.p}>
+              <Content component={ContentVariants.p}>
             Monitor the health and performance of your AI workloads and infrastructure
-          </Content>
+              </Content>
+            </FlexItem>
+
+        {/* Overview card */}
+            <FlexItem>
+          <Card>
+            <CardTitle>
+              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                <FlexItem>
+                  <Title headingLevel="h3" size="lg">Overview</Title>
+            </FlexItem>
+                <FlexItem>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                    <div style={{ width: '8px', height: '8px', backgroundColor: '#3e8635', borderRadius: '50%' }} />
+                    <Content component={ContentVariants.small}>All systems operational</Content>
+          </Flex>
+                </FlexItem>
+              </Flex>
+            </CardTitle>
+            <CardBody>
+              <Flex spaceItems={{ default: 'spaceItemsSm' }}>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#e6f2ff', border: 'none', padding: '2px' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#0066cc', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>CLUSTERS</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>8 Nodes</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+2</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#e6f2ff', border: 'none', padding: '2px' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#0066cc', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>COMPUTE</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>24 GPUs</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>58% util</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#e6f5e6', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#3e8635', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>MODELS</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>4 Active</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+1</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#e6f5e6', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#3e8635', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>P90 LATENCY</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>820ms</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#f0ad00', fontSize: '0.75rem', margin: 0 }}>+45ms</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#f3e5f5', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#8b5cf6', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>REQUESTS</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>2.8K</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+12%</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#f3e5f5', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#8b5cf6', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>TOKENS</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>1.2M</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+8%</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#fff3e0', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#c9190b', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>COST PER REQUEST</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>$0.023</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>+$0.002</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+                <FlexItem grow={{ default: 'grow' }}>
+                  <Card isCompact style={{ backgroundColor: '#fff3e0', border: 'none' }}>
+                    <CardBody style={{ padding: '0.5rem' }}>
+                      <Content component={ContentVariants.small} style={{ color: '#c9190b', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>ERROR RATE</Content>
+                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
+                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>0.8%</Title>
+                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>-0.1%</Content>
+                      </Flex>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+              </Flex>
+            </CardBody>
+          </Card>
         </FlexItem>
 
             {/* Tab Navigation */}
@@ -609,33 +838,450 @@ const Dashboard: React.FunctionComponent = () => {
                   aria-label="Models tab"
                 />
                 <Tab
-                  eventKey="Usage (MaaS)"
-                  title={<TabTitleText>Usage (MaaS)</TabTitleText>}
-                  aria-label="Usage MaaS tab"
+                  eventKey="Usage"
+                  title={<TabTitleText>Usage</TabTitleText>}
+                  aria-label="Usage tab"
                 />
                 <Tab
                   eventKey="Traces"
                   title={<TabTitleText>Traces</TabTitleText>}
                   aria-label="Traces tab"
                 />
+                {/* Perses tab removed */}
               </Tabs>
             </FlexItem>
 
 
         {/* Tab Content */}
         {selectedTab === 'Cluster' && (
+          <>
+            {/* Cluster Details and Resource Inventory */}
           <FlexItem>
-            <Card>
-              <CardTitle>
-                <Title headingLevel="h3" size="lg">Cluster Overview</Title>
-              </CardTitle>
+              <Grid hasGutter>
+                <GridItem span={6}>
+                  <Card style={{ height: '100%' }}>
+                    <CardTitle>
+                      <Title headingLevel="h4" size="md">Cluster Details</Title>
+                    </CardTitle>
               <CardBody>
-                <Content component={ContentVariants.p}>
-                  This cluster monitoring functionality is out of scope. This section would typically show cluster-wide metrics, node health, resource utilization across the cluster, and infrastructure monitoring data.
-                </Content>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                  <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>Provider</Content>
+                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>AWS</Content>
+                    </Flex>
+                  </FlexItem>
+                        <FlexItem>
+                    <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>OpenShift version</Content>
+                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>2.24.0</Content>
+                          </Flex>
+                        </FlexItem>
+                      <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>Channel</Content>
+                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>fast</Content>
+                          </Flex>
+                      </FlexItem>
+                      <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>API server</Content>
+                            <Content component={ContentVariants.small} style={{ fontFamily: 'monospace', fontSize: '12px', marginTop: 0 }}>
+                              https://api.cluster-z84h8.z84h8.sandbox.opentic.com
+                            </Content>
+                        </Flex>
+                      </FlexItem>
+                        <FlexItem>
+                          <Button variant="link" style={{ padding: 0, fontSize: '14px' }}>
+                            View settings →
+                          </Button>
+                      </FlexItem>
+                    </Flex>
+                    </CardBody>
+                  </Card>
+                  </GridItem>
+                <GridItem span={6}>
+                  <Card style={{ height: '100%' }}>
+                    <CardTitle>
+                      <Title headingLevel="h4" size="md">Cluster inventory</Title>
+                    </CardTitle>
+                    <CardBody>
+                    <Flex direction={{ default: 'column' }}>
+                      <FlexItem>
+                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>3 Nodes</Content>
+                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>3</Content>
+                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
+                            </Flex>
+                          </Flex>
+                      </FlexItem>
+                      <FlexItem>
+                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>8 Disks</Content>
+                        <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>8</Content>
+                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
+                            </Flex>
+                        </Flex>
+                      </FlexItem>
+                        <FlexItem>
+                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>20 Pods</Content>
+                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>20</Content>
+                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
+                    </Flex>
+                          </Flex>
+                        </FlexItem>
+                      <FlexItem>
+                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>12 PVs</Content>
+                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>12</Content>
+                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
+                            </Flex>
+                          </Flex>
+                      </FlexItem>
+                      <FlexItem>
+                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>18 PVCs</Content>
+                        <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>18</Content>
+                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
+                            </Flex>
+                        </Flex>
+                      </FlexItem>
+                    </Flex>
+                    </CardBody>
+                  </Card>
+                  </GridItem>
+              </Grid>
+            </FlexItem>
+
+            {/* Utilizations Section */}
+                      <FlexItem>
+              <Card>
+                <CardTitle>
+                  <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                    <FlexItem>
+                      <Title headingLevel="h4" size="md">Utilizations</Title>
+                      </FlexItem>
+                      <FlexItem>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Content component={ContentVariants.small}>
+                            Time range:
+                          </Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Dropdown
+                            onSelect={(_e, itemId) => {
+                              setUtilTimeOpen(false);
+                              const selected = typeof itemId === 'string' ? itemId : '';
+                              if (selected === '1h') setUtilTimeRange('Last 1 hour');
+                              else if (selected === '6h') setUtilTimeRange('Last 6 hours');
+                              else if (selected === '24h') setUtilTimeRange('Last 24 hours');
+                              else if (selected === '7d') setUtilTimeRange('Last 7 days');
+                            }}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle ref={toggleRef} onClick={() => setUtilTimeOpen(!utilTimeOpen)} isExpanded={utilTimeOpen}>
+                                {utilTimeRange}
+                              </MenuToggle>
+                            )}
+                            isOpen={utilTimeOpen}
+                            id="utilization-time-range-dropdown"
+                          >
+                            <DropdownList>
+                              <DropdownItem value="1h">Last 1 hour</DropdownItem>
+                              <DropdownItem value="6h">Last 6 hours</DropdownItem>
+                              <DropdownItem value="24h">Last 24 hours</DropdownItem>
+                              <DropdownItem value="7d">Last 7 days</DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </FlexItem>
+                          </Flex>
+                    </FlexItem>
+                        </Flex>
+                </CardTitle>
+                <CardBody>
+                  <Grid hasGutter>
+                    {/* First row: GPU and Memory */}
+                    <GridItem span={6}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>GPU</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>77% available of 80</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <PatternFlyAreaChart
+                            data={[
+                              { x: '00:00', y: 65 },
+                              { x: '02:00', y: 70 },
+                              { x: '04:00', y: 55 },
+                              { x: '06:00', y: 60 },
+                              { x: '08:00', y: 75 },
+                              { x: '10:00', y: 68 }
+                            ]}
+                            height={180}
+                            width="100%"
+                            domain={{ y: [0, 100] }}
+                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
+                            themeColor="blue"
+                            showLegend={false}
+                            axisTickFontSize={11}
+                            chartLabel="GPU"
+                            ariaDesc="GPU utilization over time"
+                            ariaTitle="GPU Utilization Chart"
+                          />
+                      </FlexItem>
+                    </Flex>
+                  </GridItem>
+                    <GridItem span={6}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>Memory</Content>
+                      </FlexItem>
+                      <FlexItem>
+                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>2,048 GB available of 3,677 GB</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <PatternFlyAreaChart
+                            data={[
+                              { x: '00:00', y: 45 },
+                              { x: '02:00', y: 50 },
+                              { x: '04:00', y: 40 },
+                              { x: '06:00', y: 42 },
+                              { x: '08:00', y: 55 },
+                              { x: '10:00', y: 48 }
+                            ]}
+                            height={180}
+                            width="100%"
+                            domain={{ y: [0, 80] }}
+                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
+                            themeColor="blue"
+                            showLegend={false}
+                            axisTickFontSize={11}
+                            chartLabel="Memory"
+                            ariaDesc="Memory utilization over time"
+                            ariaTitle="Memory Utilization Chart"
+                          />
+                      </FlexItem>
+                    </Flex>
+                  </GridItem>
+                    {/* Second row: CPU and Network */}
+                    <GridItem span={6}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>CPU</Content>
+                      </FlexItem>
+                      <FlexItem>
+                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>71% available of 80</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <PatternFlyAreaChart
+                            data={[
+                              { x: '00:00', y: 60 },
+                              { x: '02:00', y: 65 },
+                              { x: '04:00', y: 55 },
+                              { x: '06:00', y: 58 },
+                              { x: '08:00', y: 70 },
+                              { x: '10:00', y: 62 }
+                            ]}
+                            height={180}
+                            width="100%"
+                            domain={{ y: [0, 100] }}
+                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
+                            themeColor="blue"
+                            showLegend={false}
+                            axisTickFontSize={11}
+                            chartLabel="CPU"
+                            ariaDesc="CPU utilization over time"
+                            ariaTitle="CPU Utilization Chart"
+                          />
+                        </FlexItem>
+                          </Flex>
+                    </GridItem>
+                    <GridItem span={6}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>Network</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>3.8 Mbps In</Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <PatternFlyAreaChart
+                            data={[
+                              { x: '00:00', y: 15 },
+                              { x: '02:00', y: 20 },
+                              { x: '04:00', y: 12 },
+                              { x: '06:00', y: 18 },
+                              { x: '08:00', y: 25 },
+                              { x: '10:00', y: 16 }
+                            ]}
+                            height={180}
+                            width="100%"
+                            domain={{ y: [0, 30] }}
+                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
+                            themeColor="blue"
+                            showLegend={false}
+                            axisTickFontSize={11}
+                            chartLabel="Network"
+                            ariaDesc="Network utilization over time"
+                            ariaTitle="Network Utilization Chart"
+                          />
+                      </FlexItem>
+                    </Flex>
+                  </GridItem>
+                  </Grid>
+                </CardBody>
+              </Card>
+            </FlexItem>
+
+            {/* System Health Score */}
+                      <FlexItem>
+              <Card>
+                <CardTitle>
+                  <Title headingLevel="h4" size="md">System health score</Title>
+                </CardTitle>
+                <CardBody>
+                  <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                    <FlexItem>
+                      <Grid hasGutter>
+                        <GridItem span={3}>
+                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>100%</Content>
+                            <Content component={ContentVariants.small}>Health score</Content>
+                          </Flex>
+                        </GridItem>
+                        <GridItem span={3}>
+                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
+                            <Content component={ContentVariants.small}>Active errors</Content>
+                          </Flex>
+                        </GridItem>
+                        <GridItem span={3}>
+                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
+                            <Content component={ContentVariants.small}>Pending requests</Content>
+                          </Flex>
+                        </GridItem>
+                        <GridItem span={3}>
+                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
+                            <Content component={ContentVariants.small}>Active warnings</Content>
+                          </Flex>
+                        </GridItem>
+                      </Grid>
+                      </FlexItem>
+                      <FlexItem>
+                      <Flex spaceItems={{ default: 'spaceItemsLg' }}>
+                        <FlexItem>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <div style={{ width: '8px', height: '8px', backgroundColor: '#3e8635', borderRadius: '50%' }} />
+                            <Content component={ContentVariants.small}>Healthy</Content>
+                        </Flex>
+                      </FlexItem>
+                        <FlexItem>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <div style={{ width: '8px', height: '8px', backgroundColor: '#f0ad00', borderRadius: '50%' }} />
+                            <Content component={ContentVariants.small}>No data</Content>
+                    </Flex>
+                        </FlexItem>
+                      <FlexItem>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <div style={{ width: '8px', height: '8px', backgroundColor: '#f0ad00', borderRadius: '50%' }} />
+                            <Content component={ContentVariants.small}>No requests</Content>
+                          </Flex>
+                      </FlexItem>
+                      <FlexItem>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <div style={{ width: '8px', height: '8px', backgroundColor: '#c9190b', borderRadius: '50%' }} />
+                            <Content component={ContentVariants.small}>No warnings</Content>
+                          </Flex>
+                        </FlexItem>
+                        </Flex>
+                      </FlexItem>
+                    </Flex>
               </CardBody>
             </Card>
           </FlexItem>
+
+            {/* Charts Section */}
+          <FlexItem>
+              <Grid hasGutter>
+                <GridItem span={6}>
+            <Card>
+              <CardTitle>
+                      <Title headingLevel="h4" size="md">GPU Core Utilization</Title>
+              </CardTitle>
+              <CardBody>
+                      <PatternFlyLineChart
+                        data={[
+                          { name: 'GPU', x: '00:00', y: 65 },
+                          { name: 'GPU', x: '02:00', y: 70 },
+                          { name: 'GPU', x: '04:00', y: 55 },
+                          { name: 'GPU', x: '06:00', y: 60 },
+                          { name: 'GPU', x: '08:00', y: 75 },
+                          { name: 'GPU', x: '10:00', y: 68 }
+                        ]}
+                        height={200}
+                        width="100%"
+                        domain={{ y: [0, 100] }}
+                        padding={{
+                          bottom: 40,
+                          left: 50,
+                          right: 120,
+                          top: 20
+                        }}
+                        themeColor="blue"
+                        showLegend={true}
+                        axisTickFontSize={11}
+                        ariaDesc="GPU Core Utilization over time"
+                        ariaTitle="GPU Core Utilization Chart"
+                      />
+              </CardBody>
+            </Card>
+                </GridItem>
+                <GridItem span={6}>
+                  <Card>
+                    <CardTitle>
+                      <Title headingLevel="h4" size="md">Average Memory Utilization</Title>
+                    </CardTitle>
+                    <CardBody>
+                      <PatternFlyLineChart
+                        data={[
+                          { name: 'Memory', x: '00:00', y: 45 },
+                          { name: 'Memory', x: '02:00', y: 50 },
+                          { name: 'Memory', x: '04:00', y: 40 },
+                          { name: 'Memory', x: '06:00', y: 42 },
+                          { name: 'Memory', x: '08:00', y: 55 },
+                          { name: 'Memory', x: '10:00', y: 48 }
+                        ]}
+                        height={200}
+                        width="100%"
+                        domain={{ y: [0, 80] }}
+                        padding={{
+                          bottom: 40,
+                          left: 50,
+                          right: 120,
+                          top: 20
+                        }}
+                        themeColor="blue"
+                        showLegend={true}
+                        axisTickFontSize={11}
+                        ariaDesc="Average Memory Utilization over time"
+                        ariaTitle="Average Memory Utilization Chart"
+                      />
+                    </CardBody>
+                  </Card>
+                </GridItem>
+              </Grid>
+          </FlexItem>
+          </>
         )}
 
         {selectedTab === 'Models' && (
@@ -731,19 +1377,19 @@ const Dashboard: React.FunctionComponent = () => {
                                 <FlexItem>
                                   <Badge style={{ backgroundColor: '#f0ad00', color: '#ffffff', fontSize: '12px', padding: '2px 8px', minHeight: '20px' }}>{model.apiKeyTag}</Badge>
                                 </FlexItem>
-                              </Flex>
+                            </Flex>
                             </Td>
-                            <Td>
+                          <Td>
                               <Button variant="link" style={{ padding: 0, fontSize: '14px', textAlign: 'left', fontWeight: 'normal' }}>
                                 {model.apiKey}
                               </Button>
-                            </Td>
+                          </Td>
                             <Td>{model.project}</Td>
                             <Td>{model.runtime}</Td>
                             <Td>{model.requests}</Td>
                             <Td>{model.latency}</Td>
-                            <Td>{model.errorRate}</Td>
-                            <Td>{model.resources}</Td>
+                          <Td>{model.errorRate}</Td>
+                          <Td>{model.resources}</Td>
                             <Td>
                               {getStatusBadge(model.status)}
                             </Td>
@@ -834,13 +1480,13 @@ const Dashboard: React.FunctionComponent = () => {
                                 constrainToVisibleArea 
                               />
                             }
-                            height={200}
-                            padding={{
-                              bottom: 40,
-                              left: 50,
-                              right: 50,
-                              top: 20
-                            }}
+                          height={200}
+                          padding={{
+                            bottom: 40,
+                            left: 50,
+                            right: 50,
+                            top: 20
+                          }}
                             themeColor={ChartThemeColor.orange}
                           >
                             <ChartAxis dependentAxis showGrid />
@@ -885,13 +1531,13 @@ const Dashboard: React.FunctionComponent = () => {
                                 constrainToVisibleArea 
                               />
                             }
-                            height={200}
-                            padding={{
-                              bottom: 40,
-                              left: 50,
-                              right: 50,
-                              top: 20
-                            }}
+                          height={200}
+                          padding={{
+                            bottom: 40,
+                            left: 50,
+                            right: 50,
+                            top: 20
+                          }}
                             themeColor={ChartThemeColor.green}
                           >
                             <ChartAxis dependentAxis showGrid />
@@ -936,13 +1582,13 @@ const Dashboard: React.FunctionComponent = () => {
                                 constrainToVisibleArea 
                               />
                             }
-                            height={200}
-                            padding={{
-                              bottom: 40,
-                              left: 50,
-                              right: 50,
-                              top: 20
-                            }}
+                          height={200}
+                          padding={{
+                            bottom: 40,
+                            left: 50,
+                            right: 50,
+                            top: 20
+                          }}
                             themeColor={ChartThemeColor.purple}
                           >
                             <ChartAxis dependentAxis showGrid tickFormat={(x) => `${x} ms`} />
@@ -967,7 +1613,7 @@ const Dashboard: React.FunctionComponent = () => {
           </>
         )}
 
-        {selectedTab === 'Usage (MaaS)' && (
+        {selectedTab === 'Usage' && (
           <>
             {/* Usage Metrics */}
             <FlexItem>
@@ -1103,18 +1749,18 @@ const Dashboard: React.FunctionComponent = () => {
                           constrainToVisibleArea 
                         />
                       }
-                      domain={{ y: [0, 10] }}
+                    domain={{ y: [0, 10] }}
                       domainPadding={{ x: [30, 25] }}
                       legendData={legendData}
                       legendOrientation="vertical"
                       legendPosition="right"
                       height={400}
-                      padding={{
-                        bottom: 50,
-                        left: 50,
+                    padding={{
+                      bottom: 50,
+                      left: 50,
                         right: 160, // Adjusted for smaller width
-                        top: 50
-                      }}
+                      top: 50
+                    }}
                       themeColor={ChartThemeColor.multi}
                     >
                       <ChartAxis />
@@ -1168,17 +1814,17 @@ const Dashboard: React.FunctionComponent = () => {
                           constrainToVisibleArea 
                         />
                       }
-                      domain={{ y: [0, 10] }}
+                    domain={{ y: [0, 10] }}
                       legendData={legendData}
                       legendOrientation="vertical"
                       legendPosition="right"
                       height={400}
-                      padding={{
-                        bottom: 50,
-                        left: 50,
+                    padding={{
+                      bottom: 50,
+                      left: 50,
                         right: 160, // Adjusted for smaller width
-                        top: 50
-                      }}
+                      top: 50
+                    }}
                       themeColor={ChartThemeColor.multi}
                     >
                       <ChartAxis dependentAxis showGrid tickFormat={(x) => `${x}`} />
@@ -1210,17 +1856,252 @@ const Dashboard: React.FunctionComponent = () => {
         {selectedTab === 'Traces' && (
           <FlexItem>
             <Card>
-              <CardTitle>
-                <Title headingLevel="h3" size="lg">Traces & Logs</Title>
-              </CardTitle>
               <CardBody>
+                {/* Header Section */}
+                <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                  <FlexItem>
+                    <Title headingLevel="h1" size="2xl">Request traces</Title>
+                  </FlexItem>
+                  <FlexItem>
     <Content component={ContentVariants.p}>
-                  This trace analytics functionality is out of scope. This section would show distributed tracing data, request flows, service dependencies, and performance bottleneck analysis.
+                      View distributed traces for user requests with detailed service timelines and performance metrics.
     </Content>
+                  </FlexItem>
+                  <FlexItem>
+                    <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                      {/* Left side filters */}
+                      <FlexItem>
+                        <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                          <FlexItem>
+                            <Dropdown
+                              onSelect={(event, value) => {
+                                if (value) {
+                                  setServiceName(value as string);
+                                  setServiceNameOpen(false);
+                                }
+                              }}
+                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                <MenuToggle ref={toggleRef} onClick={() => setServiceNameOpen(!serviceNameOpen)} isExpanded={serviceNameOpen}>
+                                  Service Name: {serviceName}
+                                </MenuToggle>
+                              )}
+                              isOpen={serviceNameOpen}
+                            >
+                              <DropdownList>
+                                <DropdownItem value="All Services">All Services</DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </FlexItem>
+                          <FlexItem>
+                            <Dropdown
+                              onSelect={(event, value) => {
+                                if (value) {
+                                  setNamespace(value as string);
+                                  setNamespaceOpen(false);
+                                }
+                              }}
+                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                <MenuToggle ref={toggleRef} onClick={() => setNamespaceOpen(!namespaceOpen)} isExpanded={namespaceOpen}>
+                                  Namespace: {namespace}
+                                </MenuToggle>
+                              )}
+                              isOpen={namespaceOpen}
+                            >
+                              <DropdownList>
+                                <DropdownItem value="All Namespaces">All Namespaces</DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </FlexItem>
+                          <FlexItem>
+                            <Dropdown
+                              onSelect={(event, value) => {
+                                if (value) {
+                                  setModelFilter(value as string);
+                                  setModelFilterOpen(false);
+                                }
+                              }}
+                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                <MenuToggle ref={toggleRef} onClick={() => setModelFilterOpen(!modelFilterOpen)} isExpanded={modelFilterOpen}>
+                                  Model: {modelFilter}
+                                </MenuToggle>
+                              )}
+                              isOpen={modelFilterOpen}
+                            >
+                              <DropdownList>
+                                <DropdownItem value="All Models">All Models</DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </FlexItem>
+                        </Flex>
+                      </FlexItem>
+                      {/* Right side filters */}
+                      <FlexItem grow={{ default: 'grow' }} />
+                      <FlexItem>
+                        <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                          <FlexItem>
+                            <Dropdown
+                              onSelect={(event, value) => {
+                                if (value) {
+                                  setTimeRange(value as string);
+                                  setTimeRangeOpen(false);
+                                }
+                              }}
+                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                <MenuToggle ref={toggleRef} onClick={() => setTimeRangeOpen(!timeRangeOpen)} isExpanded={timeRangeOpen}>
+                                  Time range: {timeRange}
+                                </MenuToggle>
+                              )}
+                              isOpen={timeRangeOpen}
+                            >
+                              <DropdownList>
+                                <DropdownItem value="Last 1 hour">Last 1 hour</DropdownItem>
+                                <DropdownItem value="Last 6 hours">Last 6 hours</DropdownItem>
+                                <DropdownItem value="Last 24 hours">Last 24 hours</DropdownItem>
+                                <DropdownItem value="Last 7 days">Last 7 days</DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </FlexItem>
+                          <FlexItem>
+                            <Dropdown
+                              onSelect={(event, value) => {
+                                if (value) {
+                                  setLimitTraces(value as string);
+                                  setLimitTracesOpen(false);
+                                }
+                              }}
+                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                <MenuToggle ref={toggleRef} onClick={() => setLimitTracesOpen(!limitTracesOpen)} isExpanded={limitTracesOpen}>
+                                  Limit traces: {limitTraces}
+                                </MenuToggle>
+                              )}
+                              isOpen={limitTracesOpen}
+                            >
+                              <DropdownList>
+                                <DropdownItem value="20">20</DropdownItem>
+                                <DropdownItem value="50">50</DropdownItem>
+                                <DropdownItem value="100">100</DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </FlexItem>
+                        </Flex>
+                      </FlexItem>
+                    </Flex>
+                  </FlexItem>
+                </Flex>
+
+                {/* Table Section */}
+                <div style={{ marginTop: '1.5rem' }}>
+                  <Table aria-label="Request traces table">
+                    <Thead>
+                      <Tr>
+                        <Th>USER</Th>
+                        <Th>TRACE ID</Th>
+                        <Th>TIMESTAMP</Th>
+                        <Th>DURATION</Th>
+                        <Th>MODEL</Th>
+                        <Th>STATUS</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {traceData.map((trace, index) => (
+                        <Tr key={index}>
+                          <Td dataLabel="USER">
+                            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                              <FlexItem>
+                                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                                  <FlexItem>
+                                    <div
+                                      style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        backgroundColor: trace.statusIcon
+                                      }}
+                                    />
+                                  </FlexItem>
+                                  <FlexItem>
+                                    <Content component={ContentVariants.p} style={{ fontWeight: 'bold', color: '#0066cc' }}>
+                                      {trace.user}
+                                    </Content>
+                                  </FlexItem>
+                                </Flex>
+                              </FlexItem>
+                              <FlexItem>
+                                <Content component={ContentVariants.small} style={{ color: '#6a6e73' }}>
+                                  {trace.userDetails}
+                                </Content>
+                              </FlexItem>
+                            </Flex>
+                          </Td>
+                          <Td dataLabel="TRACE ID">
+                            {trace.traceId ? (
+                              <Content component={ContentVariants.p} style={{ color: '#0066cc', cursor: 'pointer' }}>
+                                {trace.traceId}
+                              </Content>
+                            ) : (
+                              <Content component={ContentVariants.p} style={{ color: '#6a6e73' }}>
+                                No trace
+                              </Content>
+                            )}
+                          </Td>
+                          <Td dataLabel="TIMESTAMP">
+                            <Content component={ContentVariants.p}>{trace.timestamp}</Content>
+                          </Td>
+                          <Td dataLabel="DURATION">
+                            <span
+                              style={{
+                                backgroundColor: trace.durationColor,
+                                color: trace.duration === 'N/A' ? '#151515' : '#ffffff',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {trace.duration}
+                            </span>
+                          </Td>
+                          <Td dataLabel="MODEL">
+                            <Content component={ContentVariants.p} style={{ color: '#0066cc', cursor: 'pointer' }}>
+                              {trace.model}
+                            </Content>
+                          </Td>
+                          <Td dataLabel="STATUS">
+                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                              <FlexItem>
+                                <div
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: trace.statusIcon
+                                  }}
+                                />
+                              </FlexItem>
+                              <FlexItem>
+                                <Content
+                                  component={ContentVariants.p}
+                                  style={{
+                                    color: trace.status === 'success' ? '#3e8635' : trace.status === 'warning' ? '#f0ad00' : '#6a6e73',
+                                    textTransform: 'capitalize'
+                                  }}
+                                >
+                                  {trace.status}
+                                </Content>
+                              </FlexItem>
+                            </Flex>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </div>
               </CardBody>
             </Card>
           </FlexItem>
         )}
+
+        {/* Perses content removed */}
       </Flex>
   </PageSection>
 );
