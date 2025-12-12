@@ -12,7 +12,7 @@ variables:
 # Default settings for all jobs
 default:
   tags:
-    - shared-podman
+    - itup-alm-arm
 
 # Cache disabled due to S3 upload timeouts in Red Hat GitLab environment
 # cache:
