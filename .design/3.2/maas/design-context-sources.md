@@ -154,3 +154,4 @@ source: https://litemaas-litemaas.apps.prod.rhoai.rh-aiservices-bu.com/home
 - description: MaaS demo UI powered by LiteLLM and created by the AI Customer Adoption and Innovation Team (CAI)
 source: http://18.223.29.178:3000
 - description: MaaS demo UI for policy management and observability, created by Noy
+

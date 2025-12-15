@@ -335,6 +335,13 @@ const routes: AppRouteConfig[] = [
         path: '/develop-train/experiments',
         title: 'RHOAI 3.1 Console | Develop & Train - Experiments',
       },
+      {
+        element: <TrainingJobs />,
+        exact: true,
+        label: 'Training jobs',
+        path: '/develop-train/training-jobs',
+        title: 'RHOAI 3.1 Console | Develop & Train - Training Jobs',
+      },
     ],
   },
   {
@@ -354,14 +361,8 @@ const routes: AppRouteConfig[] = [
         label: 'Workload metrics',
         path: '/observe-monitor/workload-metrics',
         title: 'RHOAI 3.1 Console | Observe & Monitor - Workload Metrics',
-      },
-      {
-        element: <TrainingJobs />,
-        exact: true,
-        label: 'Training jobs',
-        path: '/observe-monitor/training-jobs',
-        title: 'RHOAI 3.1 Console | Observe & Monitor - Training Jobs',
-      },
+        inProgress: true,
+      } as any,
     ],
   },
   {

@@ -321,6 +321,18 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 Tech Preview
               </Label>
             )}
+            {(route as any).inProgress && (
+              <Badge 
+                style={{ 
+                  backgroundColor: '#F32BC4',
+                  color: '#ffffff',
+                  fontSize: '10px'
+                }}
+                id={`${itemId}-in-progress-badge-disabled`}
+              >
+                WIP
+              </Badge>
+            )}
           </div>
         ) : (
           <NavLink
@@ -374,6 +386,18 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                   New
                 </Badge>
               </Tooltip>
+            )}
+            {(route as any).inProgress && (
+              <Badge 
+                style={{ 
+                  backgroundColor: '#F32BC4',
+                  color: '#ffffff',
+                  fontSize: '10px'
+                }}
+                id={`${itemId}-in-progress-badge`}
+              >
+                WIP
+              </Badge>
             )}
           </NavLink>
         )}

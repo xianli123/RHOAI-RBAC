@@ -3003,7 +3003,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
           </FlexItem>
         </Flex>
         <div className="pf-v5-u-color-200 pf-v5-u-mt-sm">
-          Browse endpoints for available models and MCP servers.
+          Browse endpoints for models and MCP servers available within a project.
         </div>
       </PageSection>
 
