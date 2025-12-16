@@ -1,96 +1,97 @@
 # Sample Merge Resolution Plan
 
-This file provides a complete example of a merge resolution plan for a typical conflict scenario.
+This is a complete example of a merge resolution plan for a typical React/TypeScript project conflict.
 
 ## Merge Resolution Plan
 
-### Conflict Summary
+### What We Found
 
-- **Total conflicted files**: 5
-- **Deleted-modified conflicts**: 1
-- **Generated files**: 1
-- **Regular conflicts**: 3
+- **Total files with conflicts**: 5
+- **Files where one was deleted**: 1
+- **Generated files (like package-lock.json)**: 1
+- **Regular code files**: 3
 
-### Resolution Strategy by File
+### Plan for Each File
 
-#### 1. `Cargo.lock`
+#### 1. `package-lock.json`
 
-**Conflict Type**: generated
-**Strategy**: Regenerate from Cargo.toml after merge
-**Rationale**: Lock files should never be manually merged; regeneration ensures all dependencies are correctly resolved
-**Risk**: Low - Standard procedure for lock files
-**Action Items**:
+**What's conflicted**: generated file
+**How we'll fix it**: Let npm regenerate it from package.json
+**Why this approach**: Lock files should never be manually edited; npm will include all dependencies from both branches
+**Risk level**: Low - Standard procedure
+**Steps**:
 
-- [ ] Choose either version temporarily
-- [ ] Run `cargo update` to regenerate
-- [ ] Stage the regenerated file
+- [ ] Pick either version (doesn't matter which)
+- [ ] Run `npm install` to regenerate
+- [ ] Mark the file as resolved
 
-#### 2. `src/utils/helpers.rs` (deleted in incoming, modified in current)
+#### 2. `src/components/UserCard.tsx` (deleted in incoming, modified in current)
 
-**Conflict Type**: deleted-modified
-**Strategy**: Backup modifications and apply to new location if applicable
-**Rationale**: File may have been moved/renamed; need to preserve modifications
-**Risk**: Medium - Requires analysis of where changes should go
-**Action Items**:
+**What's conflicted**: deleted-modified
+**How we'll fix it**: Save the changes and apply to new location if we find one
+**Why this approach**: File may have been renamed or moved; we need to save the changes
+**Risk level**: Medium - Need to figure out where changes go
+**Steps**:
 
-- [ ] Run handle-deleted-modified script to create backup
-- [ ] Review analysis report for potential relocation targets
-- [ ] Apply modifications to new location if found
+- [ ] Run handle-deleted-modified script to save a backup
+- [ ] Look at the analysis report for similar files
+- [ ] Apply the changes to the new location if found
 
-#### 3. `src/lib.rs`
+#### 3. `src/app/index.tsx`
 
-**Conflict Type**: imports
-**Strategy**: Merge all unique imports from both branches
-**Rationale**: Both branches likely added new dependencies; combining ensures all code works
-**Risk**: Low - Standard import merge pattern
-**Action Items**:
+**What's conflicted**: imports
+**How we'll fix it**: Combine all unique imports from both branches
+**Why this approach**: Both branches probably added new imports; combining keeps everything working
+**Risk level**: Low - Safe and standard approach
+**Steps**:
 
-- [ ] Extract imports from both sides
-- [ ] Deduplicate and sort by module
-- [ ] Verify no unused imports
+- [ ] Collect all imports from both sides
+- [ ] Remove duplicates
+- [ ] Organize by source (React, PatternFly, local files)
+- [ ] Check for any unused imports
 
-#### 4. `tests/integration_test.rs`
+#### 4. `src/app/Dashboard/Dashboard.test.tsx`
 
-**Conflict Type**: tests
-**Strategy**: Include all test cases from both branches
-**Rationale**: Both branches added new test coverage; all tests should be preserved
-**Risk**: Low - Tests are additive
-**Action Items**:
+**What's conflicted**: tests
+**How we'll fix it**: Keep all test cases from both branches
+**Why this approach**: Both branches added new tests; we want all the test coverage
+**Risk level**: Low - Tests are additive
+**Steps**:
 
-- [ ] Merge test functions from both branches
-- [ ] Combine test fixtures if needed
-- [ ] Ensure no duplicate test names
+- [ ] Include all test functions from both branches
+- [ ] Combine any test data/mocks
+- [ ] Make sure no test names are duplicated
 
-#### 5. `src/config.rs`
+#### 5. `src/app/Dashboard/Dashboard.tsx`
 
-**Conflict Type**: code logic
-**Strategy**: Need user input - both branches modify validation logic differently
-**Rationale**: Cannot determine correct business logic from code alone
-**Risk**: High - Affects core validation behavior
-**Action Items**:
+**What's conflicted**: component code logic
+**How we'll fix it**: Need your input - both branches changed the data calculation
+**Why this approach**: Can't tell which calculation is correct just from the code
+**Risk level**: High - Changes how the dashboard displays data
+**Steps**:
 
-- [ ] Present both approaches to user
-- [ ] Get user decision on which validation logic to use
-- [ ] Implement chosen approach
+- [ ] Show you both approaches
+- [ ] Get your decision on which to use
+- [ ] Implement the chosen approach
 
-### Execution Order
+### Order We'll Fix Things
 
-1. **Phase 1: Deleted-Modified Files** - Handle helpers.rs backup and analysis
-2. **Phase 2: Generated Files** - Regenerate Cargo.lock
-3. **Phase 3: Low-Risk Merges** - Merge imports in lib.rs and tests in integration_test.rs
-4. **Phase 4: High-Risk Merges** - Resolve config.rs after user input
-5. **Phase 5: Validation** - Compile, test, verify
+1. **First: Deleted Files** - Save backup of UserCard.tsx and analyze where changes go
+2. **Second: Generated Files** - Regenerate package-lock.json with npm
+3. **Third: Safe Merges** - Fix imports in index.tsx and tests in Dashboard.test.tsx
+4. **Fourth: Code Changes** - Fix Dashboard.tsx after getting your input
+5. **Fifth: Testing** - Build the app and run tests
 
-### Questions/Decisions Needed
+### Your Input Needed
 
-- [ ] **src/config.rs**: Validation logic conflict - which approach should we use?
-  - Current branch: Validates using regex patterns
-  - Incoming branch: Validates using a validation library
-  - Options: (1) Keep current, (2) Keep incoming, (3) Use both with feature flag
+- [ ] **src/app/Dashboard/Dashboard.tsx**: How should the chart data be calculated?
+  - Current branch: Multiplies values by 100 (showing percentages)
+  - Incoming branch: Adds baseline to values (showing totals)
+  - Which one is correct for what you're building?
 
-### Validation Steps
+### How We'll Verify Everything Works
 
-- [ ] Run conflict validation script
-- [ ] Compile with `cargo check`
-- [ ] Run full test suite with `cargo test`
-- [ ] Manual verification of config.rs changes
+- [ ] Check no conflict markers remain (run validation script)
+- [ ] Build the project with `npm run build`
+- [ ] Run all tests with `npm test`
+- [ ] Manually check the Dashboard changes

@@ -1,432 +1,522 @@
-# Conflict Resolution Patterns
+# Conflict Resolution Patterns for React/TypeScript Projects
 
-This document provides detailed patterns for resolving specific types of conflicts.
+This document provides detailed patterns for resolving conflicts in React/TypeScript/PatternFly projects.
 
-**Important**: For each conflict you resolve, provide a one-line explanation of your resolution strategy. When the correct resolution isn't clear from the diff, present numbered options to the user.
+**Important**: For each conflict you resolve, provide a simple one-sentence explanation. When you're not sure which change is better, show numbered options to the user.
 
 ## Import Conflicts
 
-When both branches modify import statements, merge both sets of imports:
+When both branches change import statements, combine both sets:
 
-### Pattern: Combine and Deduplicate
-
-```
-<<<<<<< HEAD
-import { foo, bar } from './module';
-import { baz } from './other';
-=======
-import { foo, qux } from './module';
-import { newThing } from './another';
->>>>>>> branch
-```
-
-**Resolution:** Merge all unique imports, group by module:
-
-```
-import { foo, bar, qux } from './module';
-import { baz } from './other';
-import { newThing } from './another';
-```
-
-### Rust Imports
+### Pattern: Combine and Remove Duplicates
 
 ```
 <<<<<<< HEAD
-use std::collections::HashMap;
-use crate::domain::User;
+import { Button, Card } from '@patternfly/react-core';
+import { Dashboard } from './Dashboard';
 =======
-use std::collections::HashSet;
-use crate::domain::Account;
+import { Button, Modal } from '@patternfly/react-core';
+import { Chart } from './Chart';
 >>>>>>> branch
 ```
 
-**Resolution:**
+**Fix:** Merge all unique imports, group by where they come from:
 
 ```
-use std::collections::{HashMap, HashSet};
-use crate::domain::{Account, User};
+import { Button, Card, Modal } from '@patternfly/react-core';
+import { Chart } from './Chart';
+import { Dashboard } from './Dashboard';
 ```
 
-**Key principles:**
+### React and Type Imports
+
+```
+<<<<<<< HEAD
+import React, { useState } from 'react';
+import type { User } from './types';
+=======
+import React, { useEffect } from 'react';
+import type { Project } from './types';
+>>>>>>> branch
+```
+
+**Fix:**
+
+```
+import React, { useState, useEffect } from 'react';
+import type { Project, User } from './types';
+```
+
+**Key points:**
 - Combine all unique imports
 - Remove duplicates
-- Follow language-specific style (group by module, alphabetize)
-- Preserve any re-exports or aliases from both sides
+- Group by source: React, then PatternFly, then other packages, then local files
+- Alphabetize within each group
+- Keep type imports separate from regular imports
 
-**One-line explanation example**: "Merging imports by combining unique imports from both branches and grouping by module."
+**Example explanation**: "Combining all unique imports from both branches and organizing them by source."
 
 ## Test Conflicts
 
-Tests should almost always include both changes, as tests are additive.
+Tests should almost always include both changes, since more tests = better coverage.
 
 ### Pattern: Merge Test Cases
 
 ```
 <<<<<<< HEAD
-#[test]
-fn test_user_creation() { ... }
+describe('Dashboard', () => {
+  it('renders the title', () => { ... });
 
-#[test]
-fn test_user_validation() { ... }
+  it('validates user input', () => { ... });
+});
 =======
-#[test]
-fn test_user_creation() { ... }
+describe('Dashboard', () => {
+  it('renders the title', () => { ... });
 
-#[test]
-fn test_user_deletion() { ... }
+  it('handles empty state', () => { ... });
+});
 >>>>>>> branch
 ```
 
-**Resolution:** Include all tests (assuming test_user_creation is identical):
+**Fix:** Include all tests (assuming 'renders the title' is the same in both):
 
 ```
-#[test]
-fn test_user_creation() { ... }
+describe('Dashboard', () => {
+  it('renders the title', () => { ... });
 
-#[test]
-fn test_user_validation() { ... }
+  it('validates user input', () => { ... });
 
-#[test]
-fn test_user_deletion() { ... }
+  it('handles empty state', () => { ... });
+});
 ```
 
-### Test Setup/Fixtures Conflicts
+### Test Setup/Mock Data Conflicts
 
-When both branches modify test fixtures, merge the changes:
+When both branches change test setup, merge the changes:
 
 ```
 <<<<<<< HEAD
-fn setup() -> TestContext {
-    TestContext {
-        user: create_test_user(),
-        admin: create_admin(),
-    }
-}
+const mockUser = {
+  id: '1',
+  name: 'Test User',
+  role: 'admin',
+};
 =======
-fn setup() -> TestContext {
-    TestContext {
-        user: create_test_user(),
-        database: init_test_db(),
-    }
-}
+const mockUser = {
+  id: '1',
+  name: 'Test User',
+  email: 'test@example.com',
+};
 >>>>>>> branch
 ```
 
-**Resolution:**
+**Fix:**
 
 ```
-fn setup() -> TestContext {
-    TestContext {
-        user: create_test_user(),
-        admin: create_admin(),
-        database: init_test_db(),
-    }
-}
+const mockUser = {
+  id: '1',
+  name: 'Test User',
+  role: 'admin',
+  email: 'test@example.com',
+};
 ```
 
-**Key principles:**
-- Keep all test cases unless they test the exact same thing
-- Merge test fixtures and setup functions
-- If test names conflict but test different things, rename one
-- Preserve all assertions from both sides
+**Key points:**
+- Keep all test cases unless they're testing the exact same thing the exact same way
+- Merge test data and setup code
+- If test names are the same but they test different things, rename one to be clearer
+- Keep all test assertions from both sides
 
-**One-line explanation example**: "Including all test cases from both branches and merging test fixtures."
+**Example explanation**: "Including all test cases from both branches and combining test data."
 
-## Lock File Conflicts
+## Package Lock File Conflicts
 
-Lock files (Cargo.lock, package-lock.json, yarn.lock, etc.) should be regenerated rather than manually resolved.
+Files like `package-lock.json` should never be manually edited. Let npm regenerate them.
 
 ### Pattern: Regenerate Lock File
 
 ```bash
-# For Cargo.lock
-git checkout --theirs Cargo.lock  # or --ours, either works
-cargo update  # or cargo build
+# For package-lock.json (used in this project)
+git checkout --theirs package-lock.json  # or --ours, doesn't matter which
+npm install  # This will regenerate it with all dependencies from both branches
 
-# For package-lock.json
-git checkout --theirs package-lock.json
-npm install
-
-# For yarn.lock
-git checkout --theirs yarn.lock
-yarn install
-
-# For Gemfile.lock
-git checkout --theirs Gemfile.lock
-bundle install
-
-# For poetry.lock
-git checkout --theirs poetry.lock
-poetry lock --no-update
+# Mark it as resolved
+git add package-lock.json
 ```
 
-**Key principles:**
-- Always regenerate, never manually merge
-- Choose either version (--ours or --theirs), doesn't matter
-- Run the package manager's update/install command
-- The result will include dependencies from both branches
+**Key points:**
+- Never edit package-lock.json by hand
+- Pick either version (--ours or --theirs), it doesn't matter which
+- Run `npm install` to regenerate it
+- npm will include all dependencies from both branches automatically
 
-**One-line explanation example**: "Regenerating lock file with package manager to include dependencies from both branches."
+**Example explanation**: "Regenerating package-lock.json with npm install to include all dependencies from both branches."
 
 ## Configuration File Conflicts
 
-Configuration files often need careful merging of both changes.
+Configuration files need careful merging to keep all settings.
 
 ### Pattern: Merge Configuration Values
 
-```yaml
+```json
 <<<<<<< HEAD
-server:
-  port: 8080
-  timeout: 30
-  max_connections: 100
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "strict": true,
+    "jsx": "react"
+  }
+}
 =======
-server:
-  port: 8080
-  timeout: 60
-  enable_https: true
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
 >>>>>>> branch
 ```
 
-**Resolution:**
+**Fix:**
 
-```yaml
-server:
-  port: 8080
-  timeout: 60  # Prefer the newer/safer value
-  max_connections: 100
-  enable_https: true
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "strict": true,
+    "jsx": "react",
+    "esModuleInterop": true
+  }
+}
 ```
 
-**Key principles:**
+### Package.json Scripts Conflict
+
+```json
+<<<<<<< HEAD
+{
+  "scripts": {
+    "start": "webpack serve --hot",
+    "build": "webpack --mode production"
+  }
+}
+=======
+{
+  "scripts": {
+    "start": "webpack serve --hot",
+    "test": "jest"
+  }
+}
+>>>>>>> branch
+```
+
+**Fix:**
+
+```json
+{
+  "scripts": {
+    "start": "webpack serve --hot",
+    "build": "webpack --mode production",
+    "test": "jest"
+  }
+}
+```
+
+**Key points:**
 - Include all configuration keys from both sides
-- When same key has different values, choose based on:
-  - Newer value (if timestamp available)
-  - Safer/more conservative value
-  - Production-ready value
-  - Document the choice in commit message
+- When the same key has different values, choose based on:
+  - Which value is newer
+  - Which value is safer
+  - Which value works in production
+  - Document the choice in the commit message
 
-**One-line explanation example**: "Merging all config keys and choosing incoming value for 'timeout' as it's more recent."
+**Example explanation**: "Keeping all config options from both branches."
 
-**When to ask the user**: If conflicting values have significant implications (e.g., security settings, API endpoints), present options:
+**When to ask**: If conflicting values are important (security settings, API URLs), show options:
 ```
-Config conflict in config.yaml for key 'timeout':
+There's a config conflict in package.json for the 'start' script:
 
-**Option 1**: Keep current value (30 seconds)
-**Option 2**: Keep incoming value (60 seconds)
-**Option 3**: Provide a different value
+**Option 1**: Keep current (webpack serve --hot --port 3000)
+**Option 2**: Keep incoming (webpack serve --hot --port 8080)
+
+Which port should the dev server use?
+```
+
+## Code Logic Conflicts in React Components
+
+When both branches change the same function or component, figure out what each is trying to do.
+
+### Pattern: Changes That Do Different Things
+
+If changes are doing different things and can work together:
+
+```tsx
+<<<<<<< HEAD
+const processUserData = (data: UserData) => {
+  const validated = validateEmail(data.email);
+  return validated ? data : null;
+};
+=======
+const processUserData = (data: UserData) => {
+  if (!data.email) {
+    return null;
+  }
+  return data;
+};
+>>>>>>> branch
+```
+
+**Fix:** Combine both checks:
+
+```tsx
+const processUserData = (data: UserData) => {
+  if (!data.email) {
+    return null;
+  }
+  const validated = validateEmail(data.email);
+  return validated ? data : null;
+};
+```
+
+**Explanation**: "Combining both validations since they check different things (email exists and email is valid)."
+
+### Pattern: Changes That Do the Same Thing Differently
+
+If changes are doing the same thing but in different ways:
+
+```tsx
+<<<<<<< HEAD
+const calculateTotal = (items: Item[]) => {
+  return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+};
+=======
+const calculateTotal = (items: Item[]) => {
+  let total = 0;
+  items.forEach(item => {
+    total += item.price * item.quantity;
+  });
+  return total;
+};
+>>>>>>> branch
+```
+
+**Fix:** Choose one approach. Both do the same thing, so pick the more concise one:
+- Look at commit messages for context
+- Check which approach matches the rest of the codebase
+- Consider which is easier to understand
+- Document why you chose it
+
+**When to ask**: If you can't tell which is better, show options:
+
+```
+Both branches changed how the cart total is calculated in Cart.tsx:
+
+**Current branch** uses:
+return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+**Incoming branch** uses:
+let total = 0;
+items.forEach(item => { total += item.price * item.quantity; });
+return total;
+
+Both calculate the same thing. Which approach should we keep?
+
+**Option 1**: Keep current (using reduce)
+**Option 2**: Keep incoming (using forEach)
+**Option 3**: Tell me which fits better with the rest of the code
 
 Please select an option.
 ```
 
-## Code Logic Conflicts
+**Example explanation**: "Choosing current branch's reduce approach to match the functional programming style used elsewhere in the codebase."
 
-When both branches modify the same function, carefully analyze the intent.
+## TypeScript Interface/Type Conflicts
 
-### Pattern: Sequential Changes
+Merge all properties from both branches.
 
-If changes are independent and can coexist:
+### Pattern: Merge Interface Properties
 
-```
+```tsx
 <<<<<<< HEAD
-fn process(data: &str) -> Result<String> {
-    let cleaned = data.trim();
-    validate(cleaned)?;
-    Ok(cleaned.to_uppercase())
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
 }
 =======
-fn process(data: &str) -> Result<String> {
-    let cleaned = data.trim();
-    if cleaned.is_empty() {
-        return Err(Error::EmptyInput);
-    }
-    Ok(cleaned.to_uppercase())
+interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  updatedAt: Date;
 }
 >>>>>>> branch
 ```
 
-**Resolution:** Combine both validations:
+**Fix:**
 
-```
-fn process(data: &str) -> Result<String> {
-    let cleaned = data.trim();
-    if cleaned.is_empty() {
-        return Err(Error::EmptyInput);
-    }
-    validate(cleaned)?;
-    Ok(cleaned.to_uppercase())
+```tsx
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
-**One-line explanation**: "Merging both validations as they check different conditions (emptiness and validation)."
+### React Component Props Conflict
 
-### Pattern: Conflicting Logic
-
-If changes represent different approaches:
-
-```
+```tsx
 <<<<<<< HEAD
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price * (1.0 + item.tax_rate)
+interface DashboardProps {
+  title: string;
+  onClose: () => void;
+  showHeader?: boolean;
 }
 =======
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price + item.tax_amount
+interface DashboardProps {
+  title: string;
+  onClose: () => void;
+  data: ChartData[];
 }
 >>>>>>> branch
 ```
 
-**Resolution:** Analyze which approach is correct:
-- Review PR/commit messages for context
-- Check which calculation matches business requirements
-- Consider running tests with both approaches
-- Choose one and document why in commit message
+**Fix:**
 
-**When to ask the user**: Present this as options when the correct approach isn't clear:
-
-```
-Code logic conflict in calculate_price function:
-
-<<<<<<< HEAD (Current Branch)
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price * (1.0 + item.tax_rate)
+```tsx
+interface DashboardProps {
+  title: string;
+  onClose: () => void;
+  showHeader?: boolean;
+  data: ChartData[];
 }
-=======
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price + item.tax_amount
-}
->>>>>>> feature-branch (Incoming Branch)
-
-These represent different calculation methods:
-
-**Option 1**: Keep current branch - calculates tax as percentage (base_price * tax_rate)
-**Option 2**: Keep incoming branch - uses pre-calculated tax amount (base_price + tax_amount)
-**Option 3**: Ask you to clarify the correct business logic
-
-Please select an option.
 ```
 
-**One-line explanation example**: "Choosing current branch approach as it calculates tax dynamically based on rate (per user selection)."
+**Key points:**
+- Include all properties from both sides
+- If the same property has different types, figure out which is correct
+- Update all places that use the interface
+- Fix any TypeScript errors after merging
 
-## Struct/Type Definition Conflicts
+**Example explanation**: "Adding all properties from both branches to the interface."
 
-Merge all fields from both branches.
-
-### Pattern: Merge Struct Fields
-
+**When to ask**: If the same property has different types:
 ```
+The 'role' property has different types in both branches:
+
+**Option 1**: Keep current (role: string)
+**Option 2**: Keep incoming (role: UserRole)
+
+Which type should we use? (UserRole is an enum, string is more flexible)
+```
+
+## Documentation and Comment Conflicts
+
+Combine all documentation improvements from both branches.
+
+### Pattern: Merge JSDoc Comments
+
+```tsx
 <<<<<<< HEAD
-pub struct User {
-    pub id: i64,
-    pub name: String,
-    pub email: String,
-    pub created_at: DateTime,
-}
+/**
+ * Renders the main dashboard component
+ * 
+ * @param props - Component props
+ * @returns The dashboard component
+ */
 =======
-pub struct User {
-    pub id: i64,
-    pub name: String,
-    pub role: UserRole,
-    pub updated_at: DateTime,
-}
+/**
+ * Renders the main dashboard component
+ * 
+ * @example
+ * <Dashboard title="My Dashboard" onClose={handleClose} />
+ */
 >>>>>>> branch
 ```
 
-**Resolution:**
+**Fix:**
 
-```
-pub struct User {
-    pub id: i64,
-    pub name: String,
-    pub email: String,
-    pub role: UserRole,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
-}
-```
-
-**Key principles:**
-- Include all fields from both sides
-- If field types conflict, analyze which is more appropriate
-- Update all usages of the struct accordingly
-- Fix compilation errors after merging
-
-**One-line explanation example**: "Including all fields from both branches in User struct."
-
-**When to ask the user**: If the same field has different types:
-```
-Struct conflict - field 'role' has different types:
-
-**Option 1**: Keep current type (role: String)
-**Option 2**: Keep incoming type (role: UserRole enum)
-**Option 3**: Provide more context
-
-Please select an option.
+```tsx
+/**
+ * Renders the main dashboard component
+ * 
+ * @param props - Component props
+ * @returns The dashboard component
+ * 
+ * @example
+ * <Dashboard title="My Dashboard" onClose={handleClose} />
+ */
 ```
 
-## Documentation Conflicts
+### README or Markdown Documentation
 
-Merge all documentation improvements.
-
-### Pattern: Combine Documentation
-
-```
+```markdown
 <<<<<<< HEAD
-/// Processes user input and returns validated data.
-/// 
-/// # Arguments
-/// * `input` - The raw user input
+## Features
+- User authentication
+- Dashboard view
 =======
-/// Processes user input and returns validated data.
-/// 
-/// # Errors
-/// Returns `Error::InvalidInput` if validation fails
+## Features
+- User authentication
+- Real-time updates
 >>>>>>> branch
 ```
 
-**Resolution:**
+**Fix:**
 
-```
-/// Processes user input and returns validated data.
-/// 
-/// # Arguments
-/// * `input` - The raw user input
-/// 
-/// # Errors
-/// Returns `Error::InvalidInput` if validation fails
+```markdown
+## Features
+- User authentication
+- Dashboard view
+- Real-time updates
 ```
 
-**Key principles:**
-- Preserve all documentation sections
-- If descriptions conflict, choose the more accurate/detailed one
+**Key points:**
+- Keep all documentation sections
+- If descriptions are different, choose the more accurate/detailed one
 - Keep all examples from both sides
 - Maintain consistent formatting
 
-**One-line explanation example**: "Combining all documentation sections from both branches."
+**Example explanation**: "Combining all documentation from both branches."
 
 ## Deleted File Special Cases
 
-### Pattern: File Renamed/Moved
+### Pattern: File Was Renamed or Moved
 
-If file was deleted on one branch but modified on another, and there's a similar new file:
+If one branch deleted a file but another branch changed it, and there's a similar new file:
 
-1. Check if file was renamed: `git log --follow --diff-filter=R -- <file>`
-2. Apply modifications to the new location
+1. Check if the file was renamed: `git log --follow --diff-filter=R -- <file>`
+2. Apply the changes to the new location
 3. Remove the old file
 
-### Pattern: File Legitimately Deleted
+**Example:**
+```bash
+# Old file: src/components/UserDashboard.tsx was deleted
+# New file: src/app/Dashboard/Dashboard.tsx exists
+# → The file was probably renamed/moved
+# → Apply the changes from UserDashboard.tsx to Dashboard.tsx
+```
 
-If file deletion was intentional (feature removed, refactored):
+### Pattern: File Was Intentionally Deleted
 
-1. Review the modifications from the other branch
-2. Determine if any changes are still relevant
-3. If yes, apply to the appropriate new location
+If file deletion was on purpose (feature removed, code refactored):
+
+1. Look at what was changed in the deleted file
+2. Figure out if any of those changes are still needed
+3. If yes, apply them to the appropriate new file
 4. If no, accept the deletion
 
-### Pattern: Accidental Deletion
+### Pattern: File Shouldn't Have Been Deleted
 
-If file should not have been deleted:
+If the file should still exist:
 
 1. Restore the file from the branch that kept it
-2. Apply any additional modifications
-3. Verify tests pass
+2. Apply any additional changes
+3. Make sure tests still pass
+
+**Example explanation**: "Saved changes from deleted file and applied them to the renamed file."

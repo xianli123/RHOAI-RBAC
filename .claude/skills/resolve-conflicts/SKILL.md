@@ -1,482 +1,450 @@
 ---
 name: resolve-conflicts
-description: Use this skill immediately when the user mentions merge conflicts that need to be resolved. Do not attempt to resolve conflicts directly - invoke this skill first. This skill specializes in providing a structured framework for merging imports, tests, lock files (regeneration), configuration files, and handling deleted-but-modified files with backup and analysis.
+description: Use this skill immediately when the user mentions merge conflicts that need to be resolved. Do not attempt to resolve conflicts directly - invoke this skill first. This skill specializes in providing a structured framework for merging imports, tests, package lock files, configuration files, and handling deleted files with backup and analysis.
 ---
 
-# Git Conflict Resolution
+# Resolving Merge Conflicts
 
-Resolve Git merge conflicts by intelligently combining changes from both branches while preserving the intent of both changes. This skill follows a plan-first approach: assess conflicts, create a detailed resolution plan, get approval, then execute.
+When you're working with Git and trying to merge changes from different branches, sometimes Git can't automatically combine the changes. This creates "merge conflicts" that need your help to resolve. This guide will walk you through the process step-by-step in simple terms.
 
-## Core Principles
+**What you'll be doing:** Combining changes from two branches while keeping the good parts from both sides.
 
-1. **Plan Before Executing**: Always create a structured resolution plan and get user approval before making changes
-2. **Prefer Both Changes**: Default to keeping both changes unless they directly contradict
-3. **Merge, Don't Choose**: Especially for imports, tests, and configuration
-4. **Regenerate Generated Files**: Never manually merge generated files - always regenerate them from their sources
-5. **Backup Before Resolving**: For deleted-modified files, create backups first
-6. **Validate with Tests**: Always run tests after resolution
-7. **Explain All Resolutions**: For each conflict resolved, provide a one-line explanation of the resolution strategy
-8. **Ask When Unclear**: When the correct resolution isn't clear from the diff, present options to the user and ask for their choice
+## Core Principles (What We'll Follow)
+
+1. **Plan First**: We'll look at all the conflicts and create a plan before changing anything
+2. **Keep Both Changes When Possible**: Usually both changes are good, so we'll try to keep both
+3. **Combine, Don't Delete**: Especially for things like imports and tests
+4. **Let Tools Handle Generated Files**: Files like `package-lock.json` should be regenerated, not manually edited
+5. **Backup Before Deleting**: If a file was deleted, we'll save its contents first
+6. **Test After Fixing**: We'll run the app to make sure everything still works
+7. **Explain Everything**: Each fix will have a simple explanation of what was done
+8. **Ask When Unsure**: If it's not clear which change is better, we'll ask you to decide
 
 ## Workflow
 
-### Step 1: Assess the Conflict Situation
+### Step 1: See What's Conflicted
 
-Run initial checks to understand the conflict scope:
+First, let's check what files have conflicts:
 
 ```bash
 git status
 ```
 
-Identify and categorize all conflicted files:
+We'll organize the conflicts into categories:
 
-- Regular file conflicts (both modified)
-- Deleted-modified conflicts (one deleted, one modified)
-- Generated file conflicts (lock files, build artifacts, generated code)
-- Test file conflicts
-- Import/configuration conflicts
-- Binary file conflicts
+- **Both changed the same file**: Both branches edited the same lines
+- **One deleted, one changed**: One branch deleted a file while the other changed it
+- **Generated files**: Files like `package-lock.json` that are created automatically
+- **Test files**: Files ending in `.test.tsx` or `.test.ts`
+- **Import conflicts**: Files where import statements conflict
+- **React components**: `.tsx` files with component code
 
-For each conflicted file, gather information:
+For each file, we'll note:
 
-- File type and purpose
-- Nature of the conflict (content, deletion, type change)
-- Scope of changes (lines changed, sections affected)
-- Whether the file is generated or hand-written
+- What kind of file it is (component, test, config, etc.)
+- What type of conflict it has
+- How much changed (a few lines or the whole file)
 
-### Step 2: Create Merge Resolution Plan
+### Step 2: Create a Plan
 
-Based on the assessment, create a structured plan before resolving any conflicts. Present the plan in the following markdown format:
+Before fixing anything, we'll create a plan that shows what we'll do with each file. Here's the format:
 
 ```markdown
 ## Merge Resolution Plan
 
-### Conflict Summary
+### What We Found
 
-- **Total conflicted files**: [N]
-- **Deleted-modified conflicts**: [N]
-- **Generated files**: [N]
-- **Regular conflicts**: [N]
+- **Total files with conflicts**: [N]
+- **Files where one was deleted**: [N]
+- **Generated files (like package-lock.json)**: [N]
+- **Regular code files**: [N]
 
-### Resolution Strategy by File
+### Plan for Each File
 
 #### 1. [File Path]
 
-**Conflict Type**: [deleted-modified / generated / imports / tests / code logic / config / struct / binary]
-**Strategy**: [Brief description of resolution approach]
-**Rationale**: [Why this strategy is appropriate]
-**Risk**: [Low/Medium/High] - [Brief risk description]
-**Action Items**:
+**What's conflicted**: [imports / tests / component code / configuration / generated file]
+**How we'll fix it**: [Simple description]
+**Why this approach**: [Reason why it's safe]
+**Risk level**: [Low/Medium/High] - [What could go wrong]
+**Steps**:
 
-- [ ] [Specific action 1]
-- [ ] [Specific action 2]
+- [ ] [What we'll do first]
+- [ ] [What we'll do next]
 
 #### 2. [File Path]
 
 ...
 
-### Execution Order
+### Order We'll Fix Things
 
-1. **Phase 1: Deleted-Modified Files** - Handle deletions and backups first
-2. **Phase 2: Generated Files** - Regenerate from source
-3. **Phase 3: Low-Risk Merges** - Imports, tests, documentation
-4. **Phase 4: High-Risk Merges** - Code logic, configuration, structs
-5. **Phase 5: Validation** - Compile, test, verify
+1. **First: Deleted Files** - Save backups and figure out where changes should go
+2. **Second: Generated Files** - Let npm recreate package-lock.json
+3. **Third: Safe Merges** - Fix imports and tests (low risk)
+4. **Fourth: Code Changes** - Fix component logic (needs more care)
+5. **Fifth: Testing** - Make sure the app still works
 
-### Questions/Decisions Needed
+### Your Input Needed
 
-- [ ] **[File/Decision]**: [Question for user] (Options: 1, 2, 3)
+- [ ] **[File/Decision]**: [Question in plain language] (Choose: Option 1, 2, or 3)
 
-### Validation Steps
+### How We'll Verify Everything Works
 
-- [ ] Run conflict validation script
-- [ ] Compile project
-- [ ] Run test suite
-- [ ] Manual verification of high-risk changes
+- [ ] Check no conflict markers remain
+- [ ] Run the build process
+- [ ] Run automated tests
+- [ ] Manually check important changes
 ```
 
-**Present this plan to the user** and wait for their approval before proceeding with resolution. If there are any unclear conflicts where you need user input, list them in the "Questions/Decisions Needed" section.
+**We'll show you this plan first** and wait for your OK before making any changes. If we're not sure about something, it'll be in the "Your Input Needed" section.
 
-**For a complete example plan**, see `references/sample-plan.md`.
+**See a complete example** in `references/sample-plan.md`.
 
-### Step 3: Handle Deleted-Modified Files
+### Step 3: Handle Deleted Files
 
-**Execute this phase only after the plan is approved.**
+**We'll only do this after you approve the plan.**
 
-If there are deleted-but-modified files (status: DU, UD, DD, UA, AU):
+If one branch deleted a file while another branch changed it:
 
 ```bash
-.forge/skills/resolve-conflicts/scripts/handle-deleted-modified.sh
+.claude/skills/resolve-conflicts/scripts/handle-deleted-modified.sh
 ```
 
-This script will:
+This helper script will:
 
-- Create timestamped backups of modified content
-- Analyze potential relocation targets
-- Generate analysis reports for each file
-- Automatically resolve the deletion status
+- Save a backup copy of the changed file
+- Look for where the file might have been moved to
+- Create a report explaining what happened
+- Mark the conflict as resolved in Git
 
-Review the backup directory and analysis files to understand where changes should be applied.
+We'll review the backups and reports to figure out where to apply the changes.
 
-### Step 4: Execute Resolution Plan
+### Step 4: Fix the Conflicts
 
-**Follow the execution order defined in your plan.** For each conflicted file, apply the appropriate resolution pattern according to your plan. **For every conflict you resolve, provide a one-line explanation** of how you're resolving it.
+**We'll follow the order in the plan.** For each file, we'll apply the right fix based on what type of conflict it is. **For each fix, we'll explain in one simple sentence** what we did.
 
-As you complete each action item in your plan, mark it as done and report progress to the user.
+As we complete each step, we'll check it off and let you know our progress.
 
-#### When Resolution is Unclear
+#### When We're Not Sure What to Do
 
-When you cannot determine the correct resolution from the diff alone (these should already be listed in your plan's "Questions/Decisions Needed" section):
+When we can't tell which change is better (these will be listed in the plan's "Your Input Needed" section):
 
-1. **Present the conflict** to the user with the conflicting code from both sides
-2. **Provide numbered options** for resolution (Option 1, Option 2, etc.)
-3. **Explain each option** clearly with what it would do
-4. **Ask the user to choose** an option number or provide additional information
-5. **Remember their choice** and apply similar reasoning to subsequent related conflicts
+1. **Show you the conflict** with code from both sides
+2. **Give you numbered options** (Option 1, Option 2, etc.)
+3. **Explain each option** in simple terms
+4. **Ask you to choose** which option makes sense
+5. **Remember your choice** and use the same approach for similar conflicts
 
-**Example interaction:**
+**Example:**
 
 ```
-I found a conflict in src/main.rs where both branches modify the `calculate_price` function:
+There's a conflict in src/app/Dashboard/Dashboard.tsx where both branches changed how the chart data is calculated:
 
-<<<<<<< HEAD (Current Branch)
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price * (1.0 + item.tax_rate)
-}
+<<<<<<< HEAD (Your Current Branch)
+const chartData = data.map(item => item.value * 100);
 =======
-fn calculate_price(item: &Item) -> f64 {
-    item.base_price + item.tax_amount
-}
->>>>>>> feature-branch (Incoming Branch)
+const chartData = data.map(item => item.value + item.baseline);
+>>>>>>> feature-branch (Incoming Changes)
 
-I'm not sure which calculation is correct. Please select an option:
+These are two different ways to calculate the data. Which should we keep?
 
-**Option 1**: Keep current branch (multiplies base_price by tax_rate)
-**Option 2**: Keep incoming branch (adds tax_amount to base_price)
-**Option 3**: Keep both approaches with a new parameter
-**Option 4**: Provide more context to help me decide
+**Option 1**: Keep current branch (multiplies value by 100)
+**Option 2**: Keep incoming branch (adds value and baseline together)
+**Option 3**: Tell me more about what this chart should show
 
-Please respond with "Option 1", "Option 2", "Option 3", or "Option 4", or provide additional information.
+Please respond with "Option 1", "Option 2", or "Option 3".
 ```
 
-Once the user responds, apply their decision and similar logic to related conflicts.
+Once you tell us which to use, we'll apply that choice and use the same approach for similar conflicts.
 
-#### Resolution Patterns
+#### How to Fix Different Types of Conflicts
 
-For each conflicted file, apply the appropriate resolution pattern:
+For each file, we'll use the right approach based on what's conflicted:
 
-#### Imports/Dependencies
+#### Import Statements (React, PatternFly, etc.)
 
-**Goal**: Merge all unique imports from both branches.
+**Goal**: Keep all the import statements from both branches.
 
-**One-line explanation**: "Merging imports by combining unique imports from both branches, removing duplicates, and grouping by module."
+**Explanation**: "Combining all unique imports from both branches and organizing them."
 
-Read `references/patterns.md` section "Import Conflicts" for detailed examples.
+See `references/patterns.md` section "Import Conflicts" for examples.
 
-**Quick approach:**
+**Quick steps:**
 
-1. Extract all imports from both sides
-2. Remove duplicates
-3. Group by module/package
-4. Follow language-specific style (alphabetize, group std/external/internal)
+1. Collect all import statements from both sides
+2. Remove any duplicates
+3. Group them by where they come from (React, PatternFly, local files)
+4. Organize alphabetically within each group
 
-#### Tests
+#### Test Files
 
-**Goal**: Include all test cases and test data from both branches.
+**Goal**: Keep all tests from both branches.
 
-**One-line explanation**: "Merging tests by including all test cases from both branches, combining fixtures, and renaming if necessary to avoid conflicts."
+**Explanation**: "Including all test cases from both branches so we don't lose any test coverage."
 
-Read `references/patterns.md` section "Test Conflicts" for detailed examples.
+See `references/patterns.md` section "Test Conflicts" for examples.
 
-**Quick approach:**
+**Quick steps:**
 
-1. Keep all test functions unless they test the exact same thing
-2. Merge test fixtures and setup functions
-3. Combine assertions from both sides
-4. If test names conflict but test different behaviors, rename to clarify
+1. Keep all test functions unless they're testing the exact same thing in the same way
+2. Combine any test setup code
+3. Keep all the test assertions from both sides
+4. If two tests have the same name but test different things, rename one to be clearer
 
-#### Generated Files
+#### Generated Files (package-lock.json, dist/ folder, etc.)
 
-**Goal**: Regenerate any generated files to include changes from both branches.
+**Goal**: Let the build tools recreate these files with changes from both branches.
 
-**One-line explanation**: "Resolving generated file by regenerating it from source files to incorporate changes from both branches."
+**Explanation**: "Regenerating this file automatically so it includes all the dependencies from both branches."
 
-**Recognition**: A file is generated if it:
+**How to recognize generated files**:
 
-- Is produced by a build tool, compiler, or code generator
-- Has a source file or configuration that defines it
-- Contains headers/comments indicating it's auto-generated
-- Is listed in `.gitattributes` as generated
-- Common examples: lock files, protobuf outputs, GraphQL schema files, compiled assets, auto-generated docs
+- Files created by npm, webpack, or other build tools
+- Files with warnings at the top saying "auto-generated" or "do not edit"
+- Common examples: `package-lock.json`, files in `dist/` folder, compiled JavaScript
 
-**Approach:**
+**Steps:**
 
-1. **Identify the generation source**: Determine what command or tool generates the file
-2. **Choose either version** temporarily (doesn't matter which):
+1. **Pick either version temporarily** (doesn't matter which):
 
    ```bash
-   git checkout --ours <generated-file>    # or --theirs
+   git checkout --ours package-lock.json    # or --theirs
    ```
 
-3. **Regenerate from source**: Run the appropriate generation command:
+2. **Let npm recreate it**:
 
    ```bash
-   # Package manager lock files
-   cargo update                       # for Cargo.lock
-   npm install                        # for package-lock.json
-   yarn install                       # for yarn.lock
-   bundle install                     # for Gemfile.lock
-   poetry lock --no-update            # for poetry.lock
+   # For package-lock.json
+   npm install
 
-   # Code generation
-   protoc ...                         # for protobuf files
-   graphql-codegen                    # for GraphQL generated code
-   make generate                      # for Makefile-based generation
-   npm run generate                   # for npm script-based generation
-
-   # Build artifacts
-   npm run build                      # for compiled/bundled assets
-   cargo build                        # for Rust build artifacts
+   # For built files in dist/
+   npm run build
    ```
 
-4. **Stage the regenerated file**:
+3. **Tell Git the file is fixed**:
    ```bash
-   git add <generated-file>
+   git add package-lock.json
    ```
 
-**When unsure if a file is generated**: Check for auto-generation markers in the file header, or ask the user if you should regenerate or manually merge the file.
+**If you're not sure** whether a file is generated: Check if it has a comment at the top saying "auto-generated", or we'll ask you.
 
-#### Configuration Files
+#### Configuration Files (package.json, tsconfig.json, webpack configs)
 
-**Goal**: Merge configuration values from both branches.
+**Goal**: Keep all configuration options from both branches.
 
-**One-line explanation**: "Merging configuration by including all keys from both branches and choosing appropriate values for conflicts."
+**Explanation**: "Merging all config options and choosing the best value when they conflict."
 
-Read `references/patterns.md` section "Configuration File Conflicts" for detailed examples.
+See `references/patterns.md` section "Configuration File Conflicts" for examples.
 
-**Quick approach:**
+**Quick steps:**
 
-1. Include all keys from both sides
-2. For conflicting values, choose based on:
-   - Newer/more recent value
-   - Safer/more conservative value
-   - Production requirements
-3. Document choice in commit message
+1. Keep all configuration keys from both sides
+2. For keys that have different values, choose based on:
+   - Which value is newer
+   - Which value is safer
+   - Which value makes the app work in production
+3. Note the choice in the commit message
 
-**When unclear**: Ask the user which configuration value to prefer (current vs incoming)
+**When we're not sure**: We'll ask you which configuration value is better (current vs incoming)
 
-#### Code Logic
+#### Component Code Logic (React components, functions)
 
-**Goal**: Understand intent of both changes and combine if possible.
+**Goal**: Figure out what each change is trying to do and combine them if possible.
 
-**One-line explanation**: "Resolving code logic by analyzing intent: merging if changes are orthogonal, or choosing one approach if they conflict."
+**Explanation**: "Combining both changes since they're doing different things" OR "Choosing one approach because they conflict."
 
-Read `references/patterns.md` section "Code Logic Conflicts" for detailed examples.
+See `references/patterns.md` section "Code Logic Conflicts" for examples.
 
-**Quick approach:**
+**Quick steps:**
 
-1. Analyze what each branch is trying to achieve
-2. If changes are orthogonal (different concerns), merge both
-3. If changes conflict (same concern, different approach):
-   - Review commit messages/PRs for context
-   - Choose the approach that matches requirements
-   - Test both approaches if unclear
-   - Document the decision
+1. Figure out what each branch is trying to accomplish
+2. If they're doing different things, merge both changes
+3. If they're doing the same thing differently:
+   - Look at commit messages for context
+   - Choose the approach that matches what the feature should do
+   - Test both approaches if it's unclear
+   - Document which one we chose and why
 
-**When unclear**: Present both approaches as options to the user with context about what each does
+**When we're not sure**: We'll show you both approaches and ask which one matches what you're trying to build
 
-#### Struct/Type Definitions
+#### TypeScript Interfaces and Types
 
-**Goal**: Include all fields from both branches.
+**Goal**: Include all properties from both branches.
 
-**One-line explanation**: "Merging struct by including all fields from both branches and choosing appropriate types for any conflicting field definitions."
+**Explanation**: "Adding all properties from both branches to the type definition."
 
-**Quick approach:**
+**Quick steps:**
 
-1. Merge all fields
-2. If field types conflict, analyze which is more appropriate
-3. Fix all compilation errors from updated struct
-4. Update tests to use new fields
+1. Combine all properties from both sides
+2. If the same property has different types, figure out which is correct
+3. Fix any TypeScript errors from the updated type
+4. Update tests to use the new properties
 
-**When unclear**: Ask the user which type definition is correct if field types conflict
+**When we're not sure**: We'll ask you which type definition is correct if the same property has different types
 
-### Step 5: Validate Resolution
+### Step 5: Check Everything is Fixed
 
-After completing all resolution phases in your plan, validate that all conflicts are resolved:
+After we've fixed all the conflicts according to the plan, let's verify everything:
 
 ```bash
-.forge/skills/resolve-conflicts/scripts/validate-conflicts.sh
+.claude/skills/resolve-conflicts/scripts/validate-conflicts.sh
 ```
 
-This script checks for:
+This helper script checks that:
 
-- Remaining conflict markers (<<<<<<<, =======, >>>>>>>)
-- Unmerged paths in git status
-- Deleted-modified conflicts
-- Merge state files
+- No conflict markers are left in the code (`<<<<<<<`, `=======`, `>>>>>>>`)
+- Git shows all conflicts are resolved
+- No files are still in "deleted but modified" state
+- Git is ready for us to commit
 
-### Step 6: Compile and Test
+### Step 6: Build and Test
 
-Build and test to ensure the resolution is correct (as defined in your plan's validation steps):
+Let's make sure the app still works after our fixes:
 
 ```bash
-# For Rust projects
-cargo test
+# Build the project
+npm run build
 
-# For other projects, use appropriate test command
-# npm test
-# pytest
-# etc.
+# Run the tests
+npm test
 ```
 
 If tests fail:
 
-1. Review the failure - is it from merged code or conflict resolution?
-2. Check if both branches' tests pass individually
-3. Fix integration issues between the merged changes
-4. Re-run tests until all pass
+1. Check what's failing - is it because of how we merged things?
+2. Make sure both branches' tests passed on their own
+3. Fix any issues where the two changes don't work well together
+4. Run tests again until everything passes
 
-### Step 7: Finalize
+### Step 7: Finish Up
 
-Once all conflicts are resolved and tests pass, review your completed plan and commit:
+Once everything is resolved and tests pass, let's save the work:
 
 ```bash
-# Review the changes
+# Review what changed
 git diff --cached
 
-# Commit with descriptive message that references the plan
-git commit -m "Resolve merge conflicts: [describe key decisions]
+# Save (commit) with a clear message
+git commit -m "Resolve merge conflicts: [short description of key fixes]
 
-Executed merge resolution plan:
-- [Phase 1 summary]
-- [Phase 2 summary]
-- [Phase 3+ summaries]
+Fixed merge conflicts following structured plan:
+- Phase 1: Handled deleted files with backups
+- Phase 2: Regenerated package-lock.json
+- Phase 3: Merged imports and tests
+- Phase 4: Fixed component logic conflicts
 
-Key decisions:
-- Merged imports from both branches
-- Combined test cases
-- Regenerated lock files
-- [other significant decisions from plan]
-
-Co-Authored-By: ForgeCode <noreply@forgecode.dev>"
+Key decisions made:
+- Combined all imports from both branches
+- Kept all test cases
+- Regenerated package-lock.json with npm install
+- [other important choices we made]"
 ```
 
-## Decision Tracking
+## Remembering Your Decisions
 
-When you ask the user to choose between options, track their decision and apply similar reasoning to subsequent conflicts:
+When we ask you to choose between options, we'll remember your choice and use it for similar conflicts:
 
-**Example scenario:**
+**Example:**
 
-1. First conflict: User chooses Option 1 (prefer current branch's validation logic)
-2. Second similar conflict: Apply the same reasoning (prefer current branch's validation approach)
-3. Mention: "Resolving by keeping current branch's approach (consistent with your earlier choice)"
+1. First conflict: You choose Option 1 (keep the current branch's way of validating data)
+2. Second similar conflict: We'll automatically use the same approach
+3. We'll mention: "Using current branch's approach like you chose before"
 
-**Key principles:**
+**Key points:**
 
-- Remember user preferences within the same conflict resolution session
-- Apply consistent patterns when conflicts are similar
-- Mention the consistency: "Following the same pattern as before..."
-- Ask again if a new conflict is sufficiently different from previous ones
+- We remember your preferences while fixing all the conflicts
+- We apply the same pattern when conflicts are similar
+- We'll say: "Following the same pattern as before..."
+- We'll ask again if a new conflict is different enough from previous ones
 
-## Common Patterns Reference
+## Quick Reference - How to Fix Each Type
 
-For detailed resolution patterns, read:
+For detailed examples, read:
 
-- `references/patterns.md` - Comprehensive examples for all conflict types
+- `references/patterns.md` - Complete examples for all conflict types
 
-**Quick pattern lookup:**
+**Quick lookup:**
 
-- **Imports**: Combine all unique imports, group by module
-- **Tests**: Keep all tests unless identical, merge fixtures
-- **Generated files**: Choose either version, regenerate from source
-- **Config**: Merge all keys, choose newer/safer values for conflicts
-- **Code**: Analyze intent, merge if orthogonal, choose one if conflicting
-- **Structs**: Include all fields from both branches
-- **Docs**: Combine all documentation sections
+- **Imports**: Combine all unique imports, organize by source (React, PatternFly, local)
+- **Tests**: Keep all tests unless they're identical, combine test data
+- **Generated files** (package-lock.json): Pick one version, run `npm install`
+- **Config**: Keep all settings, choose newer/safer values when they conflict
+- **Component code**: Figure out what each does, merge if doing different things, choose one if doing the same thing differently
+- **Types/Interfaces**: Include all properties from both branches
+- **Documentation**: Combine all documentation from both sides
 
-## Special Scenarios
+## Special Situations
 
-### Binary Files in Conflict
+### Image Files or Other Binary Files in Conflict
 
-Binary files cannot be merged. Choose one version:
+You can't merge binary files like images. Pick one version:
 
 ```bash
-git checkout --ours path/to/binary    # keep our version
+git checkout --ours path/to/image.png    # keep our version
 # or
-git checkout --theirs path/to/binary  # keep their version
+git checkout --theirs path/to/image.png  # keep their version
 ```
 
-### Mass Rename/Refactoring Conflicts
+We'll ask you which version to keep.
 
-If one branch renamed/refactored many files while another modified them:
+### When Many Files Were Renamed
 
-1. Accept the rename/refactoring (structural change)
-2. Apply the modifications to the new structure
-3. Use backups from `handle-deleted-modified.sh` to guide the application
+If one branch renamed a bunch of files while another branch changed them:
 
-### Submodule Conflicts
+1. Accept the rename (keep the new structure)
+2. Apply the changes to the renamed files
+3. Use the backups from `handle-deleted-modified.sh` to see what changed
 
-```bash
-# Check submodule status
-git submodule status
+## Common Problems and How to Fix Them
 
-# Update to the correct commit
-cd path/to/submodule
-git checkout <desired-commit>
-cd ../..
-git add path/to/submodule
-```
+### "Both Added" - Same Filename, Different Files
 
-## Troubleshooting
+Both branches created a new file with the same name but different content:
 
-### "Both Added" Conflicts (AA)
+1. Look at both versions
+2. If they're trying to do the same thing, merge the content
+3. If they're doing different things, rename one file
 
-Both branches added a new file with the same name but different content:
+### Conflicts That Are Just Spacing/Formatting
 
-1. Review both versions
-2. If they serve the same purpose, merge their content
-3. If they serve different purposes, rename one
-
-### Whitespace-Only Conflicts
-
-If conflicts are only whitespace differences:
+If the only difference is spaces or tabs:
 
 ```bash
 git merge -Xignore-space-change <branch>
 ```
 
-### Persistent Conflict Markers
+### Still Seeing Conflict Markers After Fixing
 
-If validation shows conflict markers but you think you resolved them:
+If our validation says there are still conflict markers but you thought we fixed them:
 
-1. Search for the exact marker strings: `git grep -n "<<<<<<< HEAD"`
-2. Some markers might be in strings or comments - resolve those too
-3. Check for hidden characters or encoding issues
+1. Search for them: `git grep -n "<<<<<<< HEAD"`
+2. Sometimes they're in text strings or comments - fix those too
+3. Check for hidden characters
 
-### Tests Fail After Resolution
+### Tests Fail After Merging
 
-1. Test each branch individually to confirm they pass
-2. The failure is likely from interaction between the merged changes
-3. Debug the interaction issue, not the individual changes
-4. Update code to make both changes work together
+1. Make sure each branch's tests passed on their own
+2. The failure is probably from how the two changes interact
+3. Fix the interaction problem, not the individual changes
+4. Update the code so both changes work together
 
 ## Quick Reference Card
 
-| Conflict Type    | Strategy                                | One-line Explanation Template                                                                                    |
-| ---------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Imports          | Merge all, deduplicate, group by module | "Merging imports by combining unique imports from both branches and grouping by module"                          |
-| Tests            | Keep all, merge fixtures                | "Including all test cases from both branches and combining test fixtures"                                        |
-| Generated files  | Regenerate from source                  | "Regenerating [file] from source to include changes from both branches"                                          |
-| Config           | Merge keys, choose newer values         | "Merging all config keys and choosing [current/incoming] value for [key]"                                        |
-| Code logic       | Analyze intent, merge if orthogonal     | "Merging both changes as they address different concerns" OR "Choosing [current/incoming] approach for [reason]" |
-| Structs          | Include all fields                      | "Including all fields from both branches in struct definition"                                                   |
-| Docs             | Combine all sections                    | "Combining documentation from both branches"                                                                     |
-| Deleted-modified | Backup, analyze, apply to new location  | "Applying modifications to new location after file was moved/renamed"                                            |
-| Binary files     | Choose one version                      | "Keeping [current/incoming] version of binary file"                                                              |
+| What's Conflicted         | How We Fix It                        | What We'll Say                                                                                     |
+| ------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Imports                   | Combine all, remove dupes, organize  | "Combining all unique imports from both branches and organizing them"                              |
+| Tests                     | Keep all, combine test data          | "Including all test cases from both branches and combining test data"                              |
+| Generated files           | Regenerate with npm                  | "Regenerating [file] with npm to include changes from both branches"                               |
+| Config                    | Keep all keys, choose newer values   | "Keeping all config options and choosing [current/incoming] value for [key]"                       |
+| Component code            | Figure out intent, merge if possible | "Combining both changes since they do different things" OR "Choosing [current/incoming] because..." |
+| Types/Interfaces          | Include all properties               | "Adding all properties from both branches to the type definition"                                  |
+| Documentation             | Combine all sections                 | "Combining documentation from both branches"                                                       |
+| Deleted files             | Backup, analyze, apply to new place  | "Saved changes from deleted file and applying them to new location"                                |
+| Image/binary files        | Choose one version                   | "Keeping [current/incoming] version of [file]"                                                     |
 
 **Remember:**
 
-- Always provide a one-line explanation for each conflict resolution
-- When unclear, present numbered options to the user
-- Track user decisions and apply consistently to similar conflicts
-- The goal is to preserve the intent and functionality of both branches while creating a cohesive merged result
+- We'll explain each fix in simple terms
+- When we're not sure, we'll show you options
+- We'll remember your decisions and apply them consistently
+- The goal is to keep the good parts from both branches while making sure everything works together
