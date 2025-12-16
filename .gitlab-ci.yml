@@ -1,6 +1,8 @@
 # GitLab Pages for Node.js Web App
 # Configured to deploy from 'gitlab-pages' branch to keep main branch clean
-image: registry.redhat.io/ubi8/nodejs-18:latest
+image: registry.redhat.io/ubi9/nodejs-20:latest
+# OR, if that registry image isn't available, use the generic one:
+# image: node:20
 
 stages:
   - build
