@@ -30,7 +30,7 @@ export const mockEntities: Entity[] = [
     fileUrl: 'snowflake://prod.warehouse.db/customers',
     created: '2024-01-15T08:30:00Z',
     lastUpdated: '2024-12-05T14:22:00Z',
-    tags: ['production', 'pii', 'customer-data'],
+    tags: ['env=production', 'type=pii', 'team=customer-data'],
     usageCode: `from feast import FeatureStore
 
 store = FeatureStore(repo_path=".")
@@ -54,7 +54,7 @@ features = store.get_online_features(
     fileUrl: 's3://feature-store-bucket/products/catalog.parquet',
     created: '2024-02-20T10:15:00Z',
     lastUpdated: '2024-12-08T09:45:00Z',
-    tags: ['production', 'catalog', 'inventory'],
+    tags: ['env=production', 'team=catalog', 'use_case=inventory'],
     usageCode: `from feast import FeatureStore
 
 store = FeatureStore(repo_path=".")
@@ -78,7 +78,7 @@ features = store.get_online_features(
     fileUrl: 'kafka://prod-cluster:9092/transactions',
     created: '2024-03-10T12:00:00Z',
     lastUpdated: '2024-12-09T11:30:00Z',
-    tags: ['production', 'streaming', 'fraud-detection', 'real-time'],
+    tags: ['env=production', 'team=analytics', 'use_case=fraud-detection', 'type=real-time'],
     usageCode: `from feast import FeatureStore
 
 store = FeatureStore(repo_path=".")
@@ -102,7 +102,7 @@ features = store.get_online_features(
     fileUrl: 'postgresql://prod-db.example.com:5432/drivers',
     created: '2024-04-05T09:20:00Z',
     lastUpdated: '2024-12-07T16:15:00Z',
-    tags: ['production', 'driver-management', 'logistics'],
+    tags: ['env=production', 'team=logistics', 'use_case=driver-management'],
     usageCode: `from feast import FeatureStore
 
 store = FeatureStore(repo_path=".")
@@ -126,7 +126,7 @@ features = store.get_online_features(
     fileUrl: 'bigquery://project-id.dataset.orders',
     created: '2024-05-12T11:45:00Z',
     lastUpdated: '2024-12-09T08:00:00Z',
-    tags: ['production', 'e-commerce', 'fulfillment'],
+    tags: ['env=production', 'team=e-commerce', 'use_case=fulfillment'],
     usageCode: `from feast import FeatureStore
 
 store = FeatureStore(repo_path=".")
@@ -140,6 +140,3 @@ features = store.get_online_features(
 ).to_df()`
   }
 ];
-
-
-
