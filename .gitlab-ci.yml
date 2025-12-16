@@ -28,7 +28,7 @@ build:
     KUBERNETES_MEMORY_REQUEST: "2Gi"
     KUBERNETES_MEMORY_LIMIT: "4Gi"
   rules:
-    - if: $CI_COMMIT_BRANCH == "3.2" || $CI_COMMIT_BRANCH == "feature-stores-entities"
+    - if: $CI_COMMIT_BRANCH == "feature-stores-entities"
   script:
     - echo "Installing dependencies (including devDependencies for build tools)..."
     - npm ci --include=dev
@@ -48,10 +48,9 @@ build:
 pages:
   stage: deploy
   rules:
-    - if: $CI_COMMIT_BRANCH == "3.2" || $CI_COMMIT_BRANCH == "feature-stores-entities"
+    - if: $CI_COMMIT_BRANCH == "feature-stores-entities"
   script:
     - echo "Deploying to GitLab Pages..."
   artifacts:
     paths:
       - public
-
