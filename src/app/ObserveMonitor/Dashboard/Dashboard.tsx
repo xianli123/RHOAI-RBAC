@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   PageSection,
   Title,
@@ -13,44 +13,40 @@ import {
   Flex,
   FlexItem,
   Badge,
+  Label,
   Button,
   Dropdown,
   DropdownList,
   DropdownItem,
   MenuToggle,
   MenuToggleElement,
+  MenuToggleCheckbox,
   Tabs,
   Tab,
   TabTitleText,
   TabContent,
   TabContentBody,
   Divider,
+  Tooltip,
+  EmptyState,
+  Bullseye,
+  Toolbar,
+  ToolbarContent,
+  ToolbarFilter,
+  ToolbarToggleGroup,
+  ToolbarItem,
+  ToolbarGroup,
+  Select,
+  SelectOption,
+  SelectList,
+  Alert,
+  Checkbox,
+  SearchInput,
 } from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
-import { MultiTypeaheadSelect, MultiTypeaheadSelectOption } from '@patternfly/react-templates';
-import { 
-  Chart,
-  ChartBar, 
-  ChartLine, 
-  ChartAxis, 
-  ChartGroup, 
-  ChartArea,
-  ChartContainer,
-  ChartThemeColor,
-  ChartVoronoiContainer
-} from '@patternfly/react-charts/victory';
-import { TableIcon, KeyIcon, CubeIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon, AngleRightIcon } from '@patternfly/react-icons';
-import { PatternFlyLineChart } from '@app/components/PatternFlyLineChart';
-import { PatternFlyAreaChart } from '@app/components/PatternFlyAreaChart';
-
-// Mock data for the dashboard
-const usageMetrics = {
-  totalRequests: '13,733',
-  errorRate: '2.12%',
-  avgLatency: '127.8ms',
-  totalCost: '540',
-  totalToken: '249'
-};
+import { Table, Thead, Tr, Th, Tbody, Td, ThProps, Caption } from '@patternfly/react-table';
+import ReactECharts from 'echarts-for-react';
+import { TableIcon, CubeIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon, AngleRightIcon, OutlinedFolderIcon, ClockIcon, SearchIcon, FilterIcon, SyncIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { useUserProfile } from '@app/utils/UserProfileContext';
 
 // Restructured data for better chart organization
 const llmChatData = [
@@ -98,186 +94,125 @@ const legendData = [
   { name: 'stable-diffusion-xl-beta' }
 ];
 
-// Request traces table data
-interface TraceData {
-  user: string;
-  userDetails: string;
-  traceId: string;
-  timestamp: string;
-  duration: string;
-  durationColor: string;
-  model: string;
-  status: 'success' | 'warning' | 'unknown';
-  statusIcon: string;
-}
-
-const traceData: TraceData[] = [
-  {
-    user: 'patient_user',
-    userDetails: '204 tokens • 22 tok/s • 243ms TTIF',
-    traceId: 'a4b1c2d3-e4f5-g6h7-i8j9-k811n2n3o4p5',
-    timestamp: '2025-09-16 18:49:01',
-    duration: '4.81s',
-    durationColor: '#3e8635',
-    model: 'granite-7b-instruct-v2',
-    status: 'success',
-    statusIcon: '#3e8635'
-  },
-  {
-    user: 'health_user',
-    userDetails: '156 tokens • 28 tok/s • 198ms TTIF',
-    traceId: 'b5c6d7e8-f9g0-h1i2-j3k4-l5m6n7o8p9q8',
-    timestamp: '2025-09-16 18:48:45',
-    duration: '3.42s',
-    durationColor: '#3e8635',
-    model: 'granite-7b-instruct-v2',
-    status: 'success',
-    statusIcon: '#3e8635'
-  },
-  {
-    user: 'complex_user',
-    userDetails: '312 tokens • 18 tok/s • 456ms TTIF',
-    traceId: 'c7d8e9f8-g1h2-i3j4-k5l6-m7n8o9p0q1r2',
-    timestamp: '2025-09-16 18:48:12',
-    duration: '6.80s',
-    durationColor: '#f0ad00',
-    model: 'granite-7b-instruct-v2',
-    status: 'warning',
-    statusIcon: '#f0ad00'
-  },
-  {
-    user: 'enterprise_user',
-    userDetails: '89 tokens • 35 tok/s • 156ms TTIF',
-    traceId: 'd8e9f0a1-h2i3-j4k5-l6m7-n8o9p0q1r2s3',
-    timestamp: '2025-09-16 18:47:23',
-    duration: '2.15s',
-    durationColor: '#3e8635',
-    model: 'granite-7b-instruct-v2',
-    status: 'success',
-    statusIcon: '#3e8635'
-  },
-  {
-    user: 'system_admin',
-    userDetails: '124 tokens • 31 tok/s • 145ms TTIF',
-    traceId: 'e9f0a1b2-i3j4-k5l6-m7n8-o9p0q1r2s3t4',
-    timestamp: '2025-09-16 17:32:15',
-    duration: '1.89s',
-    durationColor: '#3e8635',
-    model: 'granite-7b-instruct-v2',
-    status: 'success',
-    statusIcon: '#3e8635'
-  },
-  {
-    user: 'dev_team_lead',
-    userDetails: '1,247 tokens • N/A tok/s • No TTIF',
-    traceId: '',
-    timestamp: '2025-09-16 17:25:30',
-    duration: 'N/A',
-    durationColor: '#d2d2d2',
-    model: 'llama-70b-chat',
-    status: 'unknown',
-    statusIcon: '#6a6e73'
-  },
-  {
-    user: 'qa_engineer',
-    userDetails: '892 tokens • N/A tok/s • No TTIF',
-    traceId: '',
-    timestamp: '2025-09-16 17:20:45',
-    duration: 'N/A',
-    durationColor: '#d2d2d2',
-    model: 'mistral-7b-instruct-v2',
-    status: 'unknown',
-    statusIcon: '#6a6e73'
-  },
-  {
-    user: 'analyst_user',
-    userDetails: '456 tokens • N/A tok/s • No TTIF',
-    traceId: '',
-    timestamp: '2025-09-16 17:15:12',
-    duration: 'N/A',
-    durationColor: '#d2d2d2',
-    model: 'granite-7b-instruct-v2',
-    status: 'unknown',
-    statusIcon: '#6a6e73'
-  }
-];
-
 // Model deployment table data
 const modelDeploymentData = [
   {
     deployment: 'mistral-7b-instruct-v2',
-    apiKey: 'Production API Key',
-    apiKeyTag: 'MaaS',
     project: 'KonText PTE',
     runtime: 'vLLM',
     requests: '377962',
     latency: '199.56',
     errorRate: '3.98%',
-    resources: 'GPU: V1 | CPU: 6/4',
+    hardwareProfile: 'NVIDIA A100 40GB',
+    gpu: '50%',
+    gpuDetails: '1 allocated, 1 utilized',
+    cpu: '67%',
+    cpuDetails: '6 cores allocated, 4 cores utilized',
     status: 'Running'
   },
   {
     deployment: 'stable-diffusion-xl-beta',
-    apiKey: 'Dev API Key',
-    apiKeyTag: 'MaaS',
-    project: 'KonText PTE',
+    project: 'AI Research',
     runtime: 'KServer',
     requests: '377962',
     latency: '199.56',
     errorRate: '3.98%',
-    resources: 'GPU: V1 | CPU: 7/3',
+    hardwareProfile: 'NVIDIA A100 40GB',
+    gpu: '43%',
+    gpuDetails: '1 allocated, 0.43 utilized',
+    cpu: '43%',
+    cpuDetails: '7 cores allocated, 3 cores utilized',
     status: 'Running'
   },
   {
     deployment: 'llama-70b-chat-v4',
-    apiKey: 'Staging API Key',
-    apiKeyTag: 'MaaS',
-    project: 'KonText PTE',
+    project: 'ML Production',
     runtime: 'Bind',
     requests: '377962',
     latency: '199.56',
     errorRate: '3.98%',
-    resources: 'GPU: 2/2 | CPU: 6/4',
+    hardwareProfile: 'NVIDIA A100 80GB',
+    gpu: '100%',
+    gpuDetails: '2 allocated, 2 utilized',
+    cpu: '67%',
+    cpuDetails: '6 cores allocated, 4 cores utilized',
     status: 'Scaling'
   },
   {
     deployment: 'mistral-7b-instruct-v2',
-    apiKey: 'Test API Key',
-    apiKeyTag: 'MaaS',
-    project: 'KonText PTE',
+    project: 'AI Research',
     runtime: 'vLLM',
     requests: '377962',
     latency: '199.56',
     errorRate: '3.98%',
-    resources: 'GPU: 2/2 | CPU: 6/7',
+    hardwareProfile: 'NVIDIA V100 32GB',
+    gpu: '100%',
+    gpuDetails: '2 allocated, 2 utilized',
+    cpu: '86%',
+    cpuDetails: '6 cores allocated, 5.15 cores utilized',
     status: 'Failed'
   },
   {
     deployment: 'mistral-7b-instruct-v2',
-    apiKey: 'Analyst LLM API Key',
-    apiKeyTag: 'MaaS',
-    project: 'KonText PTE',
+    project: 'ML Production',
     runtime: 'vLLM',
     requests: '377962',
     latency: '199.56',
     errorRate: '3.98%',
-    resources: 'GPU: 2/2 | CPU: 6/7',
+    hardwareProfile: 'NVIDIA V100 32GB',
+    gpu: '100%',
+    gpuDetails: '2 allocated, 2 utilized',
+    cpu: '86%',
+    cpuDetails: '6 cores allocated, 5.15 cores utilized',
     status: 'Degraded'
+  },
+  {
+    deployment: 'codellama-34b-instruct',
+    project: 'KonText PTE',
+    runtime: 'vLLM',
+    requests: '156240',
+    latency: '245.78',
+    errorRate: '2.15%',
+    hardwareProfile: 'NVIDIA A100 40GB',
+    gpu: '75%',
+    gpuDetails: '2 allocated, 1.5 utilized',
+    cpu: '55%',
+    cpuDetails: '8 cores allocated, 4.4 cores utilized',
+    status: 'Running'
+  },
+  {
+    deployment: 'whisper-large-v3',
+    project: 'AI Research',
+    runtime: 'KServer',
+    requests: '89523',
+    latency: '156.34',
+    errorRate: '1.23%',
+    hardwareProfile: 'NVIDIA T4 16GB',
+    gpu: '62%',
+    gpuDetails: '1 allocated, 0.62 utilized',
+    cpu: '48%',
+    cpuDetails: '4 cores allocated, 1.92 cores utilized',
+    status: 'Running'
+  },
+  {
+    deployment: 'falcon-180b',
+    project: 'ML Production',
+    runtime: 'vLLM',
+    requests: '523641',
+    latency: '312.45',
+    errorRate: '4.56%',
+    hardwareProfile: 'NVIDIA A100 80GB',
+    gpu: '95%',
+    gpuDetails: '4 allocated, 3.8 utilized',
+    cpu: '82%',
+    cpuDetails: '16 cores allocated, 13.12 cores utilized',
+    status: 'Running'
   }
 ];
 
 // Line chart data for model metrics - organized by deployment
 const modelMetricsData = {
   'mistral-7b-instruct-v2': {
-    tokenThroughput: [
-      { x: new Date('2024-10-01T00:00:00'), y: 180 },
-      { x: new Date('2024-10-01T04:00:00'), y: 160 },
-      { x: new Date('2024-10-01T08:00:00'), y: 140 },
-      { x: new Date('2024-10-01T12:00:00'), y: 220 },
-      { x: new Date('2024-10-01T16:00:00'), y: 260 },
-      { x: new Date('2024-10-01T20:00:00'), y: 240 },
-      { x: new Date('2024-10-02T00:00:00'), y: 200 }
-    ],
     requestQueue: [
       { x: new Date('2024-10-01T00:00:00'), y: 5 },
       { x: new Date('2024-10-01T04:00:00'), y: 3 },
@@ -304,18 +239,36 @@ const modelMetricsData = {
       { x: new Date('2024-10-01T16:00:00'), y: 240 },
       { x: new Date('2024-10-01T20:00:00'), y: 220 },
       { x: new Date('2024-10-02T00:00:00'), y: 190 }
+    ],
+    ttft: [
+      { x: new Date('2024-10-01T00:00:00'), y: 250 },
+      { x: new Date('2024-10-01T04:00:00'), y: 230 },
+      { x: new Date('2024-10-01T08:00:00'), y: 220 },
+      { x: new Date('2024-10-01T12:00:00'), y: 260 },
+      { x: new Date('2024-10-01T16:00:00'), y: 280 },
+      { x: new Date('2024-10-01T20:00:00'), y: 270 },
+      { x: new Date('2024-10-02T00:00:00'), y: 245 }
+    ],
+    tokenGenerationRate: [
+      { x: new Date('2024-10-01T00:00:00'), y: 25 },
+      { x: new Date('2024-10-01T04:00:00'), y: 27 },
+      { x: new Date('2024-10-01T08:00:00'), y: 28 },
+      { x: new Date('2024-10-01T12:00:00'), y: 30 },
+      { x: new Date('2024-10-01T16:00:00'), y: 32 },
+      { x: new Date('2024-10-01T20:00:00'), y: 29 },
+      { x: new Date('2024-10-02T00:00:00'), y: 28 }
+    ],
+    throughput: [
+      { x: new Date('2024-10-01T00:00:00'), y: 40 },
+      { x: new Date('2024-10-01T04:00:00'), y: 42 },
+      { x: new Date('2024-10-01T08:00:00'), y: 45 },
+      { x: new Date('2024-10-01T12:00:00'), y: 48 },
+      { x: new Date('2024-10-01T16:00:00'), y: 50 },
+      { x: new Date('2024-10-01T20:00:00'), y: 47 },
+      { x: new Date('2024-10-02T00:00:00'), y: 45 }
     ]
   },
   'stable-diffusion-xl-beta': {
-    tokenThroughput: [
-      { x: new Date('2024-10-01T00:00:00'), y: 120 },
-      { x: new Date('2024-10-01T04:00:00'), y: 110 },
-      { x: new Date('2024-10-01T08:00:00'), y: 95 },
-      { x: new Date('2024-10-01T12:00:00'), y: 140 },
-      { x: new Date('2024-10-01T16:00:00'), y: 165 },
-      { x: new Date('2024-10-01T20:00:00'), y: 155 },
-      { x: new Date('2024-10-02T00:00:00'), y: 130 }
-    ],
     requestQueue: [
       { x: new Date('2024-10-01T00:00:00'), y: 8 },
       { x: new Date('2024-10-01T04:00:00'), y: 6 },
@@ -342,18 +295,36 @@ const modelMetricsData = {
       { x: new Date('2024-10-01T16:00:00'), y: 380 },
       { x: new Date('2024-10-01T20:00:00'), y: 365 },
       { x: new Date('2024-10-02T00:00:00'), y: 325 }
+    ],
+    ttft: [
+      { x: new Date('2024-10-01T00:00:00'), y: 450 },
+      { x: new Date('2024-10-01T04:00:00'), y: 420 },
+      { x: new Date('2024-10-01T08:00:00'), y: 410 },
+      { x: new Date('2024-10-01T12:00:00'), y: 480 },
+      { x: new Date('2024-10-01T16:00:00'), y: 520 },
+      { x: new Date('2024-10-01T20:00:00'), y: 500 },
+      { x: new Date('2024-10-02T00:00:00'), y: 460 }
+    ],
+    tokenGenerationRate: [
+      { x: new Date('2024-10-01T00:00:00'), y: 15 },
+      { x: new Date('2024-10-01T04:00:00'), y: 16 },
+      { x: new Date('2024-10-01T08:00:00'), y: 17 },
+      { x: new Date('2024-10-01T12:00:00'), y: 18 },
+      { x: new Date('2024-10-01T16:00:00'), y: 19 },
+      { x: new Date('2024-10-01T20:00:00'), y: 18 },
+      { x: new Date('2024-10-02T00:00:00'), y: 17 }
+    ],
+    throughput: [
+      { x: new Date('2024-10-01T00:00:00'), y: 25 },
+      { x: new Date('2024-10-01T04:00:00'), y: 27 },
+      { x: new Date('2024-10-01T08:00:00'), y: 28 },
+      { x: new Date('2024-10-01T12:00:00'), y: 30 },
+      { x: new Date('2024-10-01T16:00:00'), y: 32 },
+      { x: new Date('2024-10-01T20:00:00'), y: 30 },
+      { x: new Date('2024-10-02T00:00:00'), y: 28 }
     ]
   },
   'llama-70b-chat-v4': {
-    tokenThroughput: [
-      { x: new Date('2024-10-01T00:00:00'), y: 220 },
-      { x: new Date('2024-10-01T04:00:00'), y: 200 },
-      { x: new Date('2024-10-01T08:00:00'), y: 185 },
-      { x: new Date('2024-10-01T12:00:00'), y: 280 },
-      { x: new Date('2024-10-01T16:00:00'), y: 320 },
-      { x: new Date('2024-10-01T20:00:00'), y: 305 },
-      { x: new Date('2024-10-02T00:00:00'), y: 260 }
-    ],
     requestQueue: [
       { x: new Date('2024-10-01T00:00:00'), y: 3 },
       { x: new Date('2024-10-01T04:00:00'), y: 2 },
@@ -380,232 +351,362 @@ const modelMetricsData = {
       { x: new Date('2024-10-01T16:00:00'), y: 195 },
       { x: new Date('2024-10-01T20:00:00'), y: 180 },
       { x: new Date('2024-10-02T00:00:00'), y: 155 }
+    ],
+    ttft: [
+      { x: new Date('2024-10-01T00:00:00'), y: 180 },
+      { x: new Date('2024-10-01T04:00:00'), y: 170 },
+      { x: new Date('2024-10-01T08:00:00'), y: 165 },
+      { x: new Date('2024-10-01T12:00:00'), y: 200 },
+      { x: new Date('2024-10-01T16:00:00'), y: 220 },
+      { x: new Date('2024-10-01T20:00:00'), y: 210 },
+      { x: new Date('2024-10-02T00:00:00'), y: 190 }
+    ],
+    tokenGenerationRate: [
+      { x: new Date('2024-10-01T00:00:00'), y: 35 },
+      { x: new Date('2024-10-01T04:00:00'), y: 36 },
+      { x: new Date('2024-10-01T08:00:00'), y: 37 },
+      { x: new Date('2024-10-01T12:00:00'), y: 38 },
+      { x: new Date('2024-10-01T16:00:00'), y: 40 },
+      { x: new Date('2024-10-01T20:00:00'), y: 39 },
+      { x: new Date('2024-10-02T00:00:00'), y: 37 }
+    ],
+    throughput: [
+      { x: new Date('2024-10-01T00:00:00'), y: 55 },
+      { x: new Date('2024-10-01T04:00:00'), y: 57 },
+      { x: new Date('2024-10-01T08:00:00'), y: 58 },
+      { x: new Date('2024-10-01T12:00:00'), y: 60 },
+      { x: new Date('2024-10-01T16:00:00'), y: 62 },
+      { x: new Date('2024-10-01T20:00:00'), y: 60 },
+      { x: new Date('2024-10-02T00:00:00'), y: 58 }
     ]
   }
 };
 
-// Options for Multi-select dropdowns
-const ApiKeyOptions = [
-  { content: 'Production API Key', value: 'production' },
-  { content: 'Dev API Key', value: 'dev' },
-  { content: 'Staging API Key', value: 'staging' },
-  { content: 'Test API Key', value: 'test' },
-  { content: 'Analyst LLM API Key', value: 'analyst' }
-];
-
-const ModelOptions = [
-  { content: 'mistral-7b-instruct-v2 (Production)', value: 'mistral-prod' },
-  { content: 'stable-diffusion-xl-beta (Dev)', value: 'stable-dev' },
-  { content: 'llama-70b-chat-v4 (Staging)', value: 'llama-staging' },
-  { content: 'mistral-7b-instruct-v2 (Test)', value: 'mistral-test' },
-  { content: 'mistral-7b-instruct-v2 (Analyst)', value: 'mistral-analyst' }
-];
-
-type SelectionsType = (string | number)[];
-
-const usageTrendsData = {
-  'llm-7b-chat': [
-    { x: new Date('2024-06-01'), y: 0 },
-    { x: new Date('2024-07-01'), y: 2 },
-    { x: new Date('2024-08-01'), y: 7 },
-    { x: new Date('2024-09-01'), y: 1 },
-    { x: new Date('2024-10-01'), y: 6 },
-    { x: new Date('2024-11-01'), y: 4 },
-    { x: new Date('2024-12-01'), y: 9 },
-    { x: new Date('2025-01-01'), y: 7 }
-  ],
-  'mistral-7b-instruct-v2': [
-    { x: new Date('2024-06-01'), y: 0 },
-    { x: new Date('2024-07-01'), y: 1 },
-    { x: new Date('2024-08-01'), y: 6 },
-    { x: new Date('2024-09-01'), y: 4 },
-    { x: new Date('2024-10-01'), y: 6 },
-    { x: new Date('2024-11-01'), y: 3 },
-    { x: new Date('2024-12-01'), y: 4 },
-    { x: new Date('2025-01-01'), y: 3 }
-  ],
-  'stable-diffusion-xl-beta': [
-    { x: new Date('2024-06-01'), y: 0 },
-    { x: new Date('2024-07-01'), y: 0.5 },
-    { x: new Date('2024-08-01'), y: 4 },
-    { x: new Date('2024-09-01'), y: 2 },
-    { x: new Date('2024-10-01'), y: 4 },
-    { x: new Date('2024-11-01'), y: 1 },
-    { x: new Date('2024-12-01'), y: 2 },
-    { x: new Date('2025-01-01'), y: 4 }
-  ]
-};
+// Type for table sorting
+type SortableColumn = 'deployment' | 'project' | 'runtime' | 'requests' | 'latency' | 'errorRate' | 'gpu' | 'cpu' | 'hardwareProfile';
 
 const Dashboard: React.FunctionComponent = () => {
-  const [groupByOpen, setGroupByOpen] = React.useState(false);
-  const [metricsOpen, setMetricsOpen] = React.useState(false);
-  const [trendsOpen, setTrendsOpen] = React.useState(false);
-  const [utilTimeOpen, setUtilTimeOpen] = useState(false);
-  const [utilTimeRange, setUtilTimeRange] = useState('Last 24 hours');
-  const [selectedTab, setSelectedTab] = React.useState('Cluster');
+  const { userProfile, setUserProfile } = useUserProfile();
+  const [selectedTab, setSelectedTab] = React.useState(() => {
+    // Initialize based on current profile, default to Cluster if AI Admin
+    const saved = localStorage.getItem('userProfile');
+    return (saved === 'AI Admin') ? 'Cluster' : 'Models';
+  });
+  const previousProfileRef = React.useRef(userProfile);
+  const isTabChangeRef = React.useRef(false);
   
-  // Request traces filter states
-  const [serviceNameOpen, setServiceNameOpen] = useState(false);
-  const [namespaceOpen, setNamespaceOpen] = useState(false);
-  const [modelFilterOpen, setModelFilterOpen] = useState(false);
-  const [timeRangeOpen, setTimeRangeOpen] = useState(false);
-  const [limitTracesOpen, setLimitTracesOpen] = useState(false);
-  const [serviceName, setServiceName] = useState('All Services');
-  const [namespace, setNamespace] = useState('All Namespaces');
-  const [modelFilter, setModelFilter] = useState('All Models');
-  const [timeRange, setTimeRange] = useState('Last 24 hours');
-  const [limitTraces, setLimitTraces] = useState('20');
-  
-  // Multi-select states
-  const [selectedApiKeys, setSelectedApiKeys] = useState<SelectionsType>(['production', 'dev', 'staging', 'test', 'analyst']);
-  const [selectedModels, setSelectedModels] = useState<SelectionsType>(['mistral-prod', 'stable-dev', 'llama-staging', 'mistral-test', 'mistral-analyst']);
-
-  // Initialize options with selected state
-  const initialApiKeyOptions = useMemo<MultiTypeaheadSelectOption[]>(
-    () => ApiKeyOptions.map((option) => ({ ...option, selected: selectedApiKeys.includes(option.value) })),
-    [selectedApiKeys]
-  );
-
-  const initialModelOptions = useMemo<MultiTypeaheadSelectOption[]>(
-    () => ModelOptions.map((option) => ({ ...option, selected: selectedModels.includes(option.value) })),
-    [selectedModels]
-  );
-
-  // Create mapping objects for filtering
-  const apiKeyValueToName = useMemo(() => {
-    const mapping: { [key: string]: string } = {};
-    ApiKeyOptions.forEach(option => {
-      mapping[option.value] = option.content;
-    });
-    return mapping;
-  }, []);
-
-  const modelValueToDeployment = useMemo(() => {
-    const mapping: { [key: string]: { deployment: string, apiKey: string } } = {};
-    ModelOptions.forEach(option => {
-      // Extract deployment name and API key from content like "mistral-7b-instruct-v2 (Production)"
-      const match = option.content.match(/^(.+?)\s*\((.+)\)$/);
-      if (match) {
-        const deployment = match[1].trim();
-        const apiKeyType = match[2].trim();
-        mapping[option.value] = { 
-          deployment, 
-          apiKey: `${apiKeyType} API Key` 
-        };
+  // When profile changes (e.g., from dropdown), update the tab accordingly
+  useEffect(() => {
+    // Only react if profile actually changed and it wasn't from a tab selection
+    if (previousProfileRef.current !== userProfile && !isTabChangeRef.current) {
+      const previousProfile = previousProfileRef.current;
+      previousProfileRef.current = userProfile;
+      
+      if (userProfile !== 'AI Admin') {
+        // Non-AI Admin users can only see Models tab - force switch if on Cluster
+        if (selectedTab === 'Cluster') {
+          setSelectedTab('Models');
+        }
+      } else if (userProfile === 'AI Admin' && previousProfile !== 'AI Admin') {
+        // When switching to AI Admin, show Cluster tab
+        setSelectedTab('Cluster');
       }
-    });
-    return mapping;
-  }, []);
+    }
+    // Reset the flag after processing
+    isTabChangeRef.current = false;
+  }, [userProfile, selectedTab]);
+  
+  // Handle tab selection - prevent non-AI Admin users from accessing Cluster tab
+  const handleTabSelect = (_event: React.MouseEvent | React.KeyboardEvent | MouseEvent, eventKey: string | number) => {
+    const newTab = eventKey as string;
+    // If trying to select Cluster tab but user is not AI Admin, don't allow it
+    if (newTab === 'Cluster' && userProfile !== 'AI Admin') {
+      return;
+    }
+    setSelectedTab(newTab);
+  };
+  
+  // Page-level time period filter
+  const [pageTimePeriodOpen, setPageTimePeriodOpen] = useState(false);
+  const [pageTimePeriod, setPageTimePeriod] = useState('Last 1 hour');
+  
+  // Time range options
+  const timeRangeOptions = ['Last 5 minutes', 'Last 15 minutes', 'Last 30 minutes', 'Last 1 hour', 'Last 3 hours', 'Last 6 hours', 'Last 12 hours', 'Last 24 hours', 'Last 7 days', 'Last 30 days'];
+  
+  // Refresh handler
+  const handleRefresh = () => {
+    // Trigger data refresh logic here
+    console.log('Refreshing dashboard data...');
+    // In a real app, this would refetch data from APIs
+  };
+  
+  // Page-level project filter
+  const [pageProjectOpen, setPageProjectOpen] = useState(false);
+  const [pageProject, setPageProject] = useState('All projects');
+  
+  // Project options
+  const projectOptions = ['KonText PTE', 'AI Research', 'ML Production'];
+  
+  // Get unique model deployment names
+  const allModelDeployments = useMemo(() => 
+    Array.from(new Set(modelDeploymentData.map(m => m.deployment))),
+    []
+  );
+  
+  // Category-based filter states
+  const [filterCategoryOpen, setFilterCategoryOpen] = useState(false);
+  const [activeFilterCategory, setActiveFilterCategory] = useState('Models');
+  
+  // Card expansion states
+  const [isModelDeploymentsExpanded, setIsModelDeploymentsExpanded] = useState(true);
+  const [isPerformanceMetricsExpanded, setIsPerformanceMetricsExpanded] = useState(true);
+  
+  // Toolbar filter states - Project filtering, model filtering, and search
+  const [isProjectSelectOpen, setIsProjectSelectOpen] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]); // Empty by default
+  const [isModelSelectOpen, setIsModelSelectOpen] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]); // Empty by default
+  const [searchValue, setSearchValue] = useState('');
+  const [modelSearchValue, setModelSearchValue] = useState('');
+  const [modelSearchChips, setModelSearchChips] = useState<string[]>([]);
+  const [modelFilterSearch, setModelFilterSearch] = useState('');
+  
+  // Status filter
+  const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  
+  // Hardware profile filter
+  const [isHardwareSelectOpen, setIsHardwareSelectOpen] = useState(false);
+  const [selectedHardwareProfiles, setSelectedHardwareProfiles] = useState<string[]>([]);
+  
+  // Get unique hardware profiles from data
+  const uniqueHardwareProfiles = useMemo(() => 
+    Array.from(new Set(modelDeploymentData.map(m => m.hardwareProfile))),
+    []
+  );
+  
+  // Table sorting state
+  const [activeSortIndex, setActiveSortIndex] = useState<number | null>(null);
+  const [activeSortDirection, setActiveSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Filter table data based on selections
-  const filteredModelData = useMemo(() => {
+  // Handle project filter selection with visual feedback
+  const onProjectSelect = (_event: React.MouseEvent | undefined, selection: string | number | undefined) => {
+    const value = selection as string;
+    setSelectedProjects(prev => 
+      prev.includes(value)
+        ? prev.filter(p => p !== value)
+        : [...prev, value]
+    );
+  };
+
+  // Track recently changed models for visual feedback
+  const [recentlyChangedModels, setRecentlyChangedModels] = useState<Set<string>>(new Set());
+
+  // Handle model filter selection with visual feedback
+  const onModelSelect = (_event: React.MouseEvent | undefined, selection: string | number | undefined) => {
+    const value = selection as string;
+    setSelectedModels(prev => 
+      prev.includes(value)
+        ? prev.filter(m => m !== value)
+        : [...prev, value]
+    );
+    
+    // Add visual feedback for changed item
+    setRecentlyChangedModels(new Set([value]));
+    setTimeout(() => {
+      setRecentlyChangedModels(new Set());
+    }, 1000);
+  };
+
+  // Status filter handler
+  const onStatusSelect = (_event: React.MouseEvent | undefined, selection: string | number | undefined) => {
+    const value = selection as string;
+    setSelectedStatuses(prev => 
+      prev.includes(value)
+        ? prev.filter(s => s !== value)
+        : [...prev, value]
+    );
+  };
+
+  // Hardware profile filter handler
+  const onHardwareSelect = (_event: React.MouseEvent | undefined, selection: string | number | undefined) => {
+    const value = selection as string;
+    setSelectedHardwareProfiles(prev => 
+      prev.includes(value)
+        ? prev.filter(h => h !== value)
+        : [...prev, value]
+    );
+  };
+
+  // Clear all filters (projects, models, search, status, hardware)
+  const onClearAllFilters = () => {
+    setSelectedProjects([]);
+    setSelectedModels([]);
+    setSelectedStatuses([]);
+    setSelectedHardwareProfiles([]);
+    setSearchValue('');
+  };
+
+  // Remove individual project chip
+  const onDeleteProjectChip = (category: string, chip: string) => {
+    setSelectedProjects(prev => prev.filter(p => p !== chip));
+  };
+
+  // Remove individual model chip
+  const onDeleteModelChip = (category: string, chip: string) => {
+    setSelectedModels(prev => prev.filter(m => m !== chip));
+  };
+
+  // Remove individual status chip
+  const onDeleteStatusChip = (category: string, chip: string) => {
+    setSelectedStatuses(prev => prev.filter(s => s !== chip));
+  };
+
+  // Remove individual hardware chip
+  const onDeleteHardwareChip = (category: string, chip: string) => {
+    setSelectedHardwareProfiles(prev => prev.filter(h => h !== chip));
+  };
+
+  // Color palette for model series using ECharts default palette
+  const getModelColor = (index: number) => {
+    const colors = [
+      '#5470c6', // Blue
+      '#91cc75', // Green
+      '#fac858', // Yellow
+      '#ee6666', // Red
+      '#73c0de', // Light Blue
+      '#3ba272', // Dark Green
+      '#fc8452', // Orange
+      '#9a60b4', // Purple
+      '#ea7ccc', // Pink
+    ];
+    return colors[index % colors.length];
+  };
+
+  // Filter table data by page-level project, tab-level filters, and search query
+  const filteredTableData = useMemo(() => {
     return modelDeploymentData.filter(model => {
-      // Check if API key matches selection
-      const apiKeyMatches = selectedApiKeys.some(selectedKey => 
-        apiKeyValueToName[selectedKey as string] === model.apiKey
-      );
-
-      // Check if model deployment matches selection  
-      const modelMatches = selectedModels.some(selectedModel => {
-        const modelInfo = modelValueToDeployment[selectedModel as string];
-        return modelInfo && 
-               modelInfo.deployment === model.deployment && 
-               modelInfo.apiKey === model.apiKey;
-      });
-
-      return apiKeyMatches && modelMatches;
+      // Page-level project filter (applies to both tabs)
+      const matchesPageProject = pageProject === 'All projects' || model.project === pageProject;
+      
+      // Tab-level category filters
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(model.project);
+      const matchesModel = selectedModels.length === 0 || selectedModels.includes(model.deployment);
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(model.status);
+      const matchesHardware = selectedHardwareProfiles.length === 0 || selectedHardwareProfiles.includes(model.hardwareProfile);
+      const matchesSearch = searchValue === '' || 
+        model.deployment.toLowerCase().includes(searchValue.toLowerCase()) ||
+        model.runtime.toLowerCase().includes(searchValue.toLowerCase()) ||
+        model.hardwareProfile.toLowerCase().includes(searchValue.toLowerCase());
+      
+      return matchesPageProject && matchesProject && matchesModel && matchesStatus && matchesHardware && matchesSearch;
     });
-  }, [selectedApiKeys, selectedModels, apiKeyValueToName, modelValueToDeployment]);
+  }, [pageProject, selectedProjects, selectedModels, selectedStatuses, selectedHardwareProfiles, searchValue]);
 
-  // Filter and aggregate chart data based on selections
-  const filteredTokenThroughputData = useMemo(() => {
-    const selectedDeployments = filteredModelData.map(model => model.deployment);
-    
-    // Aggregate data from all selected deployments
-    const aggregatedData: { [key: string]: number } = {};
-    
-    selectedDeployments.forEach(deployment => {
-      if (modelMetricsData[deployment]) {
-        modelMetricsData[deployment].tokenThroughput.forEach(point => {
-          const timeKey = point.x.getTime().toString();
-          aggregatedData[timeKey] = (aggregatedData[timeKey] || 0) + point.y;
-        });
+  // Sort the filtered model data
+  const sortedModelData = useMemo(() => {
+    if (activeSortIndex === null) return filteredTableData;
+
+    const sortedData = [...filteredTableData];
+    const columnMap: SortableColumn[] = ['deployment', 'project', 'runtime', 'requests', 'latency', 'errorRate', 'hardwareProfile', 'gpu', 'cpu'];
+    const sortKey = columnMap[activeSortIndex - 1]; // -1 because first column is checkbox
+
+    sortedData.sort((a, b) => {
+      let aValue: any = a[sortKey];
+      let bValue: any = b[sortKey];
+
+      // Handle numeric values (remove commas and parse)
+      if (sortKey === 'requests') {
+        aValue = parseInt(aValue.replace(/,/g, ''));
+        bValue = parseInt(bValue.replace(/,/g, ''));
+      } else if (sortKey === 'latency') {
+        aValue = parseFloat(aValue);
+        bValue = parseFloat(bValue);
+      } else if (sortKey === 'errorRate' || sortKey === 'gpu' || sortKey === 'cpu') {
+        aValue = parseFloat(aValue.replace('%', ''));
+        bValue = parseFloat(bValue.replace('%', ''));
       }
+
+      if (typeof aValue === 'string') {
+        return activeSortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      return activeSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
 
-    // Convert back to chart format
-    return Object.entries(aggregatedData).map(([timeKey, value]) => ({
-      x: new Date(parseInt(timeKey)),
-      y: value
-    })).sort((a, b) => a.x.getTime() - b.x.getTime());
-  }, [filteredModelData]);
+    return sortedData;
+  }, [filteredTableData, activeSortIndex, activeSortDirection]);
+
+
+
+  // Helper function for sort
+  const getSortParams = (columnIndex: number): ThProps['sort'] => ({
+    sortBy: {
+      index: activeSortIndex || 0,
+      direction: activeSortDirection,
+    },
+    onSort: (_event, index, direction) => {
+      setActiveSortIndex(index);
+      setActiveSortDirection(direction);
+    },
+    columnIndex,
+  });
+
+  // Generate series data for charts - one series per filtered model (unique deployments)
+  const uniqueFilteredModels = useMemo(() => 
+    Array.from(new Set(filteredTableData.map(m => m.deployment))),
+    [filteredTableData]
+  );
 
   const filteredRequestQueueData = useMemo(() => {
-    const selectedDeployments = filteredModelData.map(model => model.deployment);
-    
-    const aggregatedData: { [key: string]: number } = {};
-    
-    selectedDeployments.forEach(deployment => {
-      if (modelMetricsData[deployment]) {
-        modelMetricsData[deployment].requestQueue.forEach(point => {
-          const timeKey = point.x.getTime().toString();
-          aggregatedData[timeKey] = (aggregatedData[timeKey] || 0) + point.y;
-        });
-      }
-    });
-
-    return Object.entries(aggregatedData).map(([timeKey, value]) => ({
-      x: new Date(parseInt(timeKey)),
-      y: value
-    })).sort((a, b) => a.x.getTime() - b.x.getTime());
-  }, [filteredModelData]);
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.requestQueue.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
 
   const filteredReplicaCountData = useMemo(() => {
-    const selectedDeployments = filteredModelData.map(model => model.deployment);
-    
-    const aggregatedData: { [key: string]: number } = {};
-    
-    selectedDeployments.forEach(deployment => {
-      if (modelMetricsData[deployment]) {
-        modelMetricsData[deployment].replicaCount.forEach(point => {
-          const timeKey = point.x.getTime().toString();
-          aggregatedData[timeKey] = (aggregatedData[timeKey] || 0) + point.y;
-        });
-      }
-    });
-
-    return Object.entries(aggregatedData).map(([timeKey, value]) => ({
-      x: new Date(parseInt(timeKey)),
-      y: value
-    })).sort((a, b) => a.x.getTime() - b.x.getTime());
-  }, [filteredModelData]);
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.replicaCount.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
 
   const filteredRequestLatencyData = useMemo(() => {
-    const selectedDeployments = filteredModelData.map(model => model.deployment);
-    
-    if (selectedDeployments.length === 0) return [];
-    
-    const aggregatedData: { [key: string]: { total: number, count: number } } = {};
-    
-    selectedDeployments.forEach(deployment => {
-      if (modelMetricsData[deployment]) {
-        modelMetricsData[deployment].requestLatency.forEach(point => {
-          const timeKey = point.x.getTime().toString();
-          if (!aggregatedData[timeKey]) {
-            aggregatedData[timeKey] = { total: 0, count: 0 };
-          }
-          aggregatedData[timeKey].total += point.y;
-          aggregatedData[timeKey].count += 1;
-        });
-      }
-    });
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.requestLatency.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
 
-    // Calculate average latency for each time point
-    return Object.entries(aggregatedData).map(([timeKey, { total, count }]) => ({
-      x: new Date(parseInt(timeKey)),
-      y: Math.round(total / count)
-    })).sort((a, b) => a.x.getTime() - b.x.getTime());
-  }, [filteredModelData]);
+  const filteredTTFTData = useMemo(() => {
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.ttft?.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
+
+  const filteredTokenGenerationRateData = useMemo(() => {
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.tokenGenerationRate?.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
+
+  const filteredThroughputData = useMemo(() => {
+    return uniqueFilteredModels.map((deployment, index) => ({
+      name: deployment,
+      data: modelMetricsData[deployment]?.throughput?.map(point => [point.x.getTime(), point.y]) || [],
+      color: getModelColor(index)
+    }));
+  }, [uniqueFilteredModels]);
 
   const getStatusBadge = (status: string) => {
     const baseStyle = {
@@ -624,9 +725,9 @@ const Dashboard: React.FunctionComponent = () => {
         return (
           <span style={{ 
             ...baseStyle, 
-            backgroundColor: '#3e8635', 
+            backgroundColor: '#3ba272', 
             color: '#ffffff',
-            border: '1px solid #3e8635'
+            border: '1px solid #3ba272'
           }}>
             <CheckCircleIcon size={16} />
             Running
@@ -636,9 +737,9 @@ const Dashboard: React.FunctionComponent = () => {
         return (
           <span style={{ 
             ...baseStyle, 
-            backgroundColor: '#f0ad00', 
-            color: '#151515',
-            border: '1px solid #f0ad00'
+            backgroundColor: '#fac858', 
+            color: '#000000',
+            border: '1px solid #fac858'
           }}>
             <ExclamationTriangleIcon size={16} />
             Scaling
@@ -648,9 +749,9 @@ const Dashboard: React.FunctionComponent = () => {
         return (
           <span style={{ 
             ...baseStyle, 
-            backgroundColor: '#c9190b', 
+            backgroundColor: '#ee6666', 
             color: '#ffffff',
-            border: '1px solid #c9190b'
+            border: '1px solid #ee6666'
           }}>
             <ExclamationCircleIcon size={16} />
             Failed
@@ -660,9 +761,9 @@ const Dashboard: React.FunctionComponent = () => {
         return (
           <span style={{ 
             ...baseStyle, 
-            backgroundColor: '#c9190b', 
+            backgroundColor: '#ee6666', 
             color: '#ffffff',
-            border: '1px solid #c9190b'
+            border: '1px solid #ee6666'
           }}>
             <ExclamationCircleIcon size={16} />
             Degraded
@@ -672,9 +773,9 @@ const Dashboard: React.FunctionComponent = () => {
         return (
           <span style={{ 
             ...baseStyle, 
-            backgroundColor: '#6a6e73', 
+            backgroundColor: '#6a7985', 
             color: '#ffffff',
-            border: '1px solid #6a6e73'
+            border: '1px solid #6a7985'
           }}>
             {status}
           </span>
@@ -682,456 +783,508 @@ const Dashboard: React.FunctionComponent = () => {
     }
   };
 
-  const onGroupByToggle = () => {
-    setGroupByOpen(!groupByOpen);
-  };
-
-  const onMetricsToggle = () => {
-    setMetricsOpen(!metricsOpen);
-  };
-
-  const onTrendsToggle = () => {
-    setTrendsOpen(!trendsOpen);
-  };
 
   return (
-    <PageSection hasBodyWrapper={false}>
+    <PageSection>
       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsLg' }}>
-        {/* Header */}
+        {/* Page Header */}
+        <FlexItem>
+          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
+            <FlexItem>
+              <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                <FlexItem>
+                  <Title headingLevel="h1" size="2xl">Dashboard</Title>
+                </FlexItem>
+                <FlexItem>
+                  <Content component={ContentVariants.p}>
+                    Monitor the health and performance of your AI workloads and infrastructure
+                  </Content>
+                </FlexItem>
+              </Flex>
+            </FlexItem>
+            <FlexItem>
+              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                <FlexItem>
+                  <Dropdown
+                    onSelect={(_e, itemId) => {
+                      setPageTimePeriodOpen(false);
+                      const selected = typeof itemId === 'string' ? itemId : '';
+                      setPageTimePeriod(selected || 'Last 1 hour');
+                    }}
+                    isOpen={pageTimePeriodOpen}
+                    onOpenChange={(isOpen: boolean) => setPageTimePeriodOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setPageTimePeriodOpen(!pageTimePeriodOpen)}
+                        isExpanded={pageTimePeriodOpen}
+                        id="time-range-toggle"
+                        icon={<ClockIcon />}
+                        style={{ minWidth: '180px' }}
+                      >
+                        {pageTimePeriod}
+                      </MenuToggle>
+                    )}
+                  >
+                    <DropdownList id="time-range-dropdown-list">
+                      {timeRangeOptions.map((option, index) => (
+                        <DropdownItem key={index} itemId={option} id={`time-range-option-${index}`}>
+                          {option}
+                        </DropdownItem>
+                      ))}
+                    </DropdownList>
+                  </Dropdown>
+                </FlexItem>
+                <FlexItem>
+                  <Tooltip content="Refresh dashboard">
+                    <Button
+                      variant="plain"
+                      aria-label="Refresh dashboard"
+                      onClick={handleRefresh}
+                      icon={<SyncIcon />}
+                      id="refresh-button"
+                    />
+                  </Tooltip>
+                </FlexItem>
+              </Flex>
+            </FlexItem>
+          </Flex>
+        </FlexItem>
+
+        {/* PAGE-LEVEL PROJECT FILTER - Affects both tabs */}
         <FlexItem>
           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
             <FlexItem>
-              <Title headingLevel="h1" size="2xl">Dashboard</Title>
+              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                <FlexItem>
+                  <OutlinedFolderIcon />
+                </FlexItem>
+                <FlexItem>
+                  <Content component={ContentVariants.p} className="pf-v6-u-font-weight-bold">
+                    Project
+                  </Content>
+                </FlexItem>
+              </Flex>
+            </FlexItem>
+            
+            <FlexItem>
+              <Dropdown
+                onSelect={(_e, itemId) => {
+                  setPageProjectOpen(false);
+                  const selected = typeof itemId === 'string' ? itemId : '';
+                  setPageProject(selected || 'All projects');
+                }}
+                isOpen={pageProjectOpen}
+                onOpenChange={(isOpen: boolean) => setPageProjectOpen(isOpen)}
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setPageProjectOpen(!pageProjectOpen)}
+                    isExpanded={pageProjectOpen}
+                    id="page-project-toggle"
+                    style={{ minWidth: '200px' }}
+                  >
+                    {pageProject}
+                  </MenuToggle>
+                )}
+              >
+                <DropdownList>
+                  <DropdownItem value="All projects" key="all" id="project-all">
+                    All projects
+                  </DropdownItem>
+                  <Divider component="li" />
+                  {projectOptions.map((project) => (
+                    <DropdownItem value={project} key={project}>
+                      {project}
+                    </DropdownItem>
+                  ))}
+                </DropdownList>
+              </Dropdown>
+            </FlexItem>
+
+            <FlexItem>
+              <Button 
+                variant="link" 
+                id="go-to-projects-link"
+              >
+                Go to <OutlinedFolderIcon /> Projects
+              </Button>
             </FlexItem>
           </Flex>
-              <Content component={ContentVariants.p}>
-            Monitor the health and performance of your AI workloads and infrastructure
+        </FlexItem>
+
+        {/* Tab Navigation */}
+        <FlexItem>
+          <Tabs
+            activeKey={selectedTab}
+            onSelect={handleTabSelect}
+            aria-label="Dashboard view tabs"
+          >
+            {userProfile === 'AI Admin' && (
+              <Tab
+                eventKey="Cluster"
+                title={<TabTitleText>Cluster</TabTitleText>}
+                aria-label="Cluster tab"
+              />
+            )}
+            {(userProfile === 'AI Admin' || userProfile === 'AI Engineer' || userProfile === 'Data Scientist') && (
+              <Tab
+                eventKey="Models"
+                title={<TabTitleText>Models</TabTitleText>}
+                aria-label="Models tab"
+              />
+            )}
+          </Tabs>
+        </FlexItem>
+
+        {/* Tab Content - Cluster */}
+        {selectedTab === 'Cluster' && (
+          <>
+            {/* Overview section header */}
+            <FlexItem>
+              <Title headingLevel="h2" size="xl">Overview</Title>
+              <Content component={ContentVariants.p} className="pf-v6-u-color-200 pf-v6-u-mt-sm">
+                Key cluster metrics and health indicators at a glance
               </Content>
             </FlexItem>
 
-        {/* Overview card */}
+            {/* Overview metrics - Combined Card */}
             <FlexItem>
-          <Card>
-            <CardTitle>
-              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                <FlexItem>
-                  <Title headingLevel="h3" size="lg">Overview</Title>
-            </FlexItem>
-                <FlexItem>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                    <div style={{ width: '8px', height: '8px', backgroundColor: '#3e8635', borderRadius: '50%' }} />
-                    <Content component={ContentVariants.small}>All systems operational</Content>
-          </Flex>
-                </FlexItem>
-              </Flex>
-            </CardTitle>
-            <CardBody>
-              <Flex spaceItems={{ default: 'spaceItemsSm' }}>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#e6f2ff', border: 'none', padding: '2px' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#0066cc', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>CLUSTERS</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>8 Nodes</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+2</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#e6f2ff', border: 'none', padding: '2px' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#0066cc', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>COMPUTE</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>24 GPUs</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>58% util</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#e6f5e6', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#3e8635', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>MODELS</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>4 Active</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+1</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#e6f5e6', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#3e8635', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>P90 LATENCY</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>820ms</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#f0ad00', fontSize: '0.75rem', margin: 0 }}>+45ms</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#f3e5f5', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#8b5cf6', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>REQUESTS</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>2.8K</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+12%</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#f3e5f5', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#8b5cf6', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>TOKENS</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>1.2M</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#3e8635', fontSize: '0.75rem', margin: 0 }}>+8%</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#fff3e0', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#c9190b', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>COST PER REQUEST</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>$0.023</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>+$0.002</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-                <FlexItem grow={{ default: 'grow' }}>
-                  <Card isCompact style={{ backgroundColor: '#fff3e0', border: 'none' }}>
-                    <CardBody style={{ padding: '0.5rem' }}>
-                      <Content component={ContentVariants.small} style={{ color: '#c9190b', fontWeight: 600, letterSpacing: 0.4, fontSize: '0.7rem' }}>ERROR RATE</Content>
-                      <Flex alignItems={{ default: 'alignItemsBaseline' }} justifyContent={{ default: 'justifyContentSpaceBetween' }} style={{ marginTop: '0.25rem', marginBottom: 0, whiteSpace: 'nowrap' }}>
-                        <Title headingLevel="h4" size="lg" style={{ margin: 0 }}>0.8%</Title>
-                        <Content component={ContentVariants.small} style={{ color: '#c9190b', fontSize: '0.75rem', margin: 0 }}>-0.1%</Content>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                </FlexItem>
-              </Flex>
-            </CardBody>
-          </Card>
-        </FlexItem>
-
-            {/* Tab Navigation */}
-            <FlexItem>
-              <Tabs
-                activeKey={selectedTab}
-                onSelect={(_event, eventKey) => setSelectedTab(eventKey as string)}
-                aria-label="Dashboard view tabs"
-              >
-                <Tab
-                  eventKey="Cluster"
-                  title={<TabTitleText>Cluster</TabTitleText>}
-                  aria-label="Cluster tab"
-                />
-                <Tab
-                  eventKey="Models"
-                  title={<TabTitleText>Models</TabTitleText>}
-                  aria-label="Models tab"
-                />
-                <Tab
-                  eventKey="Usage"
-                  title={<TabTitleText>Usage</TabTitleText>}
-                  aria-label="Usage tab"
-                />
-                <Tab
-                  eventKey="Traces"
-                  title={<TabTitleText>Traces</TabTitleText>}
-                  aria-label="Traces tab"
-                />
-                {/* Perses tab removed */}
-              </Tabs>
-            </FlexItem>
-
-
-        {/* Tab Content */}
-        {selectedTab === 'Cluster' && (
-          <>
-            {/* Cluster Details and Resource Inventory */}
-          <FlexItem>
-              <Grid hasGutter>
-                <GridItem span={6}>
-                  <Card style={{ height: '100%' }}>
-                    <CardTitle>
-                      <Title headingLevel="h4" size="md">Cluster Details</Title>
-                    </CardTitle>
-              <CardBody>
-                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem>
-                          <Flex direction={{ default: 'column' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>Provider</Content>
-                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>AWS</Content>
-                    </Flex>
-                  </FlexItem>
+              <Card isCompact id="overview-metrics-card">
+                <CardBody>
+                  <Flex>
+                    {/* System Health */}
+                    <FlexItem flex={{ default: 'flex_1' }}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
                         <FlexItem>
-                    <Flex direction={{ default: 'column' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>OpenShift version</Content>
-                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>2.24.0</Content>
-                          </Flex>
+                          <Title headingLevel="h3" size="md">System health</Title>
                         </FlexItem>
-                      <FlexItem>
-                          <Flex direction={{ default: 'column' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>Channel</Content>
-                            <Content component={ContentVariants.small} style={{ marginTop: 0 }}>fast</Content>
-                          </Flex>
-                      </FlexItem>
-                      <FlexItem>
-                          <Flex direction={{ default: 'column' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'bold', marginBottom: 0 }}>API server</Content>
-                            <Content component={ContentVariants.small} style={{ fontFamily: 'monospace', fontSize: '12px', marginTop: 0 }}>
-                              https://api.cluster-z84h8.z84h8.sandbox.opentic.com
-                            </Content>
-                        </Flex>
-                      </FlexItem>
                         <FlexItem>
-                          <Button variant="link" style={{ padding: 0, fontSize: '14px' }}>
-                            View settings →
-                          </Button>
-                      </FlexItem>
-                    </Flex>
-                    </CardBody>
-                  </Card>
-                  </GridItem>
-                <GridItem span={6}>
-                  <Card style={{ height: '100%' }}>
-                    <CardTitle>
-                      <Title headingLevel="h4" size="md">Cluster inventory</Title>
-                    </CardTitle>
-                    <CardBody>
-                    <Flex direction={{ default: 'column' }}>
-                      <FlexItem>
-                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>3 Nodes</Content>
-                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>3</Content>
-                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
-                            </Flex>
-                          </Flex>
-                      </FlexItem>
-                      <FlexItem>
-                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>8 Disks</Content>
-                        <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>8</Content>
-                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
-                            </Flex>
-                        </Flex>
-                      </FlexItem>
-                        <FlexItem>
-                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>20 Pods</Content>
-                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>20</Content>
-                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
-                    </Flex>
-                          </Flex>
+                          <Title headingLevel="h4" size="xl">100%</Title>
                         </FlexItem>
-                      <FlexItem>
-                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>12 PVs</Content>
-                            <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>12</Content>
-                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
-                            </Flex>
-                          </Flex>
-                      </FlexItem>
-                      <FlexItem>
-                          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
-                            <Content component={ContentVariants.small} style={{ fontWeight: 'normal' }}>18 PVCs</Content>
-                        <Flex alignItems={{ default: 'alignItemsFlexStart' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <Content component={ContentVariants.small} style={{ color: '#73bcf7' }}>18</Content>
-                              <CheckCircleIcon style={{ color: '#0066cc', fontSize: '16px' }} />
-                            </Flex>
-                        </Flex>
-                      </FlexItem>
-                    </Flex>
-                    </CardBody>
-                  </Card>
-                  </GridItem>
-              </Grid>
-            </FlexItem>
-
-            {/* Utilizations Section */}
-                      <FlexItem>
-              <Card>
-                <CardTitle>
-                  <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="md">Utilizations</Title>
-                      </FlexItem>
-                      <FlexItem>
-                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
                         <FlexItem>
-                          <Content component={ContentVariants.small}>
-                            Time range:
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            3/3 nodes healthy
                           </Content>
                         </FlexItem>
                         <FlexItem>
-                          <Dropdown
-                            onSelect={(_e, itemId) => {
-                              setUtilTimeOpen(false);
-                              const selected = typeof itemId === 'string' ? itemId : '';
-                              if (selected === '1h') setUtilTimeRange('Last 1 hour');
-                              else if (selected === '6h') setUtilTimeRange('Last 6 hours');
-                              else if (selected === '24h') setUtilTimeRange('Last 24 hours');
-                              else if (selected === '7d') setUtilTimeRange('Last 7 days');
-                            }}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle ref={toggleRef} onClick={() => setUtilTimeOpen(!utilTimeOpen)} isExpanded={utilTimeOpen}>
-                                {utilTimeRange}
-                              </MenuToggle>
-                            )}
-                            isOpen={utilTimeOpen}
-                            id="utilization-time-range-dropdown"
-                          >
-                            <DropdownList>
-                              <DropdownItem value="1h">Last 1 hour</DropdownItem>
-                              <DropdownItem value="6h">Last 6 hours</DropdownItem>
-                              <DropdownItem value="24h">Last 24 hours</DropdownItem>
-                              <DropdownItem value="7d">Last 7 days</DropdownItem>
-                            </DropdownList>
-                          </Dropdown>
+                          <Label color="green" icon={<CheckCircleIcon />} id="system-health-status-label">
+                            Healthy
+                          </Label>
                         </FlexItem>
-                          </Flex>
+                        <FlexItem>
+                          <Button 
+                            variant="link" 
+                            isInline 
+                            component="a"
+                            href="#"
+                            target="_blank"
+                            icon={<ExternalLinkAltIcon />}
+                            iconPosition="right"
+                            id="view-in-openshift-link"
+                            className="pf-v6-u-p-0"
+                          >
+                            View in OpenShift
+                          </Button>
+                        </FlexItem>
+                      </Flex>
                     </FlexItem>
-                        </Flex>
-                </CardTitle>
+
+                    <Divider orientation={{ default: 'vertical' }} />
+
+                    {/* Active Models */}
+                    <FlexItem flex={{ default: 'flex_1' }}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Title headingLevel="h3" size="md">Active models</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Title headingLevel="h4" size="xl">4</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            Models currently deployed
+                          </Content>
+                        </FlexItem>
+                      </Flex>
+                    </FlexItem>
+
+                    <Divider orientation={{ default: 'vertical' }} />
+
+                    {/* GPU Utilization */}
+                    <FlexItem flex={{ default: 'flex_1' }}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Title headingLevel="h3" size="md">GPU utilization</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Title headingLevel="h4" size="xl">100%</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            24 of 24 GPUs utilized
+                          </Content>
+                        </FlexItem>
+                        <FlexItem>
+                          <Button 
+                            variant="link" 
+                            isInline
+                            id="gpu-view-details-link"
+                            className="pf-v6-u-p-0"
+                          >
+                            View details
+                          </Button>
+                        </FlexItem>
+                      </Flex>
+                    </FlexItem>
+
+                    <Divider orientation={{ default: 'vertical' }} />
+
+                    {/* Success Rate */}
+                    <FlexItem flex={{ default: 'flex_1' }}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <Title headingLevel="h3" size="md">Success rate</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Title headingLevel="h4" size="xl">99.2%</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            Request success rate
+                          </Content>
+                        </FlexItem>
+                      </Flex>
+                    </FlexItem>
+                  </Flex>
+                </CardBody>
+              </Card>
+            </FlexItem>
+
+            {/* Divider */}
+            <Divider />
+
+            {/* Cluster-wide Utilizations */}
+            <FlexItem>
+              <Title headingLevel="h3" size="lg">Cluster-wide Utilizations</Title>
+              <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', marginTop: 'var(--pf-t--global--spacer--sm)' }}>
+                Monitor total cluster capacity and current usage across all resources
+              </Content>
+            </FlexItem>
+            <FlexItem>
+              <Card>
                 <CardBody>
                   <Grid hasGutter>
                     {/* First row: GPU and Memory */}
-                    <GridItem span={6}>
+                    <GridItem span={12} md={6}>
                       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
                         <FlexItem>
-                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>GPU</Content>
+                          <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">GPU</Content>
                         </FlexItem>
                         <FlexItem>
-                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>77% available of 80</Content>
+                          <Content component={ContentVariants.p} style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>77% available of 80 GPUs</Content>
                         </FlexItem>
                         <FlexItem>
-                          <PatternFlyAreaChart
-                            data={[
-                              { x: '00:00', y: 65 },
-                              { x: '02:00', y: 70 },
-                              { x: '04:00', y: 55 },
-                              { x: '06:00', y: 60 },
-                              { x: '08:00', y: 75 },
-                              { x: '10:00', y: 68 }
-                            ]}
-                            height={180}
-                            width="100%"
-                            domain={{ y: [0, 100] }}
-                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
-                            themeColor="blue"
-                            showLegend={false}
-                            axisTickFontSize={11}
-                            chartLabel="GPU"
-                            ariaDesc="GPU utilization over time"
-                            ariaTitle="GPU Utilization Chart"
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis'
+                              },
+                              xAxis: {
+                                type: 'category',
+                                data: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00'],
+                                boundaryGap: false
+                              },
+                              yAxis: {
+                                type: 'value',
+                                min: 0,
+                                max: 100,
+                                axisLabel: {
+                                  formatter: '{value}%'
+                                }
+                              },
+                              series: [{
+                                data: [65, 70, 55, 60, 75, 68],
+                                type: 'line',
+                                smooth: true,
+                                areaStyle: {
+                                  opacity: 0.3
+                                },
+                                itemStyle: {
+                                  color: '#5470c6'
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              }],
+                              grid: {
+                                left: '10%',
+                                right: '5%',
+                                bottom: '15%',
+                                top: '10%'
+                              }
+                            }}
+                            style={{ height: '180px', width: '100%' }}
                           />
                       </FlexItem>
                     </Flex>
                   </GridItem>
-                    <GridItem span={6}>
+                    <GridItem span={12} md={6}>
                       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
                       <FlexItem>
-                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>Memory</Content>
+                          <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">Memory</Content>
                       </FlexItem>
                       <FlexItem>
-                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>2,048 GB available of 3,677 GB</Content>
+                          <Content component={ContentVariants.p} style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>2,048 GB available of 3,677 GB</Content>
                         </FlexItem>
                         <FlexItem>
-                          <PatternFlyAreaChart
-                            data={[
-                              { x: '00:00', y: 45 },
-                              { x: '02:00', y: 50 },
-                              { x: '04:00', y: 40 },
-                              { x: '06:00', y: 42 },
-                              { x: '08:00', y: 55 },
-                              { x: '10:00', y: 48 }
-                            ]}
-                            height={180}
-                            width="100%"
-                            domain={{ y: [0, 80] }}
-                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
-                            themeColor="blue"
-                            showLegend={false}
-                            axisTickFontSize={11}
-                            chartLabel="Memory"
-                            ariaDesc="Memory utilization over time"
-                            ariaTitle="Memory Utilization Chart"
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis'
+                              },
+                              xAxis: {
+                                type: 'category',
+                                data: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00'],
+                                boundaryGap: false
+                              },
+                              yAxis: {
+                                type: 'value',
+                                min: 0,
+                                max: 80,
+                                axisLabel: {
+                                  formatter: '{value}%'
+                                }
+                              },
+                              series: [{
+                                data: [45, 50, 40, 42, 55, 48],
+                                type: 'line',
+                                smooth: true,
+                                areaStyle: {
+                                  opacity: 0.3
+                                },
+                                itemStyle: {
+                                  color: '#5470c6'
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              }],
+                              grid: {
+                                left: '10%',
+                                right: '5%',
+                                bottom: '15%',
+                                top: '10%'
+                              }
+                            }}
+                            style={{ height: '180px', width: '100%' }}
                           />
                       </FlexItem>
                     </Flex>
                   </GridItem>
                     {/* Second row: CPU and Network */}
-                    <GridItem span={6}>
+                    <GridItem span={12} md={6}>
                       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
                       <FlexItem>
-                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>CPU</Content>
+                          <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">CPU</Content>
                       </FlexItem>
                       <FlexItem>
-                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>71% available of 80</Content>
+                          <Content component={ContentVariants.p} style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>71% available of 80 cores</Content>
                         </FlexItem>
                         <FlexItem>
-                          <PatternFlyAreaChart
-                            data={[
-                              { x: '00:00', y: 60 },
-                              { x: '02:00', y: 65 },
-                              { x: '04:00', y: 55 },
-                              { x: '06:00', y: 58 },
-                              { x: '08:00', y: 70 },
-                              { x: '10:00', y: 62 }
-                            ]}
-                            height={180}
-                            width="100%"
-                            domain={{ y: [0, 100] }}
-                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
-                            themeColor="blue"
-                            showLegend={false}
-                            axisTickFontSize={11}
-                            chartLabel="CPU"
-                            ariaDesc="CPU utilization over time"
-                            ariaTitle="CPU Utilization Chart"
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis'
+                              },
+                              xAxis: {
+                                type: 'category',
+                                data: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00'],
+                                boundaryGap: false
+                              },
+                              yAxis: {
+                                type: 'value',
+                                min: 0,
+                                max: 100,
+                                axisLabel: {
+                                  formatter: '{value}%'
+                                }
+                              },
+                              series: [{
+                                data: [60, 65, 55, 58, 70, 62],
+                                type: 'line',
+                                smooth: true,
+                                areaStyle: {
+                                  opacity: 0.3
+                                },
+                                itemStyle: {
+                                  color: '#5470c6'
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              }],
+                              grid: {
+                                left: '10%',
+                                right: '5%',
+                                bottom: '15%',
+                                top: '10%'
+                              }
+                            }}
+                            style={{ height: '180px', width: '100%' }}
                           />
                         </FlexItem>
                           </Flex>
                     </GridItem>
-                    <GridItem span={6}>
+                    <GridItem span={12} md={6}>
                       <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
                         <FlexItem>
-                          <Content component={ContentVariants.small} style={{ fontWeight: 'bold' }}>Network</Content>
+                          <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">Network</Content>
                         </FlexItem>
                         <FlexItem>
-                          <Content component={ContentVariants.p} style={{ color: '#6a6e73', fontSize: '0.875em' }}>3.8 Mbps In</Content>
+                          <Content component={ContentVariants.p} style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>3.8 Mbps In</Content>
                         </FlexItem>
                         <FlexItem>
-                          <PatternFlyAreaChart
-                            data={[
-                              { x: '00:00', y: 15 },
-                              { x: '02:00', y: 20 },
-                              { x: '04:00', y: 12 },
-                              { x: '06:00', y: 18 },
-                              { x: '08:00', y: 25 },
-                              { x: '10:00', y: 16 }
-                            ]}
-                            height={180}
-                            width="100%"
-                            domain={{ y: [0, 30] }}
-                            padding={{ bottom: 20, left: 4, right: 20, top: 20 }}
-                            themeColor="blue"
-                            showLegend={false}
-                            axisTickFontSize={11}
-                            chartLabel="Network"
-                            ariaDesc="Network utilization over time"
-                            ariaTitle="Network Utilization Chart"
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis'
+                              },
+                              xAxis: {
+                                type: 'category',
+                                data: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00'],
+                                boundaryGap: false
+                              },
+                              yAxis: {
+                                type: 'value',
+                                min: 0,
+                                max: 30,
+                                axisLabel: {
+                                  formatter: '{value}'
+                                }
+                              },
+                              series: [{
+                                data: [15, 20, 12, 18, 25, 16],
+                                type: 'line',
+                                smooth: true,
+                                areaStyle: {
+                                  opacity: 0.3
+                                },
+                                itemStyle: {
+                                  color: '#5470c6'
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              }],
+                              grid: {
+                                left: '10%',
+                                right: '5%',
+                                bottom: '15%',
+                                top: '10%'
+                              }
+                            }}
+                            style={{ height: '180px', width: '100%' }}
                           />
                       </FlexItem>
                     </Flex>
@@ -1141,366 +1294,964 @@ const Dashboard: React.FunctionComponent = () => {
               </Card>
             </FlexItem>
 
-            {/* System Health Score */}
-                      <FlexItem>
-              <Card>
-                <CardTitle>
-                  <Title headingLevel="h4" size="md">System health score</Title>
-                </CardTitle>
-                <CardBody>
-                  <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                    <FlexItem>
-                      <Grid hasGutter>
-                        <GridItem span={3}>
-                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
-                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>100%</Content>
-                            <Content component={ContentVariants.small}>Health score</Content>
-                          </Flex>
-                        </GridItem>
-                        <GridItem span={3}>
-                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
-                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
-                            <Content component={ContentVariants.small}>Active errors</Content>
-                          </Flex>
-                        </GridItem>
-                        <GridItem span={3}>
-                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
-                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
-                            <Content component={ContentVariants.small}>Pending requests</Content>
-                          </Flex>
-                        </GridItem>
-                        <GridItem span={3}>
-                          <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsCenter' }}>
-                            <Content component={ContentVariants.h3} size={2} style={{ color: '#3e8635', fontWeight: 'bold' }}>0</Content>
-                            <Content component={ContentVariants.small}>Active warnings</Content>
-                          </Flex>
-                        </GridItem>
-                      </Grid>
-                      </FlexItem>
-                      <FlexItem>
-                      <Flex spaceItems={{ default: 'spaceItemsLg' }}>
-                        <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                            <div style={{ width: '8px', height: '8px', backgroundColor: '#3e8635', borderRadius: '50%' }} />
-                            <Content component={ContentVariants.small}>Healthy</Content>
-                        </Flex>
-                      </FlexItem>
-                        <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                            <div style={{ width: '8px', height: '8px', backgroundColor: '#f0ad00', borderRadius: '50%' }} />
-                            <Content component={ContentVariants.small}>No data</Content>
-                    </Flex>
-                        </FlexItem>
-                      <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                            <div style={{ width: '8px', height: '8px', backgroundColor: '#f0ad00', borderRadius: '50%' }} />
-                            <Content component={ContentVariants.small}>No requests</Content>
-                          </Flex>
-                      </FlexItem>
-                      <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                            <div style={{ width: '8px', height: '8px', backgroundColor: '#c9190b', borderRadius: '50%' }} />
-                            <Content component={ContentVariants.small}>No warnings</Content>
-                          </Flex>
-                        </FlexItem>
-                        </Flex>
-                      </FlexItem>
-                    </Flex>
-              </CardBody>
-            </Card>
-          </FlexItem>
+            {/* Divider */}
+            <Divider />
 
-            {/* Charts Section */}
-          <FlexItem>
-              <Grid hasGutter>
-                <GridItem span={6}>
-            <Card>
-              <CardTitle>
-                      <Title headingLevel="h4" size="md">GPU Core Utilization</Title>
-              </CardTitle>
-              <CardBody>
-                      <PatternFlyLineChart
-                        data={[
-                          { name: 'GPU', x: '00:00', y: 65 },
-                          { name: 'GPU', x: '02:00', y: 70 },
-                          { name: 'GPU', x: '04:00', y: 55 },
-                          { name: 'GPU', x: '06:00', y: 60 },
-                          { name: 'GPU', x: '08:00', y: 75 },
-                          { name: 'GPU', x: '10:00', y: 68 }
-                        ]}
-                        height={200}
-                        width="100%"
-                        domain={{ y: [0, 100] }}
-                        padding={{
-                          bottom: 40,
-                          left: 50,
-                          right: 120,
-                          top: 20
-                        }}
-                        themeColor="blue"
-                        showLegend={true}
-                        axisTickFontSize={11}
-                        ariaDesc="GPU Core Utilization over time"
-                        ariaTitle="GPU Core Utilization Chart"
-                      />
-              </CardBody>
-            </Card>
-                </GridItem>
-                <GridItem span={6}>
-                  <Card>
-                    <CardTitle>
-                      <Title headingLevel="h4" size="md">Average Memory Utilization</Title>
-                    </CardTitle>
-                    <CardBody>
-                      <PatternFlyLineChart
-                        data={[
-                          { name: 'Memory', x: '00:00', y: 45 },
-                          { name: 'Memory', x: '02:00', y: 50 },
-                          { name: 'Memory', x: '04:00', y: 40 },
-                          { name: 'Memory', x: '06:00', y: 42 },
-                          { name: 'Memory', x: '08:00', y: 55 },
-                          { name: 'Memory', x: '10:00', y: 48 }
-                        ]}
-                        height={200}
-                        width="100%"
-                        domain={{ y: [0, 80] }}
-                        padding={{
-                          bottom: 40,
-                          left: 50,
-                          right: 120,
-                          top: 20
-                        }}
-                        themeColor="blue"
-                        showLegend={true}
-                        axisTickFontSize={11}
-                        ariaDesc="Average Memory Utilization over time"
-                        ariaTitle="Average Memory Utilization Chart"
-                      />
-                    </CardBody>
-                  </Card>
-                </GridItem>
-              </Grid>
-          </FlexItem>
-          </>
-        )}
-
-        {selectedTab === 'Models' && (
-          <>
-            {/* Model Inventory */}
+            {/* Resource Usage by Project */}
             <FlexItem>
-              <Card>
-                <CardTitle>
-                  <Title headingLevel="h3" size="lg">Model inventory</Title>
-                </CardTitle>
+              <Title headingLevel="h3" size="lg">Resource Usage by Project</Title>
+              <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', marginTop: 'var(--pf-t--global--spacer--sm)' }}>
+                Compare resource consumption across different projects over time
+              </Content>
+            </FlexItem>
+          <FlexItem>
+              <Card id="project-resource-breakdown-card">
                 <CardBody>
-                  <Content component={ContentVariants.p} style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                    View real-time performance metrics and monitor the health of your selected models.
-                  </Content>
-                  
-                  {/* API Key and Model Selection */}
-                  <Flex spaceItems={{ default: 'spaceItemsLg' }} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
-                    <FlexItem>
-                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                        <FlexItem>
-                          <Content component={ContentVariants.small}>Select API Key(s):</Content>
-                        </FlexItem>
-                        <FlexItem>
-                          <MultiTypeaheadSelect
-                            initialOptions={initialApiKeyOptions}
-                            placeholder={selectedApiKeys.length === 0 ? "Select API Keys" : `${selectedApiKeys.length} selected`}
-                            noOptionsFoundMessage={(filter) => `No API key was found for "${filter}"`}
-                            onSelectionChange={(_ev, selections) => setSelectedApiKeys(selections)}
-                          />
-                        </FlexItem>
-                      </Flex>
-                    </FlexItem>
-                    <FlexItem>
-                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                        <FlexItem>
-                          <Content component={ContentVariants.small}>Select model(s):</Content>
-                        </FlexItem>
-                        <FlexItem>
-                          <MultiTypeaheadSelect
-                            initialOptions={initialModelOptions}
-                            placeholder={selectedModels.length === 0 ? "Select Models" : `${selectedModels.length} selected`}
-                            noOptionsFoundMessage={(filter) => `No model was found for "${filter}"`}
-                            onSelectionChange={(_ev, selections) => setSelectedModels(selections)}
-                          />
-                        </FlexItem>
-                      </Flex>
-                    </FlexItem>
-                  </Flex>
+                  <Grid hasGutter>
+                    {/* GPU Usage */}
+                    <GridItem span={12} md={6} lg={4}>
+                      <Card isCompact isFullHeight id="project-gpu-usage-card">
+                        <CardTitle>
+                          <Title headingLevel="h4" size="md">GPU Usage</Title>
+                        </CardTitle>
+                        <CardBody>
+                          <div style={{ height: '280px', width: '100%' }}>
+                            <ReactECharts
+                              option={{
+                                tooltip: {
+                                  trigger: 'axis',
+                                  axisPointer: {
+                                    type: 'cross',
+                                    label: {
+                                      backgroundColor: '#6a7985'
+                                    }
+                                  }
+                                },
+                                legend: {
+                                  data: ['KonText PTE', 'AI Research', 'ML Production'],
+                                  bottom: 0
+                                },
+                                grid: {
+                                  left: '5%',
+                                  right: '5%',
+                                  bottom: '15%',
+                                  top: '5%',
+                                  containLabel: true
+                                },
+                                xAxis: {
+                                  type: 'category',
+                                  boundaryGap: false,
+                                  data: ['12AM', '2AM', '4AM', '6AM', '8AM', '10AM']
+                                },
+                                yAxis: {
+                                  type: 'value',
+                                  axisLabel: {
+                                    formatter: '{value}%'
+                                  }
+                                },
+                                series: [
+                                  {
+                                    name: 'KonText PTE',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [48, 50, 45, 52, 55, 50]
+                                  },
+                                  {
+                                    name: 'AI Research',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [30, 32, 28, 33, 35, 31]
+                                  },
+                                  {
+                                    name: 'ML Production',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [15, 16, 13, 17, 18, 16]
+                                  }
+                                ]
+                              }}
+                              style={{ height: '100%', width: '100%' }}
+                            />
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </GridItem>
 
-                  {/* Results Count */}
-                  <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: 'var(--pf-t--global--spacer--sm)' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>
-                        Showing {filteredModelData.length} of {modelDeploymentData.length} deployments
-                      </Content>
-                    </FlexItem>
-                  </Flex>
+                    {/* CPU Usage */}
+                    <GridItem span={12} md={6} lg={4}>
+                      <Card isCompact isFullHeight id="project-cpu-usage-card">
+                        <CardTitle>
+                          <Title headingLevel="h4" size="md">CPU Usage</Title>
+                        </CardTitle>
+                        <CardBody>
+                          <div style={{ height: '280px', width: '100%' }}>
+                            <ReactECharts
+                              option={{
+                                tooltip: {
+                                  trigger: 'axis',
+                                  axisPointer: {
+                                    type: 'cross',
+                                    label: {
+                                      backgroundColor: '#6a7985'
+                                    }
+                                  }
+                                },
+                                legend: {
+                                  data: ['KonText PTE', 'AI Research', 'ML Production'],
+                                  bottom: 0
+                                },
+                                grid: {
+                                  left: '5%',
+                                  right: '5%',
+                                  bottom: '15%',
+                                  top: '5%',
+                                  containLabel: true
+                                },
+                                xAxis: {
+                                  type: 'category',
+                                  boundaryGap: false,
+                                  data: ['12AM', '2AM', '4AM', '6AM', '8AM', '10AM']
+                                },
+                                yAxis: {
+                                  type: 'value',
+                                  axisLabel: {
+                                    formatter: '{value}%'
+                                  }
+                                },
+                                series: [
+                                  {
+                                    name: 'KonText PTE',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [54, 56, 52, 58, 60, 56]
+                                  },
+                                  {
+                                    name: 'AI Research',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [28, 31, 27, 30, 33, 29]
+                                  },
+                                  {
+                                    name: 'ML Production',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [12, 13, 11, 14, 15, 13]
+                                  }
+                                ]
+                              }}
+                              style={{ height: '100%', width: '100%' }}
+                            />
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </GridItem>
 
-                  {/* Model Deployment Table */}
-                  <Table aria-label="Model deployments table" variant="compact">
-                    <Thead>
-                      <Tr>
-                        <Th>Model deployment</Th>
-                        <Th>API key</Th>
-                        <Th>Project</Th>
-                        <Th>Runtime</Th>
-                        <Th>Total requests</Th>
-                        <Th>Avg. Latency (ms)</Th>
-                        <Th>Error rate</Th>
-                        <Th>Resources</Th>
-                        <Th>Status</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {filteredModelData.length === 0 ? (
-                        <Tr>
-                          <Td colSpan={9} style={{ textAlign: 'center', padding: 'var(--pf-t--global--spacer--lg)' }}>
-                            <Content component={ContentVariants.p}>
-                              No deployments match your current selection. Try adjusting your API key or model filters.
-                            </Content>
-                          </Td>
-                        </Tr>
-                      ) : (
-                        filteredModelData.map((model, index) => (
-                          <Tr key={index}>
-                            <Td>
-                              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                                <FlexItem>
-                                  <Button variant="link" style={{ padding: 0, fontSize: '14px', textAlign: 'left', fontWeight: 'normal' }}>
-                                    {model.deployment}
-                                  </Button>
-                                </FlexItem>
-                                <FlexItem>
-                                  <Badge style={{ backgroundColor: '#f0ad00', color: '#ffffff', fontSize: '12px', padding: '2px 8px', minHeight: '20px' }}>{model.apiKeyTag}</Badge>
-                                </FlexItem>
-                            </Flex>
-                            </Td>
-                          <Td>
-                              <Button variant="link" style={{ padding: 0, fontSize: '14px', textAlign: 'left', fontWeight: 'normal' }}>
-                                {model.apiKey}
-                              </Button>
-                          </Td>
-                            <Td>{model.project}</Td>
-                            <Td>{model.runtime}</Td>
-                            <Td>{model.requests}</Td>
-                            <Td>{model.latency}</Td>
-                          <Td>{model.errorRate}</Td>
-                          <Td>{model.resources}</Td>
-                            <Td>
-                              {getStatusBadge(model.status)}
-                            </Td>
-                          </Tr>
-                        ))
-                      )}
-                    </Tbody>
-                  </Table>
+                    {/* Memory Usage */}
+                    <GridItem span={12} md={6} lg={4}>
+                      <Card isCompact isFullHeight id="project-memory-usage-card">
+                        <CardTitle>
+                          <Title headingLevel="h4" size="md">Memory Usage</Title>
+                        </CardTitle>
+                        <CardBody>
+                          <div style={{ height: '280px', width: '100%' }}>
+                            <ReactECharts
+                              option={{
+                                tooltip: {
+                                  trigger: 'axis',
+                                  axisPointer: {
+                                    type: 'cross',
+                                    label: {
+                                      backgroundColor: '#6a7985'
+                                    }
+                                  }
+                                },
+                                legend: {
+                                  data: ['KonText PTE', 'AI Research', 'ML Production'],
+                                  bottom: 0
+                                },
+                                grid: {
+                                  left: '5%',
+                                  right: '5%',
+                                  bottom: '15%',
+                                  top: '5%',
+                                  containLabel: true
+                                },
+                                xAxis: {
+                                  type: 'category',
+                                  boundaryGap: false,
+                                  data: ['12AM', '2AM', '4AM', '6AM', '8AM', '10AM']
+                                },
+                                yAxis: {
+                                  type: 'value',
+                                  axisLabel: {
+                                    formatter: '{value}%'
+                                  }
+                                },
+                                series: [
+                                  {
+                                    name: 'KonText PTE',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [46, 50, 44, 48, 52, 50]
+                                  },
+                                  {
+                                    name: 'AI Research',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [31, 33, 30, 32, 35, 33]
+                                  },
+                                  {
+                                    name: 'ML Production',
+                                    type: 'line',
+                                    smooth: true,
+                                    lineStyle: { width: 2 },
+                                    areaStyle: { opacity: 0.5 },
+                                    data: [16, 17, 14, 16, 18, 17]
+                                  }
+                                ]
+                              }}
+                              style={{ height: '100%', width: '100%' }}
+                            />
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </GridItem>
+                  </Grid>
                 </CardBody>
               </Card>
             </FlexItem>
 
-            {/* Performance Charts */}
+            {/* Divider */}
+            <Divider />
+
+            {/* Cluster Details */}
             <FlexItem>
+              <Title headingLevel="h3" size="lg">Cluster Details</Title>
+              <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', marginTop: 'var(--pf-t--global--spacer--sm)' }}>
+                View technical configuration and infrastructure details
+              </Content>
+            </FlexItem>
+          <FlexItem>
               <Grid hasGutter>
-                {/* Token throughput chart */}
-                <GridItem span={6}>
-                  <Card isFullHeight>
-                    <CardTitle>
-                      <Title headingLevel="h4" size="md">Token throughput</Title>
-                    </CardTitle>
+                <GridItem span={12} md={6}>
+                  <Card isFullHeight id="cluster-details-card">
                     <CardBody>
-                      {filteredTokenThroughputData.length === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-                          <Content component={ContentVariants.p}>
-                            No data available for current selection
-                          </Content>
-                        </div>
-                      ) : (
-                        <div style={{ height: '200px', width: '100%' }}>
-                          <Chart
-                            ariaDesc="Token throughput over time"
-                            ariaTitle="Token throughput line chart"
-                            containerComponent={
-                              <ChartVoronoiContainer 
-                                labels={({ datum }) => `${new Date(datum.x).toLocaleTimeString()}: ${datum.y}`} 
-                                constrainToVisibleArea 
-                              />
-                            }
-                            height={200}
-                            padding={{
-                              bottom: 40,
-                              left: 50,
-                              right: 50,
-                              top: 20
-                            }}
-                            themeColor={ChartThemeColor.blue}
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                        <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">Provider</Content>
+                            <Content component={ContentVariants.small}>AWS</Content>
+                          </Flex>
+                        </FlexItem>
+                        <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">OpenShift version</Content>
+                            <Content component={ContentVariants.small}>2.24.0</Content>
+                          </Flex>
+                        </FlexItem>
+                        <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">Channel</Content>
+                            <Content component={ContentVariants.small}>fast</Content>
+                          </Flex>
+                        </FlexItem>
+                        <FlexItem>
+                          <Flex direction={{ default: 'column' }}>
+                            <Content component={ContentVariants.small} className="pf-v6-u-font-weight-bold">API server</Content>
+                            <Content component={ContentVariants.small} className="pf-v6-u-font-family-monospace">
+                              https://api.cluster-z84h8.z84h8.sandbox.opentic.com
+                            </Content>
+                          </Flex>
+                        </FlexItem>
+                        <FlexItem>
+                          <Button 
+                            variant="link" 
+                            isInline
+                            component="a"
+                            href="#"
+                            target="_blank"
+                            icon={<ExternalLinkAltIcon />}
+                            iconPosition="right"
+                            id="view-settings-link"
                           >
-                            <ChartAxis dependentAxis showGrid />
-                            <ChartAxis 
-                              tickFormat={(x) => new Date(x).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                hour12: true 
-                              })}
-                            />
-                            <ChartLine
-                              data={filteredTokenThroughputData}
-                              interpolation="monotoneX"
-                            />
-                          </Chart>
-                        </div>
-                      )}
+                            View settings
+                          </Button>
+                        </FlexItem>
+                      </Flex>
                     </CardBody>
                   </Card>
                 </GridItem>
+              </Grid>
+            </FlexItem>
+          </>
+        )}
 
+        {/* Tab Content - Models */}
+        {selectedTab === 'Models' && (
+          <>
+            {/* Page-Level Filters with Category Selector Pattern - ABOVE title */}
+            <FlexItem>
+              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                
+                {/* LEFT: Category Selector Dropdown */}
+                <FlexItem>
+                  <Dropdown
+                    isOpen={filterCategoryOpen}
+                    onSelect={(_event, value) => {
+                      setActiveFilterCategory(value as string);
+                      setFilterCategoryOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setFilterCategoryOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setFilterCategoryOpen(!filterCategoryOpen)}
+                        isExpanded={filterCategoryOpen}
+                        icon={<FilterIcon />}
+                        id="filter-category-toggle"
+                      >
+                        {activeFilterCategory}
+                      </MenuToggle>
+                    )}
+                  >
+                    <DropdownList>
+                      <DropdownItem value="Models" key="models" id="category-models">
+                        Models
+                      </DropdownItem>
+                      <DropdownItem value="Project" key="project" id="category-project">
+                        Project
+                      </DropdownItem>
+                      <DropdownItem value="Hardware profile" key="hardware" id="category-hardware">
+                        Hardware profile
+                      </DropdownItem>
+                      <DropdownItem value="Status" key="status" id="category-status">
+                        Status
+                      </DropdownItem>
+                    </DropdownList>
+                  </Dropdown>
+                </FlexItem>
+
+                {/* RIGHT: Filter Options based on Selected Category - White with border */}
+                <FlexItem flex={{ default: 'flex_1' }}>
+                  
+                  {/* Project Filter */}
+                  {activeFilterCategory === 'Project' && (
+                    <Select
+                      isOpen={isProjectSelectOpen}
+                      selected={selectedProjects}
+                      onSelect={onProjectSelect}
+                      onOpenChange={(isOpen) => setIsProjectSelectOpen(isOpen)}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setIsProjectSelectOpen(!isProjectSelectOpen)}
+                          isExpanded={isProjectSelectOpen}
+                          id="project-filter-toggle"
+                        >
+                          {selectedProjects.length > 0 ? (
+                            <Badge isRead id="projects-filter-count-badge">{selectedProjects.length}</Badge>
+                          ) : (
+                            'Filter by project'
+                          )}
+                        </MenuToggle>
+                      )}
+                    >
+                      <SelectList>
+                        {projectOptions.map((project) => (
+                          <SelectOption
+                            key={project}
+                            value={project}
+                            hasCheckbox
+                            isSelected={selectedProjects.includes(project)}
+                          >
+                            {project}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
+                  )}
+
+                  {/* Models Filter */}
+                  {activeFilterCategory === 'Models' && (
+                    <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                      <FlexItem>
+                        <Select
+                          isOpen={isModelSelectOpen}
+                          selected={selectedModels}
+                          onSelect={onModelSelect}
+                          onOpenChange={(isOpen) => {
+                            setIsModelSelectOpen(isOpen);
+                            if (!isOpen) {
+                              setModelFilterSearch('');
+                            }
+                          }}
+                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                            <MenuToggle
+                              ref={toggleRef}
+                              onClick={() => setIsModelSelectOpen(!isModelSelectOpen)}
+                              isExpanded={isModelSelectOpen}
+                              id="model-filter-toggle"
+                            >
+                              {selectedModels.length > 0 ? (
+                                <Badge isRead id="models-filter-count-badge">{selectedModels.length}</Badge>
+                              ) : (
+                                'Filter by models'
+                              )}
+                            </MenuToggle>
+                          )}
+                        >
+                          <div className="pf-v6-u-p-md">
+                            <SearchInput
+                              placeholder="Search models"
+                              value={modelFilterSearch}
+                              onChange={(_event, value) => setModelFilterSearch(value)}
+                              onClear={() => setModelFilterSearch('')}
+                              id="model-filter-search"
+                            />
+                          </div>
+                          <Divider />
+                          <SelectList>
+                            {allModelDeployments
+                              .filter(model => 
+                                model.toLowerCase().includes(modelFilterSearch.toLowerCase())
+                              )
+                              .map((model) => (
+                                <SelectOption
+                                  key={model}
+                                  value={model}
+                                  hasCheckbox
+                                  isSelected={selectedModels.includes(model)}
+                                >
+                                  {model}
+                                </SelectOption>
+                              ))}
+                          </SelectList>
+                        </Select>
+                      </FlexItem>
+                      <FlexItem>
+                        <SearchInput
+                          placeholder="Search models"
+                          value={modelSearchValue}
+                          onChange={(_event, value) => setModelSearchValue(value)}
+                          onClear={() => setModelSearchValue('')}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' && modelSearchValue.trim() && !modelSearchChips.includes(modelSearchValue.trim())) {
+                              setModelSearchChips([...modelSearchChips, modelSearchValue.trim()]);
+                              setModelSearchValue('');
+                            }
+                          }}
+                          id="model-search-input"
+                        />
+                      </FlexItem>
+                    </Flex>
+                  )}
+
+                  {/* Status Filter */}
+                  {activeFilterCategory === 'Status' && (
+                    <Select
+                      isOpen={isStatusSelectOpen}
+                      selected={selectedStatuses}
+                      onSelect={onStatusSelect}
+                      onOpenChange={(isOpen) => setIsStatusSelectOpen(isOpen)}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setIsStatusSelectOpen(!isStatusSelectOpen)}
+                          isExpanded={isStatusSelectOpen}
+                          id="status-filter-toggle"
+                        >
+                          {selectedStatuses.length > 0 ? (
+                            <Badge isRead id="status-filter-count-badge">{selectedStatuses.length}</Badge>
+                          ) : (
+                            'Filter by status'
+                          )}
+                        </MenuToggle>
+                      )}
+                    >
+                      <SelectList>
+                        {['Running', 'Scaling', 'Failed', 'Degraded'].map((status) => (
+                          <SelectOption
+                            key={status}
+                            value={status}
+                            hasCheckbox
+                            isSelected={selectedStatuses.includes(status)}
+                          >
+                            {status}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
+                  )}
+
+                  {/* Hardware Profile Filter */}
+                  {activeFilterCategory === 'Hardware profile' && (
+                    <Select
+                      isOpen={isHardwareSelectOpen}
+                      selected={selectedHardwareProfiles}
+                      onSelect={onHardwareSelect}
+                      onOpenChange={(isOpen) => setIsHardwareSelectOpen(isOpen)}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setIsHardwareSelectOpen(!isHardwareSelectOpen)}
+                          isExpanded={isHardwareSelectOpen}
+                          id="hardware-filter-toggle"
+                        >
+                          {selectedHardwareProfiles.length > 0 ? (
+                            <Badge isRead id="hardware-filter-count-badge">{selectedHardwareProfiles.length}</Badge>
+                          ) : (
+                            'Filter by hardware profile'
+                          )}
+                        </MenuToggle>
+                      )}
+                    >
+                      <SelectList>
+                        {uniqueHardwareProfiles.map((profile) => (
+                          <SelectOption
+                            key={profile}
+                            value={profile}
+                            hasCheckbox
+                            isSelected={selectedHardwareProfiles.includes(profile)}
+                          >
+                            {profile}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
+                  )}
+                </FlexItem>
+
+                {/* Clear All Filters */}
+                {(modelSearchChips.length > 0 || selectedProjects.length > 0 || selectedModels.length > 0 || 
+                  selectedStatuses.length > 0 || selectedHardwareProfiles.length > 0) && (
+                  <FlexItem>
+                    <Button 
+                      variant="link" 
+                      onClick={() => {
+                        onClearAllFilters();
+                        setModelSearchChips([]);
+                      }} 
+                      id="clear-all-filters"
+                    >
+                      Clear all filters
+                    </Button>
+                  </FlexItem>
+                )}
+              </Flex>
+            </FlexItem>
+
+            {/* Active Filter Chips Row */}
+            {(modelSearchChips.length > 0 || selectedProjects.length > 0 || selectedModels.length > 0 || 
+              selectedStatuses.length > 0 || selectedHardwareProfiles.length > 0) && (
+              <FlexItem>
+                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }} flexWrap={{ default: 'wrap' }}>
+                  
+                  {/* Search Chips */}
+                  {modelSearchChips.length > 0 && (
+                    <FlexItem>
+                      <div style={{
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        padding: '0.25rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                          Search:
+                        </span>
+                        {modelSearchChips.map((chip) => (
+                          <Label 
+                            key={chip}
+                            color="grey" 
+                            onClose={() => setModelSearchChips(modelSearchChips.filter(c => c !== chip))}
+                            id={`search-chip-${chip}`}
+                          >
+                            {chip}
+                          </Label>
+                        ))}
+                      </div>
+                    </FlexItem>
+                  )}
+                  
+                  {/* Model Chips */}
+                  {selectedModels.length > 0 && (
+                    <FlexItem>
+                      <div style={{
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        padding: '0.25rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                          Models:
+                        </span>
+                        {selectedModels.map((model) => (
+                          <Label 
+                            key={model}
+                            color="grey" 
+                            onClose={() => onDeleteModelChip('model', model)}
+                            id={`model-chip-${model}`}
+                          >
+                            {model}
+                          </Label>
+                        ))}
+                      </div>
+                    </FlexItem>
+                  )}
+                  
+                  {/* Project Chips */}
+                  {selectedProjects.length > 0 && (
+                    <FlexItem>
+                      <div style={{
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        padding: '0.25rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                          Project:
+                        </span>
+                        {selectedProjects.map((project) => (
+                          <Label 
+                            key={project}
+                            color="grey" 
+                            onClose={() => onDeleteProjectChip('project', project)}
+                            id={`project-chip-${project}`}
+                          >
+                            {project}
+                          </Label>
+                        ))}
+                      </div>
+                    </FlexItem>
+                  )}
+                  
+                  {/* Status Chips */}
+                  {selectedStatuses.length > 0 && (
+                    <FlexItem>
+                      <div style={{
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        padding: '0.25rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                          Status:
+                        </span>
+                        {selectedStatuses.map((status) => (
+                          <Label 
+                            key={status}
+                            color="grey" 
+                            onClose={() => onDeleteStatusChip('status', status)}
+                            id={`status-chip-${status}`}
+                          >
+                            {status}
+                          </Label>
+                        ))}
+                      </div>
+                    </FlexItem>
+                  )}
+                  
+                  {/* Hardware Chips */}
+                  {selectedHardwareProfiles.length > 0 && (
+                    <FlexItem>
+                      <div style={{
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        padding: '0.25rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                          Hardware:
+                        </span>
+                        {selectedHardwareProfiles.map((hw) => (
+                          <Label 
+                            key={hw}
+                            color="grey" 
+                            onClose={() => onDeleteHardwareChip('hardware', hw)}
+                            id={`hardware-chip-${hw}`}
+                          >
+                            {hw}
+                          </Label>
+                        ))}
+                      </div>
+                    </FlexItem>
+                  )}
+                </Flex>
+              </FlexItem>
+            )}
+
+            {/* Model Deployments Card */}
+            <FlexItem>
+              <Card id="model-deployments-card">
+                <CardTitle>
+                  <Flex 
+                    justifyContent={{ default: 'justifyContentSpaceBetween' }}
+                    alignItems={{ default: 'alignItemsCenter' }}
+                  >
+                    <FlexItem>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsNone' }}>
+                        <FlexItem>
+                          <Title headingLevel="h2" size="xl">Model deployments</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            Active model deployments with real-time performance and resource metrics
+                          </Content>
+                        </FlexItem>
+                      </Flex>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button
+                        variant="plain"
+                        onClick={() => setIsModelDeploymentsExpanded(!isModelDeploymentsExpanded)}
+                        aria-label={isModelDeploymentsExpanded ? "Collapse model deployments" : "Expand model deployments"}
+                        id="toggle-model-deployments"
+                      >
+                        {isModelDeploymentsExpanded ? <AngleRightIcon style={{ transform: 'rotate(90deg)', transition: 'transform 0.2s' }} /> : <AngleRightIcon />}
+                      </Button>
+                    </FlexItem>
+                  </Flex>
+                </CardTitle>
+                {isModelDeploymentsExpanded && (
+                  <CardBody>
+                  {/* Model Deployment Table */}
+                  <Table aria-label="Model deployments table" isStickyHeader>
+                    <Thead>
+                      <Tr>
+                        <Th sort={getSortParams(1)} modifier="wrap">Model deployment</Th>
+                        <Th sort={getSortParams(2)}>Project</Th>
+                        <Th sort={getSortParams(3)}>Runtime</Th>
+                        <Th sort={getSortParams(4)}>Total requests</Th>
+                        <Th sort={getSortParams(5)}>P90 E2E Latency (ms)</Th>
+                        <Th sort={getSortParams(6)}>Error rate</Th>
+                        <Th sort={getSortParams(7)} modifier="wrap">Hardware profile</Th>
+                        <Th sort={getSortParams(8)}>GPU utilization</Th>
+                        <Th sort={getSortParams(9)}>CPU utilization</Th>
+                        <Th>Status</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {sortedModelData.length === 0 ? (
+                        <Tr>
+                          <Td colSpan={10}>
+                            <Bullseye className="pf-v6-u-py-lg">
+                              <Content component={ContentVariants.p}>
+                                No models match your current filters. Try adjusting your project or model filters.
+                              </Content>
+                            </Bullseye>
+                          </Td>
+                        </Tr>
+                      ) : (
+                        sortedModelData.map((model, index) => {
+                          const isRecentlyChanged = recentlyChangedModels.has(model.deployment);
+                          const isFilteredByModel = selectedModels.length > 0 && selectedModels.includes(model.deployment);
+                          return (
+                            <Tr 
+                              key={index}
+                              style={{
+                                transition: 'background-color 0.3s ease',
+                                backgroundColor: isRecentlyChanged 
+                                  ? 'var(--pf-t--global--background--color--primary--default)' 
+                                  : isFilteredByModel
+                                    ? 'var(--pf-t--global--background--color--action--plain--hover)'
+                                    : undefined
+                              }}
+                            >
+                              <Td dataLabel="Model deployment">
+                                <Button variant="link" isInline>
+                                  {model.deployment}
+                                </Button>
+                              </Td>
+                              <Td dataLabel="Project">{model.project}</Td>
+                              <Td dataLabel="Runtime">{model.runtime}</Td>
+                              <Td dataLabel="Total requests">{model.requests}</Td>
+                              <Td dataLabel="P90 E2E Latency (ms)">{model.latency}</Td>
+                              <Td dataLabel="Error rate">{model.errorRate}</Td>
+                              <Td dataLabel="Hardware profile">{model.hardwareProfile}</Td>
+                              <Td dataLabel="GPU utilization">
+                                <Tooltip content={model.gpuDetails}>
+                                  <span className="pf-v6-u-text-decoration-underline-dotted" style={{ cursor: 'help' }}>
+                                    {model.gpu}
+                                  </span>
+                                </Tooltip>
+                              </Td>
+                              <Td dataLabel="CPU utilization">
+                                <Tooltip content={model.cpuDetails}>
+                                  <span className="pf-v6-u-text-decoration-underline-dotted" style={{ cursor: 'help' }}>
+                                    {model.cpu}
+                                  </span>
+                                </Tooltip>
+                              </Td>
+                              <Td dataLabel="Status">
+                                {getStatusBadge(model.status)}
+                              </Td>
+                            </Tr>
+                          );
+                        })
+                      )}
+                    </Tbody>
+                  </Table>
+                  </CardBody>
+                )}
+              </Card>
+            </FlexItem>
+
+            {/* Performance Metrics Card */}
+            <FlexItem>
+              <Card id="performance-metrics-card">
+                <CardTitle>
+                  <Flex 
+                    justifyContent={{ default: 'justifyContentSpaceBetween' }}
+                    alignItems={{ default: 'alignItemsCenter' }}
+                  >
+                    <FlexItem>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsNone' }}>
+                        <FlexItem>
+                          <Title headingLevel="h2" size="xl">Performance metrics</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.small} className="pf-v6-u-color-200">
+                            {filteredTableData.length === 0 
+                              ? 'No models match your current filters'
+                              : 'Real-time metrics for request handling, latency, throughput, and resource utilization'
+                            }
+                          </Content>
+                        </FlexItem>
+                      </Flex>
+                    </FlexItem>
+                    <FlexItem>
+                      <Button
+                        variant="plain"
+                        onClick={() => setIsPerformanceMetricsExpanded(!isPerformanceMetricsExpanded)}
+                        aria-label={isPerformanceMetricsExpanded ? "Collapse performance metrics" : "Expand performance metrics"}
+                        id="toggle-performance-metrics"
+                      >
+                        {isPerformanceMetricsExpanded ? <AngleRightIcon style={{ transform: 'rotate(90deg)', transition: 'transform 0.2s' }} /> : <AngleRightIcon />}
+                      </Button>
+                    </FlexItem>
+                  </Flex>
+                </CardTitle>
+                {isPerformanceMetricsExpanded && (
+                  <CardBody>
+                  {filteredTableData.length === 0 ? (
+                    <Bullseye style={{ minHeight: '400px' }}>
+                      <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                        <FlexItem>
+                          <SearchIcon style={{ fontSize: '48px', color: 'var(--pf-t--global--icon--color--subtle)' }} />
+                        </FlexItem>
+                        <FlexItem>
+                          <Title headingLevel="h3" size="lg">No models match your filters</Title>
+                        </FlexItem>
+                        <FlexItem>
+                          <Content component={ContentVariants.p} style={{ textAlign: 'center' }}>
+                            Adjust your filters to view model performance metrics
+                          </Content>
+                        </FlexItem>
+                        <FlexItem className="pf-v6-u-mt-md">
+                          <Button variant="link" onClick={onClearAllFilters} id="clear-filters-empty-state">
+                            Clear all filters
+                          </Button>
+                        </FlexItem>
+                      </Flex>
+                    </Bullseye>
+                  ) : (
+                    <Grid hasGutter>
                 {/* Request queue length chart */}
-                <GridItem span={6}>
-                  <Card isFullHeight>
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="request-queue-chart">
                     <CardTitle>
-                      <Title headingLevel="h4" size="md">Request queue length</Title>
+                      <Title headingLevel="h3" size="md">Request queue length</Title>
                     </CardTitle>
                     <CardBody>
                       {filteredRequestQueueData.length === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                        <Bullseye style={{ height: '200px' }}>
                           <Content component={ContentVariants.p}>
                             No data available for current selection
                           </Content>
-                        </div>
+                        </Bullseye>
                       ) : (
                         <div style={{ height: '200px', width: '100%' }}>
-                          <Chart
-                            ariaDesc="Request queue length over time"
-                            ariaTitle="Request queue length line chart"
-                            containerComponent={
-                              <ChartVoronoiContainer 
-                                labels={({ datum }) => `${new Date(datum.x).toLocaleTimeString()}: ${datum.y}`} 
-                                constrainToVisibleArea 
-                              />
-                            }
-                          height={200}
-                          padding={{
-                            bottom: 40,
-                            left: 50,
-                            right: 50,
-                            top: 20
-                          }}
-                            themeColor={ChartThemeColor.orange}
-                          >
-                            <ChartAxis dependentAxis showGrid />
-                            <ChartAxis 
-                              tickFormat={(x) => new Date(x).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                hour12: true 
-                              })}
-                            />
-                            <ChartLine
-                              data={filteredRequestQueueData}
-                              interpolation="monotoneX"
-                            />
-                          </Chart>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]}<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredRequestQueueData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value'
+                              },
+                              series: filteredRequestQueueData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
                         </div>
                       )}
                     </CardBody>
@@ -1508,50 +2259,71 @@ const Dashboard: React.FunctionComponent = () => {
                 </GridItem>
 
                 {/* Replica count chart */}
-                <GridItem span={6}>
-                  <Card isFullHeight>
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="replica-count-chart">
                     <CardTitle>
-                      <Title headingLevel="h4" size="md">Replica count</Title>
+                      <Title headingLevel="h3" size="md">Replica count</Title>
                     </CardTitle>
                     <CardBody>
                       {filteredReplicaCountData.length === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                        <Bullseye style={{ height: '200px' }}>
                           <Content component={ContentVariants.p}>
                             No data available for current selection
                           </Content>
-                        </div>
+                        </Bullseye>
                       ) : (
                         <div style={{ height: '200px', width: '100%' }}>
-                          <Chart
-                            ariaDesc="Replica count over time"
-                            ariaTitle="Replica count line chart"
-                            containerComponent={
-                              <ChartVoronoiContainer 
-                                labels={({ datum }) => `${new Date(datum.x).toLocaleTimeString()}: ${datum.y}`} 
-                                constrainToVisibleArea 
-                              />
-                            }
-                          height={200}
-                          padding={{
-                            bottom: 40,
-                            left: 50,
-                            right: 50,
-                            top: 20
-                          }}
-                            themeColor={ChartThemeColor.green}
-                          >
-                            <ChartAxis dependentAxis showGrid />
-                            <ChartAxis 
-                              tickFormat={(x) => new Date(x).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                hour12: true 
-                              })}
-                            />
-                            <ChartLine
-                              data={filteredReplicaCountData}
-                              interpolation="monotoneX"
-                            />
-                          </Chart>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]}<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredReplicaCountData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value'
+                              },
+                              series: filteredReplicaCountData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
                         </div>
                       )}
                     </CardBody>
@@ -1559,552 +2331,369 @@ const Dashboard: React.FunctionComponent = () => {
                 </GridItem>
 
                 {/* Request latency chart */}
-                <GridItem span={6}>
-                  <Card isFullHeight>
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="request-latency-chart">
                     <CardTitle>
-                      <Title headingLevel="h4" size="md">Request latency</Title>
+                      <Title headingLevel="h3" size="md">Request latency</Title>
                     </CardTitle>
                     <CardBody>
                       {filteredRequestLatencyData.length === 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                        <Bullseye style={{ height: '200px' }}>
                           <Content component={ContentVariants.p}>
                             No data available for current selection
                           </Content>
-                        </div>
+                        </Bullseye>
                       ) : (
                         <div style={{ height: '200px', width: '100%' }}>
-                          <Chart
-                            ariaDesc="Request latency over time"
-                            ariaTitle="Request latency line chart"
-                            containerComponent={
-                              <ChartVoronoiContainer 
-                                labels={({ datum }) => `${new Date(datum.x).toLocaleTimeString()}: ${datum.y} ms`} 
-                                constrainToVisibleArea 
-                              />
-                            }
-                          height={200}
-                          padding={{
-                            bottom: 40,
-                            left: 50,
-                            right: 50,
-                            top: 20
-                          }}
-                            themeColor={ChartThemeColor.purple}
-                          >
-                            <ChartAxis dependentAxis showGrid tickFormat={(x) => `${x} ms`} />
-                            <ChartAxis 
-                              tickFormat={(x) => new Date(x).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                hour12: true 
-                              })}
-                            />
-                            <ChartLine
-                              data={filteredRequestLatencyData}
-                              interpolation="monotoneX"
-                            />
-                          </Chart>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]} ms<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredRequestLatencyData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value',
+                                axisLabel: {
+                                  formatter: '{value} ms'
+                                }
+                              },
+                              series: filteredRequestLatencyData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
                         </div>
                       )}
                     </CardBody>
                   </Card>
                 </GridItem>
+
+                {/* Time to First Token (TTFT) chart */}
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="ttft-chart">
+                    <CardTitle>
+                      <Title headingLevel="h3" size="md">Time to First Token (TTFT)</Title>
+                    </CardTitle>
+                    <CardBody>
+                      {filteredTTFTData.length === 0 ? (
+                        <Bullseye style={{ height: '200px' }}>
+                          <Content component={ContentVariants.p}>
+                            No data available for current selection
+                          </Content>
+                        </Bullseye>
+                      ) : (
+                        <div style={{ height: '200px', width: '100%' }}>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]} ms<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredTTFTData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value',
+                                axisLabel: {
+                                  formatter: '{value} ms'
+                                }
+                              },
+                              series: filteredTTFTData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
+                        </div>
+                      )}
+                    </CardBody>
+                  </Card>
+                </GridItem>
+
+                {/* Token Generation Rate chart */}
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="token-generation-rate-chart">
+                    <CardTitle>
+                      <Title headingLevel="h3" size="md">Token Generation Rate</Title>
+                    </CardTitle>
+                    <CardBody>
+                      {filteredTokenGenerationRateData.length === 0 ? (
+                        <Bullseye style={{ height: '200px' }}>
+                          <Content component={ContentVariants.p}>
+                            No data available for current selection
+                          </Content>
+                        </Bullseye>
+                      ) : (
+                        <div style={{ height: '200px', width: '100%' }}>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]} tok/s<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredTokenGenerationRateData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value',
+                                axisLabel: {
+                                  formatter: '{value} tok/s'
+                                }
+                              },
+                              series: filteredTokenGenerationRateData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
+                        </div>
+                      )}
+                    </CardBody>
+                  </Card>
+                </GridItem>
+
+                {/* Throughput chart */}
+                <GridItem span={12} lg={6}>
+                  <Card isFullHeight id="throughput-chart">
+                    <CardTitle>
+                      <Title headingLevel="h3" size="md">Throughput (requests/sec)</Title>
+                    </CardTitle>
+                    <CardBody>
+                      {filteredThroughputData.length === 0 ? (
+                        <Bullseye style={{ height: '200px' }}>
+                          <Content component={ContentVariants.p}>
+                            No data available for current selection
+                          </Content>
+                        </Bullseye>
+                      ) : (
+                        <div style={{ height: '200px', width: '100%' }}>
+                          <ReactECharts
+                            option={{
+                              tooltip: {
+                                trigger: 'axis',
+                                formatter: (params: any) => {
+                                  let tooltip = `<strong>${new Date(params[0].value[0]).toLocaleTimeString()}</strong><br/>`;
+                                  params.forEach((param: any) => {
+                                    tooltip += `${param.marker} ${param.seriesName}: ${param.value[1]} req/s<br/>`;
+                                  });
+                                  return tooltip;
+                                }
+                              },
+                              legend: {
+                                data: filteredThroughputData.map(series => series.name),
+                                bottom: 0,
+                                type: 'scroll'
+                              },
+                              xAxis: {
+                                type: 'time',
+                                axisLabel: {
+                                  formatter: (value: number) => new Date(value).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                  })
+                                }
+                              },
+                              yAxis: {
+                                type: 'value',
+                                axisLabel: {
+                                  formatter: '{value} req/s'
+                                }
+                              },
+                              series: filteredThroughputData.map(series => ({
+                                name: series.name,
+                                data: series.data,
+                                type: 'line',
+                                smooth: true,
+                                itemStyle: {
+                                  color: series.color
+                                },
+                                lineStyle: {
+                                  width: 2
+                                }
+                              })),
+                              grid: {
+                                left: '10%',
+                                right: '10%',
+                                bottom: '20%',
+                                top: '5%',
+                                containLabel: true
+                              }
+                            }}
+                            style={{ height: '100%', width: '100%' }}
+                          />
+                        </div>
+                      )}
+                    </CardBody>
+                  </Card>
+                </GridItem>
+
+                {/* Response Time Distribution */}
+                <GridItem span={12}>
+                  <Card isFullHeight id="response-time-distribution-chart">
+                    <CardTitle>
+                      <Title headingLevel="h3" size="md">Response Time Distribution</Title>
+                    </CardTitle>
+                    <CardBody>
+                      <div style={{ height: '250px', width: '100%' }}>
+                        <ReactECharts
+                          option={{
+                            tooltip: {
+                              trigger: 'axis',
+                              axisPointer: {
+                                type: 'shadow'
+                              },
+                              formatter: (params: any) => {
+                                if (params[0]) {
+                                  return `${params[0].name}: ${params[0].value} ms`;
+                                }
+                                return '';
+                              }
+                            },
+                            xAxis: {
+                              type: 'category',
+                              data: ['0-100ms', '100-200ms', '200-300ms', '300-400ms', '400-500ms', '500-600ms', '600ms+']
+                            },
+                            yAxis: {
+                              type: 'value',
+                              axisLabel: {
+                                formatter: '{value} ms'
+                              }
+                            },
+                            series: [{
+                              data: [120, 280, 450, 320, 180, 95, 45],
+                              type: 'bar',
+                              itemStyle: {
+                                color: '#5470c6'
+                              }
+                            }],
+                            grid: {
+                              left: '10%',
+                              right: '5%',
+                              bottom: '15%',
+                              top: '5%',
+                              containLabel: true
+                            }
+                          }}
+                          style={{ height: '100%', width: '100%' }}
+                        />
+                      </div>
+                    </CardBody>
+                  </Card>
+                </GridItem>
               </Grid>
+                  )}
+                  </CardBody>
+                )}
+              </Card>
             </FlexItem>
           </>
         )}
-
-        {selectedTab === 'Usage' && (
-          <>
-            {/* Usage Metrics */}
-            <FlexItem>
-              <Card>
-                <CardTitle>
-                  <Title headingLevel="h3" size="lg">Usage</Title>
-                </CardTitle>
-                <CardBody>
-              <Grid hasGutter>
-                <GridItem span={2}>
-                  <Flex direction={{ default: 'column' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>Total requests</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="xl">{usageMetrics.totalRequests}</Title>
-                    </FlexItem>
-                  </Flex>
-                </GridItem>
-                <GridItem span={2}>
-                  <Flex direction={{ default: 'column' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>Error Rate</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="xl">{usageMetrics.errorRate}</Title>
-                    </FlexItem>
-                  </Flex>
-                </GridItem>
-                <GridItem span={3}>
-                  <Flex direction={{ default: 'column' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>Avg. Latency</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="xl">{usageMetrics.avgLatency}</Title>
-                    </FlexItem>
-                  </Flex>
-                </GridItem>
-                <GridItem span={2}>
-                  <Flex direction={{ default: 'column' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>Total Cost (not 3.3)</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="xl">{usageMetrics.totalCost}</Title>
-                    </FlexItem>
-                  </Flex>
-                </GridItem>
-                <GridItem span={3}>
-                  <Flex direction={{ default: 'column' }}>
-                    <FlexItem>
-                      <Content component={ContentVariants.small}>Total Token</Content>
-                    </FlexItem>
-                    <FlexItem>
-                      <Title headingLevel="h4" size="xl">{usageMetrics.totalToken}</Title>
-                    </FlexItem>
-                  </Flex>
-                </GridItem>
-              </Grid>
-            </CardBody>
-          </Card>
-        </FlexItem>
-
-        {/* Charts Section - Side by Side */}
-        <FlexItem>
-          <Grid hasGutter>
-            {/* Usage per Group Chart */}
-            <GridItem span={6}>
-              <Card isFullHeight>
-                <CardTitle>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} justifyContent={{ default: 'justifyContentSpaceBetween' }}>
-                    <FlexItem>
-                      <Title headingLevel="h3" size="lg">Usage per Group</Title>
-                    </FlexItem>
-                    <FlexItem>
-                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                        <FlexItem>
-                          <Dropdown
-                            onSelect={() => setGroupByOpen(false)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle ref={toggleRef} onClick={onGroupByToggle} isExpanded={groupByOpen}>
-                                Group by: Users
-                              </MenuToggle>
-                            )}
-                            isOpen={groupByOpen}
-                          >
-                            <DropdownList>
-                              <DropdownItem value="users">Users</DropdownItem>
-                              <DropdownItem value="models">Models</DropdownItem>
-                            </DropdownList>
-                          </Dropdown>
-                        </FlexItem>
-                        <FlexItem>
-                          <Dropdown
-                            onSelect={() => setMetricsOpen(false)}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle ref={toggleRef} onClick={onMetricsToggle} isExpanded={metricsOpen}>
-                                Metrics: Tokens
-                              </MenuToggle>
-                            )}
-                            isOpen={metricsOpen}
-                          >
-                            <DropdownList>
-                              <DropdownItem value="tokens">Tokens</DropdownItem>
-                              <DropdownItem value="requests">Requests</DropdownItem>
-                              <DropdownItem value="cost">Cost</DropdownItem>
-                            </DropdownList>
-                          </Dropdown>
-                        </FlexItem>
-                        <FlexItem>
-                          <Button variant="plain" aria-label="Table view">
-                            <TableIcon />
-                          </Button>
-                        </FlexItem>
-                        <FlexItem>
-                          <Button variant="primary" aria-label="Export">
-                            Export
-                          </Button>
-                        </FlexItem>
-                      </Flex>
-                    </FlexItem>
-                  </Flex>
-                </CardTitle>
-                <CardBody>
-                  <div style={{ height: '400px', width: '100%' }}>
-                    <Chart
-                      ariaDesc="Average usage per user group"
-                      ariaTitle="Usage per group bar chart"
-                      containerComponent={
-                        <ChartVoronoiContainer 
-                          labels={({ datum }) => `${datum.name}: ${datum.y}`} 
-                          constrainToVisibleArea 
-                        />
-                      }
-                    domain={{ y: [0, 10] }}
-                      domainPadding={{ x: [30, 25] }}
-                      legendData={legendData}
-                      legendOrientation="vertical"
-                      legendPosition="right"
-                      height={400}
-                    padding={{
-                      bottom: 50,
-                      left: 50,
-                        right: 160, // Adjusted for smaller width
-                      top: 50
-                    }}
-                      themeColor={ChartThemeColor.multi}
-                    >
-                      <ChartAxis />
-                      <ChartAxis dependentAxis showGrid />
-                      <ChartGroup offset={11}>
-                        <ChartBar data={llmChatData} />
-                        <ChartBar data={mistralData} />
-                        <ChartBar data={stableDiffusionData} />
-                      </ChartGroup>
-                    </Chart>
-                  </div>
-                </CardBody>
-              </Card>
-            </GridItem>
-
-            {/* Usage Trends Chart */}
-            <GridItem span={6}>
-              <Card isFullHeight>
-                <CardTitle>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} justifyContent={{ default: 'justifyContentSpaceBetween' }}>
-                    <FlexItem>
-                      <Title headingLevel="h3" size="lg">Usage Trends</Title>
-                    </FlexItem>
-                    <FlexItem>
-                      <Dropdown
-                        onSelect={() => setTrendsOpen(false)}
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle ref={toggleRef} onClick={onTrendsToggle} isExpanded={trendsOpen}>
-                            Last 6 months
-                          </MenuToggle>
-                        )}
-                        isOpen={trendsOpen}
-                      >
-                        <DropdownList>
-                          <DropdownItem value="6months">Last 6 months</DropdownItem>
-                          <DropdownItem value="3months">Last 3 months</DropdownItem>
-                          <DropdownItem value="1month">Last month</DropdownItem>
-                        </DropdownList>
-                      </Dropdown>
-                    </FlexItem>
-                  </Flex>
-                </CardTitle>
-                <CardBody>
-                  <div style={{ height: '400px', width: '100%' }}>
-                    <Chart
-                      ariaDesc="Usage trends over time"
-                      ariaTitle="Model usage trends line chart"
-                      containerComponent={
-                        <ChartVoronoiContainer 
-                          labels={({ datum }) => `${new Date(datum.x).toLocaleDateString()}: ${datum.y}`} 
-                          constrainToVisibleArea 
-                        />
-                      }
-                    domain={{ y: [0, 10] }}
-                      legendData={legendData}
-                      legendOrientation="vertical"
-                      legendPosition="right"
-                      height={400}
-                    padding={{
-                      bottom: 50,
-                      left: 50,
-                        right: 160, // Adjusted for smaller width
-                      top: 50
-                    }}
-                      themeColor={ChartThemeColor.multi}
-                    >
-                      <ChartAxis dependentAxis showGrid tickFormat={(x) => `${x}`} />
-                      <ChartAxis 
-                        tickFormat={(x) => new Date(x).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <ChartArea
-                        data={usageTrendsData['llm-7b-chat']}
-                        interpolation="monotoneX"
-                      />
-                      <ChartLine
-                        data={usageTrendsData['mistral-7b-instruct-v2']}
-                        interpolation="monotoneX"
-                      />
-                      <ChartLine
-                        data={usageTrendsData['stable-diffusion-xl-beta']}
-                        interpolation="monotoneX"
-                      />
-                    </Chart>
-                  </div>
-                </CardBody>
-              </Card>
-            </GridItem>
-          </Grid>
-        </FlexItem>
-        </>
-        )}
-
-        {selectedTab === 'Traces' && (
-          <FlexItem>
-            <Card>
-              <CardBody>
-                {/* Header Section */}
-                <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem>
-                    <Title headingLevel="h1" size="2xl">Request traces</Title>
-                  </FlexItem>
-                  <FlexItem>
-    <Content component={ContentVariants.p}>
-                      View distributed traces for user requests with detailed service timelines and performance metrics.
-    </Content>
-                  </FlexItem>
-                  <FlexItem>
-                    <Flex spaceItems={{ default: 'spaceItemsMd' }}>
-                      {/* Left side filters */}
-                      <FlexItem>
-                        <Flex spaceItems={{ default: 'spaceItemsMd' }}>
-                          <FlexItem>
-                            <Dropdown
-                              onSelect={(event, value) => {
-                                if (value) {
-                                  setServiceName(value as string);
-                                  setServiceNameOpen(false);
-                                }
-                              }}
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setServiceNameOpen(!serviceNameOpen)} isExpanded={serviceNameOpen}>
-                                  Service Name: {serviceName}
-                                </MenuToggle>
-                              )}
-                              isOpen={serviceNameOpen}
-                            >
-                              <DropdownList>
-                                <DropdownItem value="All Services">All Services</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </FlexItem>
-                          <FlexItem>
-                            <Dropdown
-                              onSelect={(event, value) => {
-                                if (value) {
-                                  setNamespace(value as string);
-                                  setNamespaceOpen(false);
-                                }
-                              }}
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setNamespaceOpen(!namespaceOpen)} isExpanded={namespaceOpen}>
-                                  Namespace: {namespace}
-                                </MenuToggle>
-                              )}
-                              isOpen={namespaceOpen}
-                            >
-                              <DropdownList>
-                                <DropdownItem value="All Namespaces">All Namespaces</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </FlexItem>
-                          <FlexItem>
-                            <Dropdown
-                              onSelect={(event, value) => {
-                                if (value) {
-                                  setModelFilter(value as string);
-                                  setModelFilterOpen(false);
-                                }
-                              }}
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setModelFilterOpen(!modelFilterOpen)} isExpanded={modelFilterOpen}>
-                                  Model: {modelFilter}
-                                </MenuToggle>
-                              )}
-                              isOpen={modelFilterOpen}
-                            >
-                              <DropdownList>
-                                <DropdownItem value="All Models">All Models</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </FlexItem>
-                        </Flex>
-                      </FlexItem>
-                      {/* Right side filters */}
-                      <FlexItem grow={{ default: 'grow' }} />
-                      <FlexItem>
-                        <Flex spaceItems={{ default: 'spaceItemsMd' }}>
-                          <FlexItem>
-                            <Dropdown
-                              onSelect={(event, value) => {
-                                if (value) {
-                                  setTimeRange(value as string);
-                                  setTimeRangeOpen(false);
-                                }
-                              }}
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setTimeRangeOpen(!timeRangeOpen)} isExpanded={timeRangeOpen}>
-                                  Time range: {timeRange}
-                                </MenuToggle>
-                              )}
-                              isOpen={timeRangeOpen}
-                            >
-                              <DropdownList>
-                                <DropdownItem value="Last 1 hour">Last 1 hour</DropdownItem>
-                                <DropdownItem value="Last 6 hours">Last 6 hours</DropdownItem>
-                                <DropdownItem value="Last 24 hours">Last 24 hours</DropdownItem>
-                                <DropdownItem value="Last 7 days">Last 7 days</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </FlexItem>
-                          <FlexItem>
-                            <Dropdown
-                              onSelect={(event, value) => {
-                                if (value) {
-                                  setLimitTraces(value as string);
-                                  setLimitTracesOpen(false);
-                                }
-                              }}
-                              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setLimitTracesOpen(!limitTracesOpen)} isExpanded={limitTracesOpen}>
-                                  Limit traces: {limitTraces}
-                                </MenuToggle>
-                              )}
-                              isOpen={limitTracesOpen}
-                            >
-                              <DropdownList>
-                                <DropdownItem value="20">20</DropdownItem>
-                                <DropdownItem value="50">50</DropdownItem>
-                                <DropdownItem value="100">100</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </FlexItem>
-                        </Flex>
-                      </FlexItem>
-                    </Flex>
-                  </FlexItem>
-                </Flex>
-
-                {/* Table Section */}
-                <div style={{ marginTop: '1.5rem' }}>
-                  <Table aria-label="Request traces table">
-                    <Thead>
-                      <Tr>
-                        <Th>USER</Th>
-                        <Th>TRACE ID</Th>
-                        <Th>TIMESTAMP</Th>
-                        <Th>DURATION</Th>
-                        <Th>MODEL</Th>
-                        <Th>STATUS</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {traceData.map((trace, index) => (
-                        <Tr key={index}>
-                          <Td dataLabel="USER">
-                            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                              <FlexItem>
-                                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                                  <FlexItem>
-                                    <div
-                                      style={{
-                                        width: '8px',
-                                        height: '8px',
-                                        borderRadius: '50%',
-                                        backgroundColor: trace.statusIcon
-                                      }}
-                                    />
-                                  </FlexItem>
-                                  <FlexItem>
-                                    <Content component={ContentVariants.p} style={{ fontWeight: 'bold', color: '#0066cc' }}>
-                                      {trace.user}
-                                    </Content>
-                                  </FlexItem>
-                                </Flex>
-                              </FlexItem>
-                              <FlexItem>
-                                <Content component={ContentVariants.small} style={{ color: '#6a6e73' }}>
-                                  {trace.userDetails}
-                                </Content>
-                              </FlexItem>
-                            </Flex>
-                          </Td>
-                          <Td dataLabel="TRACE ID">
-                            {trace.traceId ? (
-                              <Content component={ContentVariants.p} style={{ color: '#0066cc', cursor: 'pointer' }}>
-                                {trace.traceId}
-                              </Content>
-                            ) : (
-                              <Content component={ContentVariants.p} style={{ color: '#6a6e73' }}>
-                                No trace
-                              </Content>
-                            )}
-                          </Td>
-                          <Td dataLabel="TIMESTAMP">
-                            <Content component={ContentVariants.p}>{trace.timestamp}</Content>
-                          </Td>
-                          <Td dataLabel="DURATION">
-                            <span
-                              style={{
-                                backgroundColor: trace.durationColor,
-                                color: trace.duration === 'N/A' ? '#151515' : '#ffffff',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                fontSize: '12px',
-                                fontWeight: '500'
-                              }}
-                            >
-                              {trace.duration}
-                            </span>
-                          </Td>
-                          <Td dataLabel="MODEL">
-                            <Content component={ContentVariants.p} style={{ color: '#0066cc', cursor: 'pointer' }}>
-                              {trace.model}
-                            </Content>
-                          </Td>
-                          <Td dataLabel="STATUS">
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-                              <FlexItem>
-                                <div
-                                  style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    borderRadius: '50%',
-                                    backgroundColor: trace.statusIcon
-                                  }}
-                                />
-                              </FlexItem>
-                              <FlexItem>
-                                <Content
-                                  component={ContentVariants.p}
-                                  style={{
-                                    color: trace.status === 'success' ? '#3e8635' : trace.status === 'warning' ? '#f0ad00' : '#6a6e73',
-                                    textTransform: 'capitalize'
-                                  }}
-                                >
-                                  {trace.status}
-                                </Content>
-                              </FlexItem>
-                            </Flex>
-                          </Td>
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </Table>
-                </div>
-              </CardBody>
-            </Card>
-          </FlexItem>
-        )}
-
-        {/* Perses content removed */}
       </Flex>
-  </PageSection>
-);
+    </PageSection>
+  );
 };
 
 export { Dashboard };

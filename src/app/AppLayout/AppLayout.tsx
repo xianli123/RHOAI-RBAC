@@ -249,6 +249,19 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 >
                   AI Engineer
                 </DropdownItem>
+                <DropdownItem 
+                  key="data-scientist"
+                  icon={<UserIcon />}
+                  onClick={() => {
+                    setUserProfile('Data Scientist');
+                  }}
+                  style={{ 
+                    fontWeight: userProfile === 'Data Scientist' ? '600' : '400',
+                    color: userProfile === 'Data Scientist' ? '#0066cc' : 'inherit'
+                  }}
+                >
+                  Data Scientist
+                </DropdownItem>
                 <Divider component="li" />
                 <DropdownItem 
                   key="profile"
