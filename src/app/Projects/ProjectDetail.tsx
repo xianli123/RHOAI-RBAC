@@ -197,7 +197,7 @@ const ProjectDetail: React.FunctionComponent = () => {
         </div>
       </div>
 
-      <PageSection variant="light">
+      <PageSection>
         <Flex
           direction={{ default: 'row' }}
           alignItems={{ default: 'alignItemsCenter' }}
@@ -266,7 +266,7 @@ const ProjectDetail: React.FunctionComponent = () => {
         </Flex>
       </PageSection>
 
-      <PageSection variant="light" type="tabs" padding={{ default: 'noPadding' }}>
+      <PageSection type="tabs" padding={{ default: 'noPadding' }}>
         <Tabs
           activeKey={activeTabKey}
           onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
