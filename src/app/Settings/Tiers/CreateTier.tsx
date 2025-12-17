@@ -19,7 +19,6 @@ const CreateTier: React.FunctionComponent = () => {
     description: '',
     level: 1,
     groups: [],
-    models: [],
     limits: {
       apiKeyExpirationDays: 4 / 24, // Default expiration time: 4 hours (stored as fractional days)
     },
@@ -61,7 +60,7 @@ const CreateTier: React.FunctionComponent = () => {
       <PageSection>
         <Content component={ContentVariants.h1}>Create tier</Content>
         <Content component={ContentVariants.p} style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
-          Create a new tier to control which models users can access based on their group membership.
+          Create a new tier to control access and limits based on group membership.
         </Content>
 
         <TierForm

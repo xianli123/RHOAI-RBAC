@@ -24,7 +24,6 @@ const EditTier: React.FunctionComponent = () => {
     description: tier?.description || '',
     level: tier?.level || 1,
     groups: tier?.groups || [],
-    models: tier?.models || [],
     limits: tier?.limits || {},
   });
 
@@ -80,7 +79,7 @@ const EditTier: React.FunctionComponent = () => {
       <PageSection>
         <Content component={ContentVariants.h1}>Edit tier</Content>
         <Content component={ContentVariants.p} style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
-          Edit the tier configuration to control which models users can access based on their group membership.
+          Edit the tier configuration to control access and limits based on group membership.
         </Content>
 
         <TierForm

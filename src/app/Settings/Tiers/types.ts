@@ -8,7 +8,7 @@ export interface Tier {
   gitSource?: string; // For GitOps-managed tiers
   isReadOnly: boolean; // True for GitOps-managed tiers
   groups: string[]; // Kubernetes groups assigned to this tier
-  models: string[]; // Model IDs (must be AI Assets / MaaS models)
+  models?: string[]; // Model IDs (must be AI Assets / MaaS models)
   limits: {
     tokenLimits?: Array<{
       id: string;
@@ -34,7 +34,7 @@ export interface CreateTierForm {
   description: string;
   level: number;
   groups: string[];
-  models: string[];
+  models?: string[];
   limits: {
     tokenLimits?: Array<{
       id: string;

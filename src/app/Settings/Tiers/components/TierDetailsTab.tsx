@@ -188,7 +188,7 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
         Groups
       </Content>
       <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        Users in these groups will have access to this tier's models.
+        Users in these groups will have access to this tier.
       </div>
       <DescriptionList>
         <DescriptionListGroup>
@@ -201,22 +201,26 @@ const TierDetailsTab: React.FunctionComponent<TierDetailsTabProps> = ({ tier }) 
 
       <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
 
-      <Content component={ContentVariants.h2} id="models-heading">
-        Models
-      </Content>
-      <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
-        These models will be available to users who can access this tier.
-      </div>
-      <DescriptionList>
-        <DescriptionListGroup>
-          <DescriptionListTerm>Available models</DescriptionListTerm>
-          <DescriptionListDescription>
-            {renderModelsList(tier.models)}
-          </DescriptionListDescription>
-        </DescriptionListGroup>
-      </DescriptionList>
+      {tier.models && tier.models.length > 0 && (
+        <>
+          <Content component={ContentVariants.h2} id="models-heading">
+            Models
+          </Content>
+          <div style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)', marginBottom: '1rem' }}>
+            These models will be available to users who can access this tier.
+          </div>
+          <DescriptionList>
+            <DescriptionListGroup>
+              <DescriptionListTerm>Available models</DescriptionListTerm>
+              <DescriptionListDescription>
+                {renderModelsList(tier.models)}
+              </DescriptionListDescription>
+            </DescriptionListGroup>
+          </DescriptionList>
 
-      <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
+          <Divider style={{ marginTop: '2rem', marginBottom: '2rem' }} />
+        </>
+      )}
 
       <Content component={ContentVariants.h2} id="limits-heading">
         Limits

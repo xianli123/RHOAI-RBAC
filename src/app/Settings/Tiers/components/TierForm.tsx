@@ -21,7 +21,7 @@ import {
 } from '@patternfly/react-core';
 import { PlusCircleIcon, MinusCircleIcon } from '@patternfly/react-icons';
 import { CreateTierForm } from '../types';
-import { mockGroups, mockMaaSModels } from '../mockData';
+import { mockGroups } from '../mockData';
 
 interface TierFormProps {
   formData: CreateTierForm;
@@ -33,7 +33,6 @@ interface TierFormProps {
 
 const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, onSubmit, onCancel, isEditMode = false }) => {
   const [isGroupsOpen, setIsGroupsOpen] = React.useState(false);
-  const [isModelsOpen, setIsModelsOpen] = React.useState(false);
   const [isPeriodSelectOpen, setIsPeriodSelectOpen] = React.useState<{ [key: string]: boolean }>({});
 
   const [tokenLimitEnabled, setTokenLimitEnabled] = React.useState(!!(formData.limits.tokenLimits && formData.limits.tokenLimits.length > 0));
@@ -134,22 +133,11 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
     }
   };
 
-  const handleModelSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
-    if (!value) return;
-    const modelId = value as string;
-    if (formData.models.includes(modelId)) {
-      handleInputChange('models', formData.models.filter((id) => id !== modelId));
-    } else {
-      handleInputChange('models', [...formData.models, modelId]);
-    }
-  };
-
   const isFormValid = () => {
     return (
       formData.name.trim() !== '' &&
       formData.level > 0 &&
-      formData.groups.length > 0 &&
-      formData.models.length > 0
+      formData.groups.length > 0
     );
   };
 
@@ -245,58 +233,6 @@ const TierForm: React.FunctionComponent<TierFormProps> = ({ formData, onChange, 
         <FormHelperText>
           <HelperText>
             <HelperTextItem>This tier will apply to all users in these groups</HelperTextItem>
-          </HelperText>
-        </FormHelperText>
-      </FormGroup>
-
-      <FormGroup label="Models" isRequired fieldId="tier-models">
-        <Select
-          role="menu"
-          id="tier-models"
-          isOpen={isModelsOpen}
-          selected={formData.models}
-          onSelect={handleModelSelect}
-          onOpenChange={(nextOpen: boolean) => setIsModelsOpen(nextOpen)}
-          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-            <MenuToggle
-              ref={toggleRef}
-              onClick={() => setIsModelsOpen(!isModelsOpen)}
-              isExpanded={isModelsOpen}
-              id="tier-models-toggle"
-            >
-              Select models
-              {formData.models.length > 0 && <Badge isRead>{formData.models.length}</Badge>}
-            </MenuToggle>
-          )}
-        >
-          <SelectList>
-            {mockMaaSModels.length === 0 ? (
-              <SelectOption isDisabled>No AI Asset models available</SelectOption>
-            ) : (
-              mockMaaSModels.map((model) => (
-                <SelectOption
-                  key={model.id}
-                  value={model.id}
-                  hasCheckbox
-                  isSelected={formData.models.includes(model.id)}
-                >
-                  {model.name}
-                </SelectOption>
-              ))
-            )}
-          </SelectList>
-        </Select>
-        <FormHelperText>
-          <HelperText>
-            <HelperTextItem>
-              Only models published as AI Assets can be assigned to tiers
-              {mockMaaSModels.length === 0 && (
-                <span style={{ color: 'var(--pf-t--global--color--status--warning--default)' }}>
-                  <br />
-                  No AI Asset models available. Publish a model deployment as an AI Asset first.
-                </span>
-              )}
-            </HelperTextItem>
           </HelperText>
         </FormHelperText>
       </FormGroup>
