@@ -28,7 +28,7 @@ build:
     KUBERNETES_MEMORY_REQUEST: "2Gi"
     KUBERNETES_MEMORY_LIMIT: "4Gi"
   rules:
-    - if: $CI_COMMIT_BRANCH == "model-catalog"
+    - if: $CI_COMMIT_BRANCH == "3.2"
   script:
     - echo "Installing dependencies (including devDependencies for build tools)..."
     - npm ci --include=dev
@@ -48,7 +48,7 @@ build:
 pages:
   stage: deploy
   rules:
-    - if: $CI_COMMIT_BRANCH == "model-catalog"
+    - if: $CI_COMMIT_BRANCH == "3.2"
   script:
     - echo "Deploying to GitLab Pages..."
   artifacts:
