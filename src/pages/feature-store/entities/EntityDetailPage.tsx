@@ -733,6 +733,7 @@ export const EntityDetailPage: React.FC = () => {
           <FlexItem>
             {/* View Connected Workbenches Link with Icon */}
             <Popover
+              position="right"
               aria-label="Connected workbenches"
               headerContent="Connected workbenches"
               bodyContent={
