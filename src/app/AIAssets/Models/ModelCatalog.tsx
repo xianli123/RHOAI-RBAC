@@ -1,16 +1,26 @@
 import * as React from 'react';
 import {
+  Alert,
+  AlertActionCloseButton,
+  Badge,
   Button,
   Card,
   CardBody,
+  CardFooter,
   CardHeader,
   Checkbox,
   Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
-  Grid,
-  GridItem,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  EmptyStateActions,
+  EmptyStateFooter,
+  ExpandableSection,
+  Gallery,
+  GalleryItem,
   InputGroup,
   InputGroupItem,
   Label,
@@ -22,14 +32,14 @@ import {
   ModalHeader,
   ModalVariant,
   PageSection,
+  Popover,
   SearchInput,
-  Sidebar,
-  SidebarContent,
-  SidebarPanel,
+  Select,
+  SelectList,
+  SelectOption,
+  Slider,
   Switch,
-  Tab,
-  TabTitleText,
-  Tabs,
+  TextInput,
   Title,
   ToggleGroup,
   ToggleGroupItem,
@@ -37,7 +47,14 @@ import {
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip
+  Tooltip,
+  Panel,
+  PanelMain,
+  PanelMainBody,
+  Menu,
+  MenuContent,
+  MenuList,
+  MenuItem,
 } from '@patternfly/react-core';
 import {
   AngleLeftIcon,
@@ -46,9 +63,22 @@ import {
   FilterIcon,
   MonitoringIcon,
   OutlinedQuestionCircleIcon,
+  UndoIcon,
+  TimesIcon,
+  ColumnsIcon,
+  SearchIcon,
 } from '@patternfly/react-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChartColumn, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { useFeatureFlags } from '../../utils/FeatureFlagsContext';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { DEFAULT_LATENCY_METRIC, DEFAULT_LATENCY_PERCENTILE, DEFAULT_LATENCY_VALUE, DEFAULT_RPS_VALUE, DEFAULT_WORKLOAD, WORKLOAD_OPTIONS, type LatencyMetric, type LatencyPercentile, type Workload } from '../../../hooks/usePerformanceFilters';
+import { generateModelBenchmarks, filterBenchmarks } from '../../../lib/benchmarks';
+import { MODELS } from '../../../data/models';
+import type { Model, Category } from '../../../types';
+import { useColumnPreferences } from '../../../hooks/useColumnPreferences';
+import { COLUMN_DEFINITIONS } from '../../../lib/columnConfig';
 import ValidatedModelIcon from '@app/assets/validated-model.svg';
 import RedHatIcon from '@app/assets/the-hat.svg';
 import GenericModelSvgIcon from '@app/assets/generic-model-icon.svg';
@@ -71,42 +101,427 @@ interface ModelCard {
   language: string[];
 }
 
+// Helper function to get display name (removes repo prefix like "RedHatAI/")
+const getDisplayName = (name: string): string => {
+  const slashIndex = name.lastIndexOf('/');
+  return slashIndex !== -1 ? name.substring(slashIndex + 1) : name;
+};
+
+// Display formatter for task labels
+// - "text-generation" → "Text generation"
+// - "text-to-text" → "Text-to-text" (keeps "-to-" pattern)
+// - "question-answering" → "Question answering"
+const formatTaskLabel = (task: string): string => {
+  // Check if task contains "-to-" pattern (e.g., text-to-text, image-to-text)
+  if (task.includes('-to-')) {
+    // Keep the "-to-" pattern, just capitalize the first letter
+    return task.charAt(0).toUpperCase() + task.slice(1);
+  }
+  
+  // For other tasks, replace hyphens with spaces and capitalize first letter
+  return task
+    .split('-')
+    .map((word, index) => index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word)
+    .join(' ');
+};
+
+// Display formatter for language codes (e.g., "en" → "English")
+const formatLanguageLabel = (lang: string): string => {
+  const languageMap: Record<string, string> = {
+    'en': 'English',
+    'zh': 'Chinese',
+    'multilingual': 'Multilingual',
+    'es': 'Spanish',
+    'fr': 'French',
+    'de': 'German',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'pt': 'Portuguese',
+    'ru': 'Russian',
+    'ar': 'Arabic',
+    'it': 'Italian',
+    'hi': 'Hindi',
+    'th': 'Thai',
+    'vi': 'Vietnamese',
+    'nl': 'Dutch',
+    'cs': 'Czech',
+  };
+  return languageMap[lang.toLowerCase()] || lang.charAt(0).toUpperCase() + lang.slice(1);
+};
+
+// Display formatter for provider names (already properly formatted, but normalize if needed)
+const formatProviderLabel = (provider: string): string => {
+  return provider; // Providers are already properly formatted in the data
+};
+
+// Minimal scrollbar styling - uses thin scrollbars and respects OS settings
+const scrollbarStyles = `
+  .pf-v6-c-page__main-section,
+  .catalog-scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: auto;
+  }
+`;
+
 const ModelCatalog: React.FunctionComponent = () => {
   useDocumentTitle('Model Catalog');
   const { flags } = useFeatureFlags();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Performance filters - use local state (not URL) to avoid navigation conflicts
+  // Initialize from sessionStorage if returning from details page
+  const [performanceFiltersEnabled, setPerformanceFiltersEnabled] = React.useState(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.performanceFiltersEnabled ?? false;
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
+  const [workload, setWorkload] = React.useState<Workload>(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.workload ?? DEFAULT_WORKLOAD;
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_WORKLOAD;
+  });
+  const [latencyMetric, setLatencyMetric] = React.useState<LatencyMetric>(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.latencyMetric ?? DEFAULT_LATENCY_METRIC;
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_LATENCY_METRIC;
+  });
+  const [latencyPercentile, setLatencyPercentile] = React.useState<LatencyPercentile>(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.latencyPercentile ?? DEFAULT_LATENCY_PERCENTILE;
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_LATENCY_PERCENTILE;
+  });
+  const [latencyValue, setLatencyValue] = React.useState(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.latencyValue ?? DEFAULT_LATENCY_VALUE;
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_LATENCY_VALUE;
+  });
+  const [rpsValue, setRpsValue] = React.useState(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.rpsValue ?? DEFAULT_RPS_VALUE;
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_RPS_VALUE;
+  });
+  const [hardware, setHardware] = React.useState<string[]>(() => {
+    try {
+      const stored = sessionStorage.getItem("catalogPerfFilters");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.hardware ?? [];
+      }
+    } catch { /* ignore */ }
+    return [];
+  });
+  
+  // Clear sessionStorage after reading (one-time restore)
+  React.useEffect(() => {
+    sessionStorage.removeItem("catalogPerfFilters");
+  }, []);
+  
+  // Toggle handler - resets filters to defaults when turning ON
+  const handleTogglePerformanceFilters = React.useCallback((enabled: boolean) => {
+      if (enabled) {
+      // Reset all filters to defaults when turning ON
+      setWorkload(DEFAULT_WORKLOAD);
+      setLatencyMetric(DEFAULT_LATENCY_METRIC);
+      setLatencyPercentile(DEFAULT_LATENCY_PERCENTILE);
+      setLatencyValue(DEFAULT_LATENCY_VALUE);
+      setRpsValue(DEFAULT_RPS_VALUE);
+      setHardware([]);
+      // Clear any stored filters so they don't accidentally restore
+      sessionStorage.removeItem("catalogPerfFilters");
+    }
+    setPerformanceFiltersEnabled(enabled);
+  }, []);
+  
+  // Combined latency filter setter
+  const setLatencyFilters = React.useCallback((metric: LatencyMetric, percentile: LatencyPercentile, value: number) => {
+    setLatencyMetric(metric);
+    setLatencyPercentile(percentile);
+    setLatencyValue(value);
+  }, []);
+  
+  // Reset all performance filters
+  const resetPerformanceFilters = React.useCallback(() => {
+    setWorkload(DEFAULT_WORKLOAD);
+    setLatencyMetric(DEFAULT_LATENCY_METRIC);
+    setLatencyPercentile(DEFAULT_LATENCY_PERCENTILE);
+    setLatencyValue(DEFAULT_LATENCY_VALUE);
+    setRpsValue(DEFAULT_RPS_VALUE);
+    setHardware([]);
+  }, []);
 
   // State for filters
-  const [selectedTasks, setSelectedTasks] = React.useState<string[]>([]);
-  const [selectedProviders, setSelectedProviders] = React.useState<string[]>([]);
-  const [selectedLicenses, setSelectedLicenses] = React.useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>([]);
-  const [activeTab, setActiveTab] = React.useState<string | number>(0);
-  const [activeFilterTab, setActiveFilterTab] = React.useState<string | number>(0);
-  const [performanceFiltersEnabled, setPerformanceFiltersEnabled] = React.useState(false);
+  const [selectedTasks, setSelectedTasks] = React.useState<string[]>(() => 
+    searchParams.get("tasks")?.split(",").filter(Boolean) || []
+  );
+  const [selectedProviders, setSelectedProviders] = React.useState<string[]>(() => 
+    searchParams.get("providers")?.split(",").filter(Boolean) || []
+  );
+  const [selectedLicenses, setSelectedLicenses] = React.useState<string[]>(() => 
+    searchParams.get("licenses")?.split(",").filter(Boolean) || []
+  );
+  const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>(() => 
+    searchParams.get("languages")?.split(",").filter(Boolean) || []
+  );
 
-  // Filter dropdown state
-  const [filterDropdownOpen, setFilterDropdownOpen] = React.useState(false);
-  const [filterAttribute, setFilterAttribute] = React.useState<'name' | 'keyword' | 'description'>('keyword');
-  const [filterInput, setFilterInput] = React.useState('');
-  const [activeFilters, setActiveFilters] = React.useState<{
-    name: string[];
-    keyword: string[];
-    description: string[];
-  }>({
-    name: [],
-    keyword: [],
-    description: []
-  });
+  // Search state
+  const [search, setSearchState] = React.useState(() => searchParams.get("search") || "");
+  const [searchInput, setSearchInput] = React.useState(() => searchParams.get("search") || "");
+  
+  // Sync search to URL
+  const setSearch = React.useCallback((value: string) => {
+    setSearchState(value);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value.trim()) {
+        next.set("search", value.trim());
+      } else {
+        next.delete("search");
+      }
+      return next;
+    });
+  }, [setSearchParams]);
+
+  // Category state - read from URL
+  const categoryFromUrl = searchParams.get("category") as Category | null;
+  const [category, setCategoryState] = React.useState<Category | null>(categoryFromUrl);
+  
+  // Sync category to URL
+  const setCategory = React.useCallback((newCategory: Category | null) => {
+    setCategoryState(newCategory);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (newCategory === null) {
+        next.delete("category");
+      } else {
+        next.set("category", newCategory);
+      }
+      return next;
+    });
+  }, [setSearchParams]);
+
+  // Sort dropdown state
+  const [isSortOpen, setIsSortOpen] = React.useState(false);
+  const [sortOption, setSortOption] = React.useState<'latency' | 'updated'>('latency');
+
+  // Workload dropdown state
+  const [isWorkloadOpen, setIsWorkloadOpen] = React.useState(false);
+  const workloadMenuRef = React.useRef<HTMLDivElement>(null);
+  
+  // Hardware dropdown state (hardware values come from usePerformanceFilters hook)
+  const [isHardwareOpen, setIsHardwareOpen] = React.useState(false);
+  const hardwareOptions = ['H100 x 1', 'H100 x 2', 'H100 x 4', 'A100 x 1', 'A100 x 2', 'A100 x 4', 'L40S x 2', 'L40S x 4'];
+  
+  // Latency and RPS panel dropdown state
+  const [isLatencyOpen, setIsLatencyOpen] = React.useState(false);
+  const [isRpsOpen, setIsRpsOpen] = React.useState(false);
+  const latencyPanelRef = React.useRef<HTMLDivElement>(null);
+  const rpsPanelRef = React.useRef<HTMLDivElement>(null);
+  
+  // Local state for latency panel (pending values before Apply)
+  const [pendingLatencyMetric, setPendingLatencyMetric] = React.useState(latencyMetric);
+  const [pendingLatencyPercentile, setPendingLatencyPercentile] = React.useState(latencyPercentile);
+  const [pendingLatencyValue, setPendingLatencyValue] = React.useState(latencyValue);
+  // Store initial values when panel opens (for Reset)
+  const latencyInitialValuesRef = React.useRef({ metric: latencyMetric, percentile: latencyPercentile, value: latencyValue });
+  // Metric and Percentile dropdown state within latency panel
+  const [isMetricSelectOpen, setIsMetricSelectOpen] = React.useState(false);
+  const [isPercentileSelectOpen, setIsPercentileSelectOpen] = React.useState(false);
+  const metricMenuRef = React.useRef<HTMLDivElement>(null);
+  const percentileMenuRef = React.useRef<HTMLDivElement>(null);
+  
+  // Local state for RPS panel
+  const [pendingRpsValue, setPendingRpsValue] = React.useState(rpsValue);
+  const rpsInitialValueRef = React.useRef(rpsValue);
+  
+  // When opening latency panel, store initial values and sync pending state
+  const handleOpenLatencyPanel = () => {
+    if (!isLatencyOpen) {
+      latencyInitialValuesRef.current = { metric: latencyMetric, percentile: latencyPercentile, value: latencyValue };
+      setPendingLatencyMetric(latencyMetric);
+      setPendingLatencyPercentile(latencyPercentile);
+      setPendingLatencyValue(latencyValue);
+    }
+    setIsLatencyOpen(!isLatencyOpen);
+  };
+  
+  // When opening RPS panel, store initial value and sync pending state
+  const handleOpenRpsPanel = () => {
+    if (!isRpsOpen) {
+      rpsInitialValueRef.current = rpsValue;
+      setPendingRpsValue(rpsValue);
+    }
+    setIsRpsOpen(!isRpsOpen);
+  };
+  
+  // Apply latency filters
+  const handleApplyLatency = () => {
+    setLatencyFilters(pendingLatencyMetric, pendingLatencyPercentile, pendingLatencyValue);
+    setIsLatencyOpen(false);
+  };
+  
+  // Reset latency to values when panel was opened
+  const handleResetLatency = () => {
+    setPendingLatencyMetric(latencyInitialValuesRef.current.metric);
+    setPendingLatencyPercentile(latencyInitialValuesRef.current.percentile);
+    setPendingLatencyValue(latencyInitialValuesRef.current.value);
+  };
+  
+  // Apply RPS filter
+  const handleApplyRps = () => {
+    setRpsValue(pendingRpsValue);
+    setIsRpsOpen(false);
+  };
+  
+  // Reset RPS to value when panel was opened
+  const handleResetRps = () => {
+    setPendingRpsValue(rpsInitialValueRef.current);
+  };
+  
+  // Close panels when clicking outside (discard pending changes)
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (latencyPanelRef.current && !latencyPanelRef.current.contains(event.target as Node)) {
+        setIsLatencyOpen(false);
+      }
+      if (rpsPanelRef.current && !rpsPanelRef.current.contains(event.target as Node)) {
+        setIsRpsOpen(false);
+      }
+      if (workloadMenuRef.current && !workloadMenuRef.current.contains(event.target as Node)) {
+        setIsWorkloadOpen(false);
+      }
+      // Close metric/percentile menus when clicking outside their container
+      if (metricMenuRef.current && !metricMenuRef.current.contains(event.target as Node)) {
+        setIsMetricSelectOpen(false);
+      }
+      if (percentileMenuRef.current && !percentileMenuRef.current.contains(event.target as Node)) {
+        setIsPercentileSelectOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Sync category state with URL on mount/URL changes (but don't update if it's the same to avoid blinking)
+  React.useEffect(() => {
+    const urlCategory = searchParams.get("category") as Category | null;
+    if (urlCategory !== category) {
+      setCategoryState(urlCategory);
+    }
+  }, [searchParams]);
+
   const [showAllTasks, setShowAllTasks] = React.useState(false);
+  const [showAllProviders, setShowAllProviders] = React.useState(false);
+  const [showAllLicenses, setShowAllLicenses] = React.useState(false);
+  const [showAllLanguages, setShowAllLanguages] = React.useState(false);
+  
+  // Alert state for filter changes
+  const [showFilterChangedAlert, setShowFilterChangedAlert] = React.useState(false);
+  const mountTime = React.useRef<number>(Date.now());
+  
+  // Column preferences for performance table
+  const {
+    visibleColumns,
+    toggleColumn,
+    setVisibleColumns,
+    restoreDefaults,
+    isColumnVisible,
+  } = useColumnPreferences(latencyMetric, latencyPercentile);
+  
+  // Customize columns modal state
+  const [isCustomizeColumnsOpen, setIsCustomizeColumnsOpen] = React.useState(false);
+  
+  // Check for return from details page on mount
+  React.useEffect(() => {
+    const returnedFromDetails = sessionStorage.getItem("returnedFromDetails");
+    const storedState = sessionStorage.getItem("catalogFilterState");
+    
+    // Clear the return flag immediately
+    sessionStorage.removeItem("returnedFromDetails");
+    
+    // Only check if user just returned from details AND performance toggle is ON
+    if (returnedFromDetails === "true" && performanceFiltersEnabled && storedState) {
+      try {
+        const stored = JSON.parse(storedState);
+        
+        // Compare performance filters only
+        const filtersChanged = 
+          stored.workload !== workload ||
+          stored.latencyMetric !== latencyMetric ||
+          stored.latencyPercentile !== latencyPercentile ||
+          stored.latencyValue !== latencyValue ||
+          stored.rpsValue !== rpsValue ||
+          JSON.stringify(stored.hardware || []) !== JSON.stringify(hardware);
+        
+        if (filtersChanged) {
+        setShowFilterChangedAlert(true);
+          // Reset mount time for grace period
+          mountTime.current = Date.now();
+        }
+      } catch {
+        // Invalid stored state, ignore
+      }
+    }
+    
+    // Clean up stored state after checking
+      sessionStorage.removeItem("catalogFilterState");
+  }, []); // Only run on mount
+  
+  // Dismiss alert when toggle is turned off
+  React.useEffect(() => {
+    if (showFilterChangedAlert && !performanceFiltersEnabled) {
+      setShowFilterChangedAlert(false);
+    }
+  }, [showFilterChangedAlert, performanceFiltersEnabled]);
+  
+  // Dismiss alert when any filter changes (with 500ms grace period after mount)
+  React.useEffect(() => {
+    // Don't dismiss within 500ms of mount (grace period for React state settling)
+    if (Date.now() - mountTime.current < 500) {
+      return;
+    }
+    
+    // Dismiss alert when user changes any filter
+    if (showFilterChangedAlert) {
+        setShowFilterChangedAlert(false);
+      }
+  }, [showFilterChangedAlert, workload, latencyMetric, latencyPercentile, latencyValue, rpsValue, hardware, selectedTasks, selectedProviders, selectedLicenses, selectedLanguages, search]);
   
   // Search state for filter categories
   const [taskSearch, setTaskSearch] = React.useState('');
   const [providerSearch, setProviderSearch] = React.useState('');
   const [licenseSearch, setLicenseSearch] = React.useState('');
   const [languageSearch, setLanguageSearch] = React.useState('');
-  
-  // State to track which cards show expanded tasks
-  const [expandedTaskCards, setExpandedTaskCards] = React.useState<Set<string>>(new Set());
   
   // State to track current benchmark index for each model
   const [benchmarkIndices, setBenchmarkIndices] = React.useState<Record<string, number>>({});
@@ -117,13 +532,83 @@ const ModelCatalog: React.FunctionComponent = () => {
   // Modal state for feature not available
   const [isFeatureModalOpen, setIsFeatureModalOpen] = React.useState(false);
 
-  // Model name click handler
-  const handleModelNameClick = () => {
-    setIsFeatureModalOpen(true);
+  // Helper to store filter state before navigating to details
+  const storeFilterStateForAlert = () => {
+    // Dismiss alert when navigating to details page
+    setShowFilterChangedAlert(false);
+    
+    // Store current filter state in sessionStorage for alert detection
+    const filterState = JSON.stringify({
+      workload, latencyMetric, latencyPercentile, 
+      latencyValue, rpsValue, hardware,
+      tasks: selectedTasks, providers: selectedProviders, licenses: selectedLicenses,
+      languages: selectedLanguages, search
+    });
+    sessionStorage.setItem("catalogFilterState", filterState);
+    
+    // Also store performance filters separately for restoration when returning
+    const perfFilters = JSON.stringify({
+      performanceFiltersEnabled,
+      workload, latencyMetric, latencyPercentile,
+      latencyValue, rpsValue, hardware
+    });
+    sessionStorage.setItem("catalogPerfFilters", perfFilters);
   };
 
-  // Mock data for model cards
-  const mockModels: ModelCard[] = [
+  // Model name click handler - navigate to model details
+  const handleModelNameClick = (modelId: string) => {
+    storeFilterStateForAlert();
+    
+    // Create URL with current filters (use local state for current values)
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (performanceFiltersEnabled) params.set("perfFilter", "true");
+    if (search.trim()) params.set("search", search.trim());
+    if (selectedTasks.length > 0) params.set("tasks", selectedTasks.join(","));
+    if (selectedProviders.length > 0) params.set("providers", selectedProviders.join(","));
+    if (selectedLicenses.length > 0) params.set("licenses", selectedLicenses.join(","));
+    if (selectedLanguages.length > 0) params.set("languages", selectedLanguages.join(","));
+    params.set("workload", workload);
+    params.set("latencyMetric", latencyMetric);
+    params.set("latencyPercentile", latencyPercentile);
+    params.set("latencyValue", latencyValue.toString());
+    params.set("rpsValue", rpsValue.toString());
+    if (hardware.length > 0) params.set("hardware", hardware.join(","));
+    
+    navigate(`/ai-assets/models/${modelId}?${params.toString()}`);
+  };
+
+  // Use real MODELS data - convert to ModelCard format for compatibility
+  const mockModels: ModelCard[] = MODELS.map((model: Model) => {
+    // Handle task as string or string[]
+    const taskArray: string[] = Array.isArray(model.task) ? model.task : [model.task];
+    // Handle language as string or string[]
+    const langArray: string[] = Array.isArray(model.language) ? model.language : (model.language ? model.language.split(',').map(l => l.trim()) : ['en']);
+    
+    // Calculate actual benchmark count for validated models
+    const benchmarkCount = model.category === 'validated' 
+      ? generateModelBenchmarks(model).length 
+      : undefined;
+    
+    return {
+    id: model.id,
+    name: model.name,
+    description: model.description,
+    accuracy: model.metrics.accuracy > 0 ? `${model.metrics.accuracy}%` : undefined,
+    hardware: model.performance?.hardware?.[0] || undefined,
+    rps: model.performance?.rps || undefined,
+    ttft: model.performance?.latency || undefined,
+    benchmarks: benchmarkCount,
+    validated: model.category === 'validated',
+    provider: model.provider,
+      task: taskArray,
+    license: model.license,
+      language: langArray,
+    };
+  });
+
+  // Legacy mock data kept for reference (will be removed)
+  const legacyMockModels: ModelCard[] = [
     // Red Hat AI validated models (4 models)
     {
       id: '1',
@@ -273,166 +758,336 @@ const ModelCatalog: React.FunctionComponent = () => {
     }
   ];
 
-  // Filter options
-  const taskOptions = ['Text generation', 'Any-to-Any', 'Image-Text-to-Text', 'Image-to-Text', 'Image-to-Image', 'Question answering', 'Text classification', 'Summarization', 'Translation'];
-  const providerOptions = ['Red Hat', 'Google', 'Meta', 'Deepseek', 'Salesforce'];
-  const licenseOptions = ['Apache-2.0', 'llama3', 'MIT'];
-  const languageOptions = ['English', 'Japanese', 'Spanish', 'Chinese'];
+  // Dynamically generate filter options from MODELS data
+  const taskOptions = React.useMemo(() => {
+    const allTasks = MODELS.flatMap(model => 
+      Array.isArray(model.task) ? model.task : [model.task]
+    );
+    return Array.from(new Set(allTasks)).sort();
+  }, []);
+
+  const providerOptions = React.useMemo(() => {
+    const allProviders = MODELS.map(model => model.provider);
+    return Array.from(new Set(allProviders)).sort();
+  }, []);
+
+  const licenseOptions = React.useMemo(() => {
+    const allLicenses = MODELS.map(model => model.license);
+    return Array.from(new Set(allLicenses)).sort();
+  }, []);
+
+  const languageOptions = React.useMemo(() => {
+    const allLanguages = MODELS.flatMap(model => 
+      Array.isArray(model.language) ? model.language : (typeof model.language === 'string' ? model.language.split(',').map(l => l.trim()) : ['en'])
+    );
+    return Array.from(new Set(allLanguages)).sort();
+  }, []);
 
   // Helper functions to filter options based on search
+  const FILTER_COLLAPSE_THRESHOLD = 5;
+
   const getFilteredTasks = () => {
     const filtered = taskOptions.filter(task => 
-      task.toLowerCase().includes(taskSearch.toLowerCase())
+      formatTaskLabel(task).toLowerCase().includes(taskSearch.toLowerCase())
     );
-    return showAllTasks ? filtered : filtered.slice(0, 6);
+    return showAllTasks ? filtered : filtered.slice(0, FILTER_COLLAPSE_THRESHOLD);
   };
 
   const getFilteredProviders = () => {
-    return providerOptions.filter(provider => 
-      provider.toLowerCase().includes(providerSearch.toLowerCase())
+    const filtered = providerOptions.filter(provider => 
+      formatProviderLabel(provider).toLowerCase().includes(providerSearch.toLowerCase())
     );
+    return showAllProviders ? filtered : filtered.slice(0, FILTER_COLLAPSE_THRESHOLD);
   };
 
   const getFilteredLicenses = () => {
-    return licenseOptions.filter(license => 
+    const filtered = licenseOptions.filter(license => 
       license.toLowerCase().includes(licenseSearch.toLowerCase())
     );
+    return showAllLicenses ? filtered : filtered.slice(0, FILTER_COLLAPSE_THRESHOLD);
   };
 
   const getFilteredLanguages = () => {
-    return languageOptions.filter(language => 
-      language.toLowerCase().includes(languageSearch.toLowerCase())
+    const filtered = languageOptions.filter(language => 
+      formatLanguageLabel(language).toLowerCase().includes(languageSearch.toLowerCase())
     );
+    return showAllLanguages ? filtered : filtered.slice(0, FILTER_COLLAPSE_THRESHOLD);
   };
 
 
-  // Filter functions
-  const getFilteredModels = () => {
-    return mockModels.filter(model => {
-      // Check active text filters
-      const matchesNameFilters = activeFilters.name.length === 0 ||
-        activeFilters.name.some(filter => model.name.toLowerCase().includes(filter.toLowerCase()));
-      
-      const matchesKeywordFilters = activeFilters.keyword.length === 0 ||
-        activeFilters.keyword.some(filter => 
-          model.name.toLowerCase().includes(filter.toLowerCase()) ||
-          model.description.toLowerCase().includes(filter.toLowerCase()) ||
-          model.task.some(task => task.toLowerCase().includes(filter.toLowerCase()))
-        );
-      
-      const matchesDescriptionFilters = activeFilters.description.length === 0 ||
-        activeFilters.description.some(filter => model.description.toLowerCase().includes(filter.toLowerCase()));
-      
-      // Check sidebar filters
-      const matchesTask = selectedTasks.length === 0 || 
-        selectedTasks.some(task => model.task.includes(task));
-      
-      const matchesProvider = selectedProviders.length === 0 || 
-        selectedProviders.includes(model.provider);
-      
-      const matchesLicense = selectedLicenses.length === 0 || 
-        selectedLicenses.includes(model.license);
-      
-      const matchesLanguage = selectedLanguages.length === 0 || 
-        selectedLanguages.some(lang => model.language.includes(lang));
+  // Pagination state for "Load more" functionality
+  const [visibleCount, setVisibleCount] = React.useState(10);
+  
+  // Reset visible count when filters/category change
+  React.useEffect(() => {
+    setVisibleCount(10);
+  }, [search, category, selectedTasks, selectedProviders, selectedLicenses, selectedLanguages, performanceFiltersEnabled]);
 
-      return matchesNameFilters && matchesKeywordFilters && matchesDescriptionFilters && 
-             matchesTask && matchesProvider && matchesLicense && matchesLanguage;
-    });
-  };
+  // Check if any filters or search are active (including performance toggle)
+  const hasActiveFiltersOrSearch = React.useMemo(() => {
+    return search.trim() !== '' || 
+           selectedTasks.length > 0 || 
+           selectedProviders.length > 0 || 
+           selectedLicenses.length > 0 || 
+           selectedLanguages.length > 0 ||
+           performanceFiltersEnabled;
+  }, [search, selectedTasks, selectedProviders, selectedLicenses, selectedLanguages, performanceFiltersEnabled]);
 
-  const getValidatedModels = () => getFilteredModels().filter(model => model.validated);
-  const getRedHatModels = () => getFilteredModels().filter(model => model.provider === 'Red Hat' && !model.validated);
-  const getCommunityModels = () => getFilteredModels().filter(model => model.provider !== 'Red Hat');
-
-  // Filter handlers
-  const handleTaskFilter = (task: string, checked: boolean) => {
-    setSelectedTasks(prev => 
-      checked ? [...prev, task] : prev.filter(t => t !== task)
-    );
-  };
-
-  const handleProviderFilter = (provider: string, checked: boolean) => {
-    setSelectedProviders(prev => 
-      checked ? [...prev, provider] : prev.filter(p => p !== provider)
-    );
-  };
-
-  const handleLicenseFilter = (license: string, checked: boolean) => {
-    setSelectedLicenses(prev => 
-      checked ? [...prev, license] : prev.filter(l => l !== license)
-    );
-  };
-
-  const handleLanguageFilter = (language: string, checked: boolean) => {
-    setSelectedLanguages(prev => 
-      checked ? [...prev, language] : prev.filter(l => l !== language)
-    );
-  };
-
-  // Filter management functions
-  const addFilter = (attribute: 'name' | 'keyword' | 'description', value: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [attribute]: [...prev[attribute], value]
-    }));
-  };
-
-  const removeFilter = (attribute: 'name' | 'keyword' | 'description', value: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [attribute]: prev[attribute].filter(item => item !== value)
-    }));
-  };
-
-  const clearAllFilters = () => {
-    setActiveFilters({
-      name: [],
-      keyword: [],
-      description: []
-    });
-  };
-
-  const getFilterPlaceholder = () => {
-    switch (filterAttribute) {
-      case 'name':
-        return 'Filter by name';
-      case 'keyword':
-        return 'Filter by keyword';
-      case 'description':
-        return 'Filter by description';
-      default:
-        return 'Filter by keyword';
+  // Filter functions using real Model type
+  const filteredModels = React.useMemo(() => {
+    let filtered = [...MODELS];
+    
+    // Search filter
+    if (search.trim()) {
+      const searchLower = search.trim().toLowerCase();
+      filtered = filtered.filter(model => 
+        model.name.toLowerCase().includes(searchLower) ||
+        model.description.toLowerCase().includes(searchLower)
+      );
     }
-  };
-
-  // Function to toggle expanded tasks for a specific card
-  const toggleExpandedTasks = (modelId: string) => {
-    setExpandedTaskCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(modelId)) {
-        newSet.delete(modelId);
+    
+    // Category filter
+    if (category !== null) {
+      filtered = filtered.filter(model => model.category === category);
+    }
+    
+    // Sidebar filters
+    if (selectedTasks.length > 0) {
+      filtered = filtered.filter(model => {
+        const modelTask = Array.isArray(model.task) ? model.task : [model.task];
+        return modelTask.some(t => selectedTasks.includes(t));
+      });
+    }
+    if (selectedProviders.length > 0) {
+      filtered = filtered.filter(model => selectedProviders.includes(model.provider));
+    }
+    if (selectedLicenses.length > 0) {
+      filtered = filtered.filter(model => selectedLicenses.includes(model.license));
+    }
+    if (selectedLanguages.length > 0) {
+      filtered = filtered.filter(model => {
+        const modelLang = Array.isArray(model.language) ? model.language : [model.language];
+        return modelLang.some(l => selectedLanguages.includes(l));
+      });
+    }
+    
+    // Performance filters (only when toggle is ON) - use local state for instant reactivity
+    if (performanceFiltersEnabled) {
+      filtered = filtered.filter(model => {
+        // Only validated models have benchmarks
+        if (model.category !== 'validated') return false;
+        
+        // Generate benchmarks for this model
+        const benchmarks = generateModelBenchmarks(model);
+        
+        // Filter benchmarks based on performance criteria (use local state)
+        const filteredBenchmarks = filterBenchmarks(benchmarks, {
+          workload: workload,
+          hardware: hardware,
+          latencyValue: latencyValue,
+          rpsValue: rpsValue,
+          latencyMetric: latencyMetric,
+          latencyPercentile: latencyPercentile,
+        });
+        
+        // Model passes if it has at least one matching benchmark
+        return filteredBenchmarks.length > 0;
+      });
+    }
+    
+    // Sorting logic
+    if (performanceFiltersEnabled) {
+      // When performance toggle is ON, use sortOption
+      if (sortOption === 'latency') {
+        // Sort by latency (lowest first) - get latency from first benchmark (already sorted by lowest latency)
+        filtered.sort((a, b) => {
+          const benchmarksA = generateModelBenchmarks(a);
+          const benchmarksB = generateModelBenchmarks(b);
+          const filteredA = filterBenchmarks(benchmarksA, { workload: workload, hardware: hardware, latencyValue: latencyValue, rpsValue: rpsValue, latencyMetric: latencyMetric, latencyPercentile: latencyPercentile });
+          const filteredB = filterBenchmarks(benchmarksB, { workload: workload, hardware: hardware, latencyValue: latencyValue, rpsValue: rpsValue, latencyMetric: latencyMetric, latencyPercentile: latencyPercentile });
+          
+          // Get latency from first benchmark (filterBenchmarks already sorts by lowest latency)
+          const getFirstBenchmarkLatency = (benchmarks: any[]) => {
+            if (benchmarks.length === 0) return Infinity;
+            // Use the latency field which is set based on current filter's metric/percentile
+            return benchmarks[0].latency || Infinity;
+          };
+          
+          return getFirstBenchmarkLatency(filteredA) - getFirstBenchmarkLatency(filteredB);
+        });
       } else {
-        newSet.add(modelId);
+        // Sort by recent publish (createdAt descending)
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
       }
-      return newSet;
+    } else {
+      // When performance toggle is OFF, sort by publish date (createdAt) descending
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+    }
+    
+    return filtered;
+  }, [search, category, selectedTasks, selectedProviders, selectedLicenses, selectedLanguages, 
+      performanceFiltersEnabled, workload, hardware, latencyValue, rpsValue, latencyMetric, latencyPercentile, sortOption]);
+
+  const getValidatedModels = React.useMemo(() => 
+    filteredModels.filter(model => model.category === 'validated'), 
+    [filteredModels]
+  );
+  const getRedHatModels = React.useMemo(() => 
+    filteredModels.filter(model => model.category === 'redhat'), 
+    [filteredModels]
+  );
+  const getCommunityModels = React.useMemo(() => 
+    filteredModels.filter(model => model.category === 'other'), 
+    [filteredModels]
+  );
+  
+  // Helper function for backward compatibility
+  const getFilteredModels = (): ModelCard[] => {
+    // Convert Model[] to ModelCard[] for compatibility with existing renderModelCard
+    return filteredModels.map((model: Model) => {
+      // Handle task as string or string[]
+      const taskArray: string[] = Array.isArray(model.task) ? model.task : [model.task];
+      // Handle language as string or string[]
+      const langArray: string[] = Array.isArray(model.language) ? model.language : (typeof model.language === 'string' ? model.language.split(',').map(l => l.trim()) : ['en']);
+      
+      // Calculate actual benchmark count for validated models
+      const benchmarkCount = model.category === 'validated' 
+        ? generateModelBenchmarks(model).length 
+        : undefined;
+      
+      return {
+      id: model.id,
+      name: model.name,
+      description: model.description,
+      accuracy: model.metrics.accuracy > 0 ? `${model.metrics.accuracy}%` : undefined,
+      hardware: model.performance?.hardware?.[0] || undefined,
+      rps: model.performance?.rps || undefined,
+      ttft: model.performance?.latency || undefined,
+      benchmarks: benchmarkCount,
+      validated: model.category === 'validated',
+      provider: model.provider,
+        task: taskArray,
+      license: model.license,
+        language: langArray,
+      };
     });
   };
+
+  // Filter handlers - sync to URL
+  const handleTaskFilter = React.useCallback((task: string, checked: boolean) => {
+    setSelectedTasks(prev => {
+      const newTasks = checked ? [...prev, task] : prev.filter(t => t !== task);
+      setSearchParams(prevParams => {
+        const next = new URLSearchParams(prevParams);
+        if (newTasks.length > 0) {
+          next.set("tasks", newTasks.join(","));
+        } else {
+          next.delete("tasks");
+        }
+        return next;
+      });
+      return newTasks;
+    });
+  }, [setSearchParams]);
+
+  const handleProviderFilter = React.useCallback((provider: string, checked: boolean) => {
+    setSelectedProviders(prev => {
+      const newProviders = checked ? [...prev, provider] : prev.filter(p => p !== provider);
+      setSearchParams(prevParams => {
+        const next = new URLSearchParams(prevParams);
+        if (newProviders.length > 0) {
+          next.set("providers", newProviders.join(","));
+        } else {
+          next.delete("providers");
+        }
+        return next;
+      });
+      return newProviders;
+    });
+  }, [setSearchParams]);
+
+  const handleLicenseFilter = React.useCallback((license: string, checked: boolean) => {
+    setSelectedLicenses(prev => {
+      const newLicenses = checked ? [...prev, license] : prev.filter(l => l !== license);
+      setSearchParams(prevParams => {
+        const next = new URLSearchParams(prevParams);
+        if (newLicenses.length > 0) {
+          next.set("licenses", newLicenses.join(","));
+        } else {
+          next.delete("licenses");
+        }
+        return next;
+      });
+      return newLicenses;
+    });
+  }, [setSearchParams]);
+
+  const handleLanguageFilter = React.useCallback((language: string, checked: boolean) => {
+    setSelectedLanguages(prev => {
+      const newLanguages = checked ? [...prev, language] : prev.filter(l => l !== language);
+      setSearchParams(prevParams => {
+        const next = new URLSearchParams(prevParams);
+        if (newLanguages.length > 0) {
+          next.set("languages", newLanguages.join(","));
+        } else {
+          next.delete("languages");
+        }
+        return next;
+      });
+      return newLanguages;
+    });
+  }, [setSearchParams]);
+
+
+  // Helper to get filtered benchmarks for a model - same logic as details page
+  // Uses local state for instant reactivity
+  const getFilteredBenchmarksForModel = (modelId: string): any[] => {
+    const originalModel = MODELS.find(m => m.id === modelId);
+    if (!originalModel || originalModel.category !== 'validated') return [];
+    
+    // Step 1: Generate benchmarks (same as details page)
+    const benchmarks = generateModelBenchmarks(originalModel);
+    
+    // Step 2: Filter benchmarks with local filter values
+    return filterBenchmarks(benchmarks, {
+      workload: workload,
+      hardware: hardware,
+      latencyValue: latencyValue,
+      rpsValue: rpsValue,
+      latencyMetric: latencyMetric,
+      latencyPercentile: latencyPercentile
+    });
+  };
+
+  // Reset benchmark indices when local filters change
+  React.useEffect(() => {
+    setBenchmarkIndices({});
+  }, [workload, hardware, latencyValue, rpsValue, latencyMetric, latencyPercentile]);
 
   // Functions to handle benchmark navigation
   const getCurrentBenchmarkIndex = (modelId: string) => {
-    return benchmarkIndices[modelId] || 1; // Default to 1
+    return benchmarkIndices[modelId] || 1; // Default to 1 (1-indexed for display)
   };
 
-  const handleBenchmarkNavigation = (modelId: string, direction: 'left' | 'right') => {
+  const handleBenchmarkNavigation = (modelId: string, direction: 'left' | 'right', maxCount: number) => {
+    if (maxCount <= 0) return;
+    
     setBenchmarkIndices(prev => {
       const currentIndex = prev[modelId] || 1;
       let newIndex = currentIndex;
       
       if (direction === 'right') {
-        newIndex = currentIndex < 3 ? currentIndex + 1 : 1; // Wrap to 1 after 3
+        newIndex = currentIndex < maxCount ? currentIndex + 1 : 1; // Wrap to 1 after max
       } else {
-        newIndex = currentIndex > 1 ? currentIndex - 1 : 3; // Wrap to 3 before 1
+        newIndex = currentIndex > 1 ? currentIndex - 1 : maxCount; // Wrap to max before 1
       }
       
       return {
@@ -443,9 +1098,18 @@ const ModelCatalog: React.FunctionComponent = () => {
   };
 
   // Render model card
-  const renderModelCard = (model: ModelCard) => (
-    <GridItem key={model.id} xl={3} lg={3} md={6} sm={12}>
-      <Card isCompact style={{ height: '100%' }}>
+  const renderModelCard = (model: ModelCard) => {
+    // Get all labels for model cards - task + provider + language
+    const formattedTasks = model.task.map(t => formatTaskLabel(t));
+    const formattedLanguages = model.language.map(l => formatLanguageLabel(l));
+    
+    // Use model.id as key - filter changes are handled by React's normal re-render
+    // Don't include filter values or benchmark index in key as it causes unnecessary remounts
+    const cardKey = model.id;
+    
+    return (
+    <GalleryItem key={cardKey}>
+      <Card style={{ height: '100%' }}>
         <CardHeader style={{ paddingBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {model.validated ? (
@@ -465,24 +1129,34 @@ const ModelCatalog: React.FunctionComponent = () => {
               />
             )}
             {model.validated ? (
-              <Label variant="filled" color="purple">
-                Validated
-              </Label>
+              <Popover bodyContent="Validated models are benchmarked for performance and quality using leading open source evaluation datasets.">
+                <Label variant="filled" color="purple" style={{ cursor: 'pointer' }}>
+                  Validated
+                </Label>
+              </Popover>
             ) : model.provider === 'Red Hat' ? (
-              <Label variant="filled" color="grey">
-                Red Hat
-              </Label>
+              <Popover bodyContent="Red Hat models with full support and legal indemnification.">
+                <Label variant="filled" color="grey" style={{ cursor: 'pointer' }}>
+                  Red Hat
+                </Label>
+              </Popover>
             ) : null}
           </div>
         </CardHeader>
-        <CardBody style={{ paddingTop: '1.5rem' }}>
+          <CardBody style={{ paddingTop: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+          {/* Title area with min-height for B-2 layout alignment */}
+          <div style={{ 
+            minHeight: model.validated && performanceFiltersEnabled ? '3rem' : 'auto',
+            display: 'flex',
+            alignItems: 'flex-start'
+          }}>
           <Button
             variant="link"
             isInline
-            onClick={handleModelNameClick}
+            onClick={() => handleModelNameClick(model.id)}
             style={{ 
               fontSize: '0.875rem', 
-              fontWeight: 'bold',
+                fontWeight: '500',
               marginBottom: '0.5rem',
               padding: '0.25rem 0',
               textAlign: 'left',
@@ -491,16 +1165,19 @@ const ModelCatalog: React.FunctionComponent = () => {
               textDecoration: 'none'
             }}
           >
-            {model.name}
+                {getDisplayName(model.name)}
           </Button>
-          {!model.validated && (
+          </div>
+            
+            {/* Description - shown for non-validated models OR validated models when toggle is OFF */}
+          {(!model.validated || (model.validated && !performanceFiltersEnabled)) && (
             <p style={{ 
               fontSize: '0.875rem', 
               color: '#6a6e73', 
               marginBottom: '1rem',
               lineHeight: '1.4',
               display: '-webkit-box',
-              WebkitLineClamp: 3,
+              WebkitLineClamp: 4,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               textOverflow: 'ellipsis'
@@ -509,130 +1186,174 @@ const ModelCatalog: React.FunctionComponent = () => {
             </p>
           )}
           
-          {model.accuracy && (
+          {/* "View X benchmarks" link - for validated models when toggle is OFF */}
+          {model.validated && !performanceFiltersEnabled && (
             <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {model.validated && <MonitoringIcon style={{ fontSize: model.validated ? '0.875rem' : '1.25rem', color: '#6a6e73' }} />}
-                  <span style={{ fontSize: model.validated ? '0.875rem' : '1.25rem', fontWeight: 'bold' }}>{model.accuracy}</span>
+              <Button 
+                variant="link" 
+                isInline 
+                style={{ fontSize: '0.875rem', padding: 0 }}
+                onClick={() => {
+                  storeFilterStateForAlert();
+                  const params = new URLSearchParams();
+                  if (category) params.set("category", category);
+                  // Don't set perfFilter - keep toggle OFF when returning
+                  if (search.trim()) params.set("search", search.trim());
+                  if (selectedTasks.length > 0) params.set("tasks", selectedTasks.join(","));
+                  if (selectedProviders.length > 0) params.set("providers", selectedProviders.join(","));
+                  if (selectedLicenses.length > 0) params.set("licenses", selectedLicenses.join(","));
+                  if (selectedLanguages.length > 0) params.set("languages", selectedLanguages.join(","));
+                  params.set("tab", "performance");
+                  navigate(`/ai-assets/models/${model.id}?${params.toString()}`);
+                }}
+              >
+                View {model.benchmarks} benchmarks →
+              </Button>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#6a6e73' }}>Average accuracy</span>
-                  <Tooltip content="microcopy coming soon">
-                    <OutlinedQuestionCircleIcon style={{ fontSize: '0.75rem', color: '#6a6e73' }} />
-                  </Tooltip>
-                </div>
-              </div>
-              
-              {model.validated && (
-                <hr style={{ 
-                  border: 'none', 
-                  borderTop: '1px solid #d2d2d2', 
-                  margin: '0.75rem 0',
-                  width: '100%'
-                }} />
-              )}
-              
-              {getCurrentBenchmarkIndex(model.id) === 1 ? (
-                <>
-                  <div style={{ display: 'flex', fontSize: '0.75rem', color: '#6a6e73' }}>
-                    <span style={{ flex: '1', minWidth: '80px' }}><strong>8 x {model.hardware}</strong></span>
-                    <span style={{ flex: '1', minWidth: '60px' }}><strong>1</strong></span>
-                    <span style={{ flex: '1', minWidth: '60px' }}><strong>{model.ttft}</strong></span>
-                  </div>
-                  <div style={{ display: 'flex', fontSize: '0.75rem', color: '#6a6e73' }}>
-                    <span style={{ flex: '1', minWidth: '80px' }}>Hardware</span>
-                    <span style={{ flex: '1', minWidth: '60px' }}>RPS/rep</span>
-                    <span style={{ flex: '1', minWidth: '60px' }}>TTFT</span>
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '2.5rem' }}>
-                  <span style={{ fontSize: '0.875rem', color: '#6a6e73' }}>
-                    benchmark {getCurrentBenchmarkIndex(model.id)}
-                  </span>
-                </div>
-              )}
-            </div>
           )}
 
-          <div style={{ marginTop: 'auto' }}>
-            {model.benchmarks && (
-              <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', color: '#6a6e73' }}>
-                  {getCurrentBenchmarkIndex(model.id)} of 3 <Button variant="link" isInline style={{ fontSize: '0.75rem', padding: 0, textDecoration: 'underline' }} onClick={() => setIsBenchmarkModalOpen(true)}>benchmarks</Button>
+          {/* Benchmark section - ONLY for validated models when toggle is ON */}
+          {model.validated && performanceFiltersEnabled && (() => {
+            // Get filtered benchmarks using same logic as details page
+            const filteredBenchmarks = getFilteredBenchmarksForModel(model.id);
+            const benchmarkCount = filteredBenchmarks.length;
+            
+            // No benchmarks match filters
+            if (benchmarkCount === 0) {
+              return (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '2.5rem' }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                      No benchmarks match filters
+                    </span>
+                </div>
+              </div>
+              );
+            }
+            
+            // Get current benchmark (0-indexed for array access)
+            const currentDisplayIndex = Math.min(getCurrentBenchmarkIndex(model.id), benchmarkCount);
+            const currentBenchmark = filteredBenchmarks[currentDisplayIndex - 1];
+            
+            if (!currentBenchmark) return null;
+            
+            // Parse hardware string like "H100 x 8"
+            const hwParts = currentBenchmark.hardware.split(' x ');
+            const hwType = hwParts[0] || currentBenchmark.hardware;
+            const hwCount = hwParts[1] || '1';
+            
+            // Get latency based on current filter metric/percentile (use local state)
+            const latencyDisplayValue = currentBenchmark.latencyData[latencyMetric][latencyPercentile];
+            const latencyLabel = latencyMetric === 'TTFT' ? 'Time To First Token - measures the time until the first response token is generated.' : 
+                                 latencyMetric === 'ITL' ? 'Inter-Token Latency - measures the average time between consecutive tokens.' : 
+                                 'End-to-End Latency - measures the total time from request to complete response.';
+            
+            return (
+              <>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', fontSize: '0.875rem' }}>
+                    <span style={{ flex: '1', minWidth: '80px' }}>
+                      <span style={{ fontWeight: '500' }}>{hwType}</span>
+                      <span style={{ color: 'var(--pf-t--global--text--color--subtle)' }}> x </span>
+                      <span style={{ fontWeight: '500' }}>{hwCount}</span>
+                    </span>
+                    <span style={{ flex: '1', minWidth: '60px', fontWeight: '500' }}>{currentBenchmark.replicas}</span>
+                    <span style={{ flex: '1', minWidth: '80px', textAlign: 'right' }}>
+                      <span style={{ fontWeight: '500' }}>{latencyDisplayValue}</span>
+                      <span style={{ color: 'var(--pf-t--global--text--color--subtle)' }}> ms</span>
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', fontSize: '0.75rem', color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    <span style={{ flex: '1', minWidth: '80px' }}>Hardware</span>
+                    <span style={{ flex: '1', minWidth: '60px' }}>Replica</span>
+                    <span style={{ flex: '1', minWidth: '80px', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem' }}>
+                      {latencyMetric}
+                      <Popover bodyContent={latencyLabel}>
+                        <OutlinedQuestionCircleIcon style={{ fontSize: '0.75rem', color: 'var(--pf-t--global--text--color--subtle)', cursor: 'pointer' }} />
+                      </Popover>
+                  </span>
+                </div>
+            </div>
+
+                {/* Benchmark navigation */}
+                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#6a6e73' }}>
+                    {currentDisplayIndex} of {benchmarkCount} <Button variant="link" isInline style={{ fontSize: '0.875rem', padding: 0, textDecoration: 'underline' }} onClick={() => {
+                      storeFilterStateForAlert();
+                    const params = new URLSearchParams();
+                    if (category) params.set("category", category);
+                    if (performanceFiltersEnabled) params.set("perfFilter", "true");
+                    if (search.trim()) params.set("search", search.trim());
+                    if (selectedTasks.length > 0) params.set("tasks", selectedTasks.join(","));
+                    if (selectedProviders.length > 0) params.set("providers", selectedProviders.join(","));
+                    if (selectedLicenses.length > 0) params.set("licenses", selectedLicenses.join(","));
+                    if (selectedLanguages.length > 0) params.set("languages", selectedLanguages.join(","));
+                    params.set("workload", workload);
+                    params.set("latencyMetric", latencyMetric);
+                    params.set("latencyPercentile", latencyPercentile);
+                    params.set("latencyValue", latencyValue.toString());
+                    params.set("rpsValue", rpsValue.toString());
+                    if (hardware.length > 0) params.set("hardware", hardware.join(","));
+                      params.set("tab", "performance");
+                    navigate(`/ai-assets/models/${model.id}?${params.toString()}`);
+                  }}>benchmarks</Button>
                 </span>
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
                   <Button 
                     variant="plain" 
                     style={{ padding: '0.125rem', minWidth: 'auto', height: 'auto' }}
-                    onClick={() => handleBenchmarkNavigation(model.id, 'left')}
+                      onClick={() => handleBenchmarkNavigation(model.id, 'left', benchmarkCount)}
                   >
                     <AngleLeftIcon style={{ fontSize: '0.75rem' }} />
                   </Button>
                   <Button 
                     variant="plain" 
                     style={{ padding: '0.125rem', minWidth: 'auto', height: 'auto' }}
-                    onClick={() => handleBenchmarkNavigation(model.id, 'right')}
+                      onClick={() => handleBenchmarkNavigation(model.id, 'right', benchmarkCount)}
                   >
                     <AngleRightIcon style={{ fontSize: '0.75rem' }} />
                   </Button>
                 </div>
               </div>
-            )}
-            
-            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-              {model.provider === 'Red Hat' && !model.validated && (
-                <Label variant="filled" color="orange">LAB judge</Label>
-              )}
-              {model.provider !== 'Red Hat' ? (
-                <>
-                  <Label variant="outline">Text generation</Label>
-                  <Label variant="outline">Question answering</Label>
-                  <Label variant="outline">Chinese</Label>
-                </>
-              ) : (
-                <>
-                  <Label variant="outline">Task_name</Label>
-                  <Label variant="outline">Provider</Label>
-                </>
-              )}
-              {model.additionalTasks && !expandedTaskCards.has(model.id) && !(model.provider === 'Red Hat' && !model.validated) && (
-                <Button 
-                  variant="link" 
-                  isInline 
-                  style={{ fontSize: '0.75rem', padding: '0.125rem 0.25rem', height: 'auto', minHeight: 'auto' }}
-                  onClick={() => toggleExpandedTasks(model.id)}
-                >
-                  3 more
-                </Button>
-              )}
-              {model.additionalTasks && expandedTaskCards.has(model.id) && (
-                <>
-                  {model.additionalTasks.map((task, index) => (
-                    <Label key={index} variant="outline">{task}</Label>
-                  ))}
-                  <Button 
-                    variant="link" 
-                    isInline 
-                    style={{ fontSize: '0.75rem', padding: '0.125rem 0.25rem', height: 'auto', minHeight: 'auto' }}
-                    onClick={() => toggleExpandedTasks(model.id)}
-                  >
-                    Show less
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+              </>
+            );
+          })()}
         </CardBody>
+        <CardFooter>
+          {/* Labels section - using LabelGroup with numLabels for truncation */}
+          <LabelGroup numLabels={2}>
+            {/* Task labels */}
+            {formattedTasks.map((task, index) => (
+              <Label key={`task-${index}`} variant="outline">{task}</Label>
+            ))}
+            {/* Provider label */}
+            <Label variant="outline">{formatProviderLabel(model.provider)}</Label>
+            {/* Language labels (if more than just English) */}
+            {formattedLanguages.length > 1 || (formattedLanguages.length === 1 && model.language[0] !== 'en') ? (
+              formattedLanguages.map((lang, index) => (
+                <Label key={`lang-${index}`} variant="outline">{lang}</Label>
+              ))
+            ) : null}
+          </LabelGroup>
+        </CardFooter>
       </Card>
-    </GridItem>
+    </GalleryItem>
   );
+  };
 
   return (
-    <PageSection isFilled style={{ padding: 0 }}>
+    <div 
+      className="catalog-scrollable"
+      style={{ 
+        height: '100%',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
+    >
+      <style>{scrollbarStyles}</style>
+      <PageSection isFilled style={{ padding: 0, minHeight: '100%' }}>
       {/* Header */}
-      <div style={{ padding: '1rem', paddingBottom: '0' }}>
+        <div style={{ padding: '1.5rem', paddingBottom: '0' }}>
         <Title headingLevel="h1" size="2xl" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <div style={{ background: '#daf2f2', borderRadius: '20px', padding: '4px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div 
@@ -647,26 +1368,25 @@ const ModelCatalog: React.FunctionComponent = () => {
         </p>
       </div>
       
-      <Sidebar>
-        <SidebarPanel 
-          width={{ default: 'width_25' }}
+        <div style={{ display: 'flex', width: '100%' }}>
+        {/* Filter Panel - Fixed Width */}
+        <div 
+          className="catalog-scrollable"
           style={{ 
             borderRight: '1px solid #d2d2d2',
-            flex: '0 0 240px',
-            maxWidth: '240px'
+            flex: '0 0 320px',
+            overflowY: 'auto',
+            height: 'calc(100vh - 150px)',
+            position: 'sticky',
+            top: 0,
+            alignSelf: 'flex-start'
           }}
         >
           {/* Filter Sidebar */}
-          <div style={{ padding: '0 1rem 1rem 1rem' }}>
-            {/* Explore model performance card */}
-            {flags.modelPerformanceInCatalog && (
-              <div style={{ 
-                backgroundColor: '#f8f9fa',
-                border: '1px solid #d2d2d2',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1.5rem'
-              }}>
+          <div style={{ padding: '1.5rem 1.5rem 1.5rem 1.5rem' }}>
+            {/* Explore model performance card - Always visible */}
+            <Card isCompact style={{ marginBottom: '1.5rem' }}>
+              <CardBody>
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'flex-start', 
@@ -674,15 +1394,15 @@ const ModelCatalog: React.FunctionComponent = () => {
                   marginBottom: '0.5rem'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CubeIcon style={{ fontSize: '1rem', color: '#6366f1' }} />
-                    <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1f2937' }}>
-                      Explore model performance
+                    <FontAwesomeIcon icon={faChartColumn} style={{ fontSize: '1rem', color: 'var(--pf-t--global--icon--color--status--info--default)' }} />
+                    <span style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1f2937' }}>
+                      Model performance view
                     </span>
                   </div>
                   <Switch
                     id="performance-filters"
                     isChecked={performanceFiltersEnabled}
-                    onChange={(_event, checked) => setPerformanceFiltersEnabled(checked)}
+                    onChange={(_event, checked) => handleTogglePerformanceFilters(checked)}
                     aria-label="Enable performance filters"
                   />
                 </div>
@@ -692,26 +1412,19 @@ const ModelCatalog: React.FunctionComponent = () => {
                   margin: 0,
                   lineHeight: '1.4'
                 }}>
-                  Enable performance filters and show only models with benchmark data
+                  Enable performance filters, display model benchmark data, and exclude unvalidated models.
                 </p>
-              </div>
-            )}
+              </CardBody>
+            </Card>
 
-            {/* Filter Tabs */}
-            {flags.modelPerformanceInCatalog ? (
-              <Tabs 
-                activeKey={activeFilterTab} 
-                onSelect={(_event, tabIndex) => setActiveFilterTab(tabIndex)}
-              >
-              <Tab eventKey={0} title={<TabTitleText>Global</TabTitleText>}>
-                <div>
+            {/* Filter Sections */}
                   {/* Task Filter */}
                   <div style={{ marginBottom: '1.5rem' }}>
-              <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
+                  <div style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
                 Task
-              </Title>
+                  </div>
               <SearchInput
-                placeholder="Search for tasks"
+                    placeholder="Search task"
                 value={taskSearch}
                 onChange={(_event, value) => setTaskSearch(value)}
                 onClear={() => setTaskSearch('')}
@@ -721,7 +1434,7 @@ const ModelCatalog: React.FunctionComponent = () => {
                 <div key={task} style={{ marginBottom: '0.5rem' }}>
                   <Checkbox
                     id={`task-${task}`}
-                    label={task}
+                        label={formatTaskLabel(task)}
                     isChecked={selectedTasks.includes(task)}
                     onChange={(_event, checked) => handleTaskFilter(task, checked)}
                   />
@@ -743,11 +1456,11 @@ const ModelCatalog: React.FunctionComponent = () => {
 
             {/* Provider Filter */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
+                  <div style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
                 Provider
-              </Title>
+                  </div>
               <SearchInput
-                placeholder="Search for providers"
+                    placeholder="Search provider"
                 value={providerSearch}
                 onChange={(_event, value) => setProviderSearch(value)}
                 onClear={() => setProviderSearch('')}
@@ -757,23 +1470,33 @@ const ModelCatalog: React.FunctionComponent = () => {
                 <div key={provider} style={{ marginBottom: '0.5rem' }}>
                   <Checkbox
                     id={`provider-${provider}`}
-                    label={provider}
+                        label={formatProviderLabel(provider)}
                     isChecked={selectedProviders.includes(provider)}
                     onChange={(_event, checked) => handleProviderFilter(provider, checked)}
                   />
                 </div>
               ))}
+                  {providerOptions.length > FILTER_COLLAPSE_THRESHOLD && (
+                    <Button 
+                      variant="link" 
+                      isInline 
+                      style={{ fontSize: '0.875rem', padding: 0 }}
+                      onClick={() => setShowAllProviders(!showAllProviders)}
+                    >
+                      {showAllProviders ? 'Show less' : 'Show more'}
+                    </Button>
+                  )}
             </div>
 
             <Divider style={{ marginBottom: '1rem' }} />
 
             {/* License Filter */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
+                  <div style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
                 License
-              </Title>
+                  </div>
               <SearchInput
-                placeholder="Search for licenses"
+                    placeholder="Search license"
                 value={licenseSearch}
                 onChange={(_event, value) => setLicenseSearch(value)}
                 onClear={() => setLicenseSearch('')}
@@ -789,17 +1512,27 @@ const ModelCatalog: React.FunctionComponent = () => {
                   />
                 </div>
               ))}
+                  {licenseOptions.length > FILTER_COLLAPSE_THRESHOLD && (
+                    <Button 
+                      variant="link" 
+                      isInline 
+                      style={{ fontSize: '0.875rem', padding: 0 }}
+                      onClick={() => setShowAllLicenses(!showAllLicenses)}
+                    >
+                      {showAllLicenses ? 'Show less' : 'Show more'}
+                    </Button>
+                  )}
             </div>
 
             <Divider style={{ marginBottom: '1rem' }} />
 
             {/* Language Filter */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
+                  <div style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
                 Language
-              </Title>
+                  </div>
               <SearchInput
-                placeholder="Search for languages"
+                    placeholder="Search language"
                 value={languageSearch}
                 onChange={(_event, value) => setLanguageSearch(value)}
                 onClear={() => setLanguageSearch('')}
@@ -809,379 +1542,864 @@ const ModelCatalog: React.FunctionComponent = () => {
                 <div key={language} style={{ marginBottom: '0.5rem' }}>
                   <Checkbox
                     id={`language-${language}`}
-                    label={language}
+                        label={formatLanguageLabel(language)}
                     isChecked={selectedLanguages.includes(language)}
                     onChange={(_event, checked) => handleLanguageFilter(language, checked)}
                   />
                 </div>
               ))}
-                  </div>
-                </div>
-              </Tab>
-              
-              {flags.modelPerformanceInCatalog && (
-                <Tab eventKey={1} title={<TabTitleText>Performance</TabTitleText>}>
-                  {/* Performance filters content - empty for now */}
-                  <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
-                    Performance filters coming soon
-                  </div>
-                </Tab>
-              )}
-              </Tabs>
-            ) : (
-              /* Show filters directly without tabs when performance feature is off */
-              <div>
-                {/* Task Filter */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
-                    Task
-                  </Title>
-                  <SearchInput
-                    placeholder="Search for tasks"
-                    value={taskSearch}
-                    onChange={(_event, value) => setTaskSearch(value)}
-                    onClear={() => setTaskSearch('')}
-                    style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}
-                  />
-                  {getFilteredTasks().map(task => (
-                    <div key={task} style={{ marginBottom: '0.5rem' }}>
-                      <Checkbox
-                        id={`task-${task}`}
-                        label={task}
-                        isChecked={selectedTasks.includes(task)}
-                        onChange={(_event, checked) => handleTaskFilter(task, checked)}
-                      />
-                    </div>
-                  ))}
-                  {taskOptions.length > 6 && (
+                  {languageOptions.length > FILTER_COLLAPSE_THRESHOLD && (
                     <Button 
                       variant="link" 
                       isInline 
                       style={{ fontSize: '0.875rem', padding: 0 }}
-                      onClick={() => setShowAllTasks(!showAllTasks)}
+                      onClick={() => setShowAllLanguages(!showAllLanguages)}
                     >
-                      {showAllTasks ? 'Show less' : 'Show more'}
+                      {showAllLanguages ? 'Show less' : 'Show more'}
                     </Button>
                   )}
                 </div>
-
-                <Divider style={{ marginBottom: '1rem' }} />
-
-                {/* Provider Filter */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
-                    Provider
-                  </Title>
-                  <SearchInput
-                    placeholder="Search for providers"
-                    value={providerSearch}
-                    onChange={(_event, value) => setProviderSearch(value)}
-                    onClear={() => setProviderSearch('')}
-                    style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}
-                  />
-                  {getFilteredProviders().map(provider => (
-                    <div key={provider} style={{ marginBottom: '0.5rem' }}>
-                      <Checkbox
-                        id={`provider-${provider}`}
-                        label={provider}
-                        isChecked={selectedProviders.includes(provider)}
-                        onChange={(_event, checked) => handleProviderFilter(provider, checked)}
-                      />
                     </div>
-                  ))}
                 </div>
 
-                <Divider style={{ marginBottom: '1rem' }} />
-
-                {/* License Filter */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
-                    License
-                  </Title>
-                  <SearchInput
-                    placeholder="Search for licenses"
-                    value={licenseSearch}
-                    onChange={(_event, value) => setLicenseSearch(value)}
-                    onClear={() => setLicenseSearch('')}
-                    style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}
-                  />
-                  {getFilteredLicenses().map(license => (
-                    <div key={license} style={{ marginBottom: '0.5rem' }}>
-                      <Checkbox
-                        id={`license-${license}`}
-                        label={license}
-                        isChecked={selectedLicenses.includes(license)}
-                        onChange={(_event, checked) => handleLicenseFilter(license, checked)}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <Divider style={{ marginBottom: '1rem' }} />   
-
-                {/* Language Filter */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>
-                    Language
-                  </Title>
-                  <SearchInput
-                    placeholder="Search for languages"
-                    value={languageSearch}
-                    onChange={(_event, value) => setLanguageSearch(value)}
-                    onClear={() => setLanguageSearch('')}
-                    style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}
-                  />
-                  {getFilteredLanguages().map(language => (
-                    <div key={language} style={{ marginBottom: '0.5rem' }}>
-                      <Checkbox
-                        id={`language-${language}`}
-                        label={language}
-                        isChecked={selectedLanguages.includes(language)}
-                        onChange={(_event, checked) => handleLanguageFilter(language, checked)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </SidebarPanel>
-
-        <SidebarContent>
+        {/* Content Area - Flexible Width */}
+        <div 
+          className="catalog-scrollable"
+          style={{ 
+            overflowY: 'auto', 
+            overflowX: 'hidden',
+            height: 'calc(100vh - 150px)',
+            flex: '1 1 0%',
+            minWidth: 0
+          }}
+        >
           {/* Main Content */}
           <div style={{ padding: '1.5rem' }}>
-            {/* Search and Filters */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <Toolbar>
-                <ToolbarContent>
-                  <ToolbarGroup>
-                    <ToolbarItem>
-                      <InputGroup>
-                        <InputGroupItem>
-                          <Dropdown
-                            isOpen={filterDropdownOpen}
-                            onSelect={() => setFilterDropdownOpen(false)}
-                            onOpenChange={(isOpen: boolean) => setFilterDropdownOpen(isOpen)}
-                            toggle={(toggleRef: React.Ref<HTMLButtonElement>) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                                isExpanded={filterDropdownOpen}
-                                style={{
-                                  minWidth: '120px',
-                                  backgroundColor: '#f0f0f0',
-                                  borderRight: 'none',
-                                  borderTopRightRadius: 0,
-                                  borderBottomRightRadius: 0
-                                }}
-                              >
-                                <FilterIcon style={{ marginRight: '0.5rem' }} />
-                                {filterAttribute === 'name' && 'Name'}
-                                {filterAttribute === 'keyword' && 'Keyword'}
-                                {filterAttribute === 'description' && 'Description'}
-                              </MenuToggle>
-                            )}
-                          >
-                            <DropdownList>
-                              <DropdownItem 
-                                key="name"
-                                onClick={() => {
-                                  setFilterAttribute('name');
-                                  setFilterInput('');
-                                }}
-                              >
-                                Name
-                              </DropdownItem>
-                              <DropdownItem 
-                                key="keyword"
-                                onClick={() => {
-                                  setFilterAttribute('keyword');
-                                  setFilterInput('');
-                                }}
-                              >
-                                Keyword
-                              </DropdownItem>
-                              <DropdownItem 
-                                key="description"
-                                onClick={() => {
-                                  setFilterAttribute('description');
-                                  setFilterInput('');
-                                }}
-                              >
-                                Description
-                              </DropdownItem>
-                            </DropdownList>
-                          </Dropdown>
-                        </InputGroupItem>
-                        <InputGroupItem isFill>
-                          <SearchInput
-                            placeholder={getFilterPlaceholder()}
-                            value={filterInput}
-                            onChange={(_event, value) => setFilterInput(value)}
-                            onSearch={() => {
-                              if (filterInput.trim()) {
-                                addFilter(filterAttribute, filterInput.trim());
-                                setFilterInput('');
-                              }
-                            }}
-                            onClear={() => setFilterInput('')}
-                            style={{ 
-                              borderTopLeftRadius: 0,
-                              borderBottomLeftRadius: 0,
-                              minWidth: '300px'
-                            }}
-                          />
-                        </InputGroupItem>
-                      </InputGroup>
-                    </ToolbarItem>
-                  </ToolbarGroup>
-
-                  {/* Active Filters Row */}
-                  {(activeFilters.name.length > 0 || activeFilters.keyword.length > 0 || activeFilters.description.length > 0) && (
-                    <ToolbarGroup>
-                      <ToolbarItem variant="label-group">
-                        <LabelGroup
-                          categoryName="Active filters"
-                          isClosable={false}
-                          numLabels={activeFilters.name.length + activeFilters.keyword.length + activeFilters.description.length}
-                        >
-                          {activeFilters.name.map(filter => (
-                            <Label 
-                              key={`name-${filter}`}
-                              variant="outline"
-                              onClose={() => removeFilter('name', filter)}
-                            >
-                              {filter}
-                            </Label>
-                          ))}
-                          {activeFilters.keyword.map(filter => (
-                            <Label 
-                              key={`keyword-${filter}`}
-                              variant="outline"
-                              onClose={() => removeFilter('keyword', filter)}
-                            >
-                              {filter}
-                            </Label>
-                          ))}
-                          {activeFilters.description.map(filter => (
-                            <Label 
-                              key={`description-${filter}`}
-                              variant="outline"
-                              onClose={() => removeFilter('description', filter)}
-                            >
-                              {filter}
-                            </Label>
-                          ))}
-                        </LabelGroup>
-                        <Button 
-                          variant="link" 
-                          onClick={() => clearAllFilters()}
-                          size="sm"
-                        >
-                          Clear filters
-                        </Button>
-                      </ToolbarItem>
-                    </ToolbarGroup>
-                  )}
-                </ToolbarContent>
-              </Toolbar>
+            {/* Search Input - always visible */}
+            <div style={{ marginBottom: (!performanceFiltersEnabled && (selectedTasks.length > 0 || selectedProviders.length > 0 || selectedLicenses.length > 0 || selectedLanguages.length > 0)) ? '0' : '1rem' }}>
+              <SearchInput
+                placeholder="Filter by name or description"
+                value={searchInput}
+                onChange={(_event, value) => {
+                  setSearchInput(value);
+                }}
+                onSearch={(_event, value) => {
+                  setSearch(value || '');
+                }}
+                onClear={() => {
+                  setSearchInput('');
+                  setSearch('');
+                }}
+                style={{ width: '600px' }}
+              />
             </div>
 
-            {/* Filter Toggle Group */}
-            <ToggleGroup 
-              style={{ 
-                marginBottom: '1.5rem'
-              }}
-              aria-label="Model category filter"
+            {/* Filter chips toolbar - when performance toggle is OFF and has filters */}
+            {(!performanceFiltersEnabled && (selectedTasks.length > 0 || selectedProviders.length > 0 || selectedLicenses.length > 0 || selectedLanguages.length > 0)) && (
+            <div key="filter-chips-off" style={{ marginTop: '1rem' }}>
+              <Toolbar id="search-toolbar">
+              {/* First row: All chips */}
+              <ToolbarContent>
+                <ToolbarGroup variant="filter-group" style={{ flexWrap: 'wrap', rowGap: '0.5rem' }}>
+                  {/* Task chips */}
+                  {selectedTasks.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Task" isClosable onClick={() => setSelectedTasks([])}>
+                        {selectedTasks.map(task => (
+                          <Label key={task} onClose={() => handleTaskFilter(task, false)}>{formatTaskLabel(task)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Provider chips */}
+                  {selectedProviders.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Provider" isClosable onClick={() => setSelectedProviders([])}>
+                        {selectedProviders.map(provider => (
+                          <Label key={provider} onClose={() => handleProviderFilter(provider, false)}>{formatProviderLabel(provider)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* License chips */}
+                  {selectedLicenses.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="License" isClosable onClick={() => setSelectedLicenses([])}>
+                        {selectedLicenses.map(license => (
+                          <Label key={license} onClose={() => handleLicenseFilter(license, false)}>{license}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Language chips */}
+                  {selectedLanguages.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Language" isClosable onClick={() => setSelectedLanguages([])}>
+                        {selectedLanguages.map(lang => (
+                          <Label key={lang} onClose={() => handleLanguageFilter(lang, false)}>{formatLanguageLabel(lang)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                </ToolbarGroup>
+              </ToolbarContent>
+              {/* Second row: Reset all filters button */}
+              <ToolbarContent>
+                <ToolbarItem>
+                  <Button variant="link" isInline onClick={() => {
+                    setSearch('');
+                    setSearchInput('');
+                    setSelectedTasks([]);
+                    setSelectedProviders([]);
+                    setSelectedLicenses([]);
+                    setSelectedLanguages([]);
+                  }}>
+                    Reset all filters
+                  </Button>
+                </ToolbarItem>
+              </ToolbarContent>
+            </Toolbar>
+            </div>
+            )}
+
+            {/* Performance Toolbar - use display instead of conditional rendering to prevent blink */}
+            <div style={{ display: performanceFiltersEnabled ? 'block' : 'none', marginTop: '0.5rem' }}>
+                <Title headingLevel="h3" size="lg" style={{ marginBottom: '0.5rem' }}>
+                  Set performance criteria to find the best model
+                </Title>
+                <Toolbar>
+                  <ToolbarContent>
+                    <ToolbarGroup>
+                      {/* Workload Type */}
+                      <ToolbarItem>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.125rem' }}>
+                          <div ref={workloadMenuRef} style={{ position: 'relative' }}>
+                            <MenuToggle
+                              onClick={() => setIsWorkloadOpen(!isWorkloadOpen)}
+                              isExpanded={isWorkloadOpen}
+                              style={{ height: '56px' }}
+                            >
+                              <span style={{ fontWeight: 500 }}>Workload:</span> {WORKLOAD_OPTIONS.find(o => o.value === workload)?.label || workload}
+                            </MenuToggle>
+                            {isWorkloadOpen && (
+                              <Menu 
+                                role="listbox" 
+                                onSelect={(_, itemId) => { setWorkload(itemId as any); setIsWorkloadOpen(false); }}
+                                selected={workload}
+                                style={{ position: 'absolute', top: '100%', left: 0, zIndex: 9999, minWidth: '100%' }}
+                              >
+                                <MenuContent>
+                                  <MenuList>
+                                    {WORKLOAD_OPTIONS.map((option) => (
+                                      <MenuItem key={option.value} itemId={option.value}>
+                                        {option.label}
+                                      </MenuItem>
+                                    ))}
+                                  </MenuList>
+                                </MenuContent>
+                              </Menu>
+                            )}
+                          </div>
+                          <Popover
+                            bodyContent="Sets the input and output token lengths used for generating the benchmark. Different scenarios (e.g. Chatbot) use different token counts, which impacts performance results below."
+                          >
+                            <Button variant="plain" aria-label="Workload help" style={{ padding: '0.25rem' }}>
+                              <OutlinedQuestionCircleIcon />
+                            </Button>
+                          </Popover>
+                          <Divider orientation={{ default: 'vertical' }} style={{ height: '56px', marginLeft: '0.25rem', marginRight: '0' }} />
+                        </div>
+                      </ToolbarItem>
+                      
+                      {/* Latency */}
+                      <ToolbarItem>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.125rem' }}>
+                          <div ref={latencyPanelRef} style={{ position: 'relative' }}>
+                            <MenuToggle 
+                              onClick={handleOpenLatencyPanel}
+                              isExpanded={isLatencyOpen}
+                              style={{ height: '56px' }}
+                            >
+                              <span style={{ fontWeight: 500 }}>Latency:</span> {latencyMetric} | {latencyPercentile} | Under {latencyValue}ms
+                                    </MenuToggle>
+                            {isLatencyOpen && (
+                              <Panel 
+                                variant="raised" 
+                                style={{ 
+                                  position: 'absolute', 
+                                  top: '100%', 
+                                  left: 0, 
+                                  zIndex: 9999,
+                                  minWidth: '450px'
+                                }}
+                              >
+                                <PanelMain>
+                                  <PanelMainBody>
+                                    {/* Row 1: Metric and Percentile dropdowns */}
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                      <div ref={metricMenuRef} style={{ position: 'relative', flex: 1 }}>
+                                        <MenuToggle 
+                                          onClick={() => { setIsMetricSelectOpen(!isMetricSelectOpen); setIsPercentileSelectOpen(false); }}
+                                          isExpanded={isMetricSelectOpen}
+                                          style={{ width: '100%' }}
+                                        >
+                                          <span style={{ fontWeight: 500 }}>Metric:</span> {pendingLatencyMetric}
+                                    </MenuToggle>
+                                        {isMetricSelectOpen && (
+                                          <Menu 
+                                            role="listbox" 
+                                            onSelect={(_, itemId) => { setPendingLatencyMetric(itemId as any); setIsMetricSelectOpen(false); }}
+                                            selected={pendingLatencyMetric}
+                                            style={{ position: 'absolute', top: '100%', left: 0, zIndex: 9999, minWidth: '100%' }}
+                                          >
+                                            <MenuContent>
+                                              <MenuList>
+                                                <MenuItem itemId="TTFT">TTFT</MenuItem>
+                                                <MenuItem itemId="ITL">ITL</MenuItem>
+                                                <MenuItem itemId="E2E">E2E</MenuItem>
+                                              </MenuList>
+                                            </MenuContent>
+                                          </Menu>
+                                        )}
+                                      </div>
+                                      <Popover bodyContent={<div>Choose the specific aspect of speed that matters most for your use case:<br/><br/><strong>TTFT (Time To First Token):</strong> How quickly the model starts responding. Important for perceived responsiveness.<br/><br/><strong>E2E (End-To-End):</strong> The total time to generate the full response. Important for completion tasks.<br/><br/><strong>ITL (Inter-Token Latency):</strong> The time gap between generating each new token. Consistent ITL ensures smooth streaming.<br/><br/><strong>TPS (Tokens Per Second):</strong> The speed of text generation. Higher TPS is better.</div>}>
+                                        <Button variant="plain" aria-label="Metric help" style={{ padding: '0.25rem', marginRight: '0.5rem' }}>
+                                          <OutlinedQuestionCircleIcon />
+                                        </Button>
+                                      </Popover>
+                                      <div ref={percentileMenuRef} style={{ position: 'relative', flex: 1 }}>
+                                        <MenuToggle 
+                                          onClick={() => { setIsPercentileSelectOpen(!isPercentileSelectOpen); setIsMetricSelectOpen(false); }}
+                                          isExpanded={isPercentileSelectOpen}
+                                          style={{ width: '100%' }}
+                                        >
+                                          <span style={{ fontWeight: 500 }}>Percentile:</span> {pendingLatencyPercentile}
+                                        </MenuToggle>
+                                        {isPercentileSelectOpen && (
+                                          <Menu 
+                                            role="listbox" 
+                                            onSelect={(_, itemId) => { setPendingLatencyPercentile(itemId as any); setIsPercentileSelectOpen(false); }}
+                                            selected={pendingLatencyPercentile}
+                                            style={{ position: 'absolute', top: '100%', left: 0, zIndex: 9999, minWidth: '100%' }}
+                                          >
+                                            <MenuContent>
+                                              <MenuList>
+                                                <MenuItem itemId="Mean">Mean</MenuItem>
+                                                <MenuItem itemId="P90">P90</MenuItem>
+                                                <MenuItem itemId="P95">P95</MenuItem>
+                                                <MenuItem itemId="P99">P99</MenuItem>
+                                              </MenuList>
+                                            </MenuContent>
+                                          </Menu>
+                                        )}
+                              </div>
+                                      <Popover bodyContent="Defines how consistently the model must perform. For example, P90 means 90% of requests must meet your target, Mean represents the average performance across all requests.">
+                                        <Button variant="plain" aria-label="Percentile help" style={{ padding: '0.25rem' }}>
+                                          <OutlinedQuestionCircleIcon />
+                                        </Button>
+                                      </Popover>
+                                    </div>
+                                    {/* Row 2: Slider with input */}
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                <Slider
+                                            value={pendingLatencyValue}
+                                            onChange={(_, value) => setPendingLatencyValue(Math.round(value as number))}
+                                  min={20}
+                                  max={893}
+                                            areCustomStepsContinuous
+                                            customSteps={[{ value: 20, label: '20' }, { value: 893, label: '893' }]}
+                                />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <TextInput
+                                    type="number"
+                                            value={pendingLatencyValue.toString()}
+                                            onChange={(_, value) => {
+                                              const numVal = parseInt(value) || 0;
+                                              setPendingLatencyValue(Math.max(20, Math.min(893, numVal)));
+                                            }}
+                                            style={{ width: '80px' }}
+                                          />
+                                          <span style={{ padding: '0.5rem', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '0.875rem' }}>ms</span>
+                                </div>
+                              </div>
+                                    </div>
+                                    {/* Row 3: Apply and Reset buttons */}
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                      <Button variant="primary" onClick={handleApplyLatency}>
+                                  Apply filter
+                                </Button>
+                                      <Button variant="link" onClick={handleResetLatency}>
+                                  Reset
+                                </Button>
+                              </div>
+                                  </PanelMainBody>
+                                </PanelMain>
+                              </Panel>
+                            )}
+                            </div>
+                          <Popover
+                            bodyContent="Filters out configurations that do not meet your specific speed requirements."
+                          >
+                            <Button variant="plain" aria-label="Latency help" style={{ padding: '0.25rem' }}>
+                              <OutlinedQuestionCircleIcon />
+                            </Button>
+                        </Popover>
+                        </div>
+                      </ToolbarItem>
+                      
+                      {/* Max RPS */}
+                      <ToolbarItem>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.125rem' }}>
+                          <div ref={rpsPanelRef} style={{ position: 'relative' }}>
+                            <MenuToggle 
+                              onClick={handleOpenRpsPanel}
+                              isExpanded={isRpsOpen}
+                              style={{ height: '56px' }}
+                            >
+                              <span style={{ fontWeight: 500 }}>Max RPS:</span> {rpsValue}
+                            </MenuToggle>
+                            {isRpsOpen && (
+                              <Panel 
+                                variant="raised" 
+                                style={{ 
+                                  position: 'absolute', 
+                                  top: '100%', 
+                                  left: 0, 
+                                  zIndex: 9999,
+                                  minWidth: '350px'
+                                }}
+                              >
+                                <PanelMain>
+                                  <PanelMainBody>
+                                    {/* Row 1: Slider with input */}
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ flex: 1 }}>
+                              <Slider
+                                            value={pendingRpsValue}
+                                            onChange={(_, value) => setPendingRpsValue(Math.round(value as number))}
+                                min={1}
+                                max={50}
+                                            customSteps={[{ value: 1, label: '1' }, { value: 50, label: '50' }]}
+                                            areCustomStepsContinuous
+                              />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <TextInput
+                                  type="number"
+                                            value={pendingRpsValue.toString()}
+                                            onChange={(_, value) => {
+                                              const numVal = parseInt(value) || 1;
+                                              setPendingRpsValue(Math.min(50, Math.max(1, numVal)));
+                                            }}
+                                            style={{ width: '80px' }}
+                                />
+                              </div>
+                                      </div>
+                                    </div>
+                                    {/* Row 2: Apply and Reset buttons */}
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                      <Button variant="primary" onClick={handleApplyRps}>
+                                  Apply filter
+                                </Button>
+                                      <Button variant="link" onClick={handleResetRps}>
+                                  Reset
+                                </Button>
+                              </div>
+                                  </PanelMainBody>
+                                </PanelMain>
+                              </Panel>
+                            )}
+                            </div>
+                          <Popover
+                            bodyContent="Sets your target traffic load (Requests Per Second). This value is used to calculate the optimal deployment size (number of replicas) required to handle this volume."
+                          >
+                            <Button variant="plain" aria-label="RPS help" style={{ padding: '0.25rem' }}>
+                              <OutlinedQuestionCircleIcon />
+                            </Button>
+                          </Popover>
+                          <Divider orientation={{ default: 'vertical' }} style={{ height: '56px', marginLeft: '0.25rem', marginRight: '0' }} />
+                        </div>
+                      </ToolbarItem>
+                      
+                      {/* Hardware */}
+                      <ToolbarItem>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.125rem' }}>
+                          <Dropdown
+                            isOpen={isHardwareOpen}
+                            onOpenChange={(isOpen) => setIsHardwareOpen(isOpen)}
+                            toggle={(toggleRef: React.Ref<HTMLButtonElement>) => (
+                          <MenuToggle
+                                ref={toggleRef}
+                                onClick={() => setIsHardwareOpen(!isHardwareOpen)}
+                                isExpanded={isHardwareOpen}
+                                style={{ height: '56px' }}
+                          >
+                                Hardware {hardware.length > 0 && <Badge isRead>{hardware.length}</Badge>}
+                          </MenuToggle>
+                            )}
+                            popperProps={{ position: 'left' }}
+                          >
+                            <DropdownList>
+                              {hardwareOptions.map((hw) => (
+                                <DropdownItem 
+                                  key={hw}
+                                  onClick={() => {
+                                    if (hardware.includes(hw)) {
+                                      setHardware(hardware.filter(h => h !== hw));
+                                    } else {
+                                      setHardware([...hardware, hw]);
+                                    }
+                                  }}
+                                >
+                                  <Checkbox
+                                    id={`hw-${hw}`}
+                                    label={hw}
+                                    isChecked={hardware.includes(hw)}
+                                    onChange={() => {}}
+                                  />
+                                </DropdownItem>
+                              ))}
+                            </DropdownList>
+                          </Dropdown>
+                          <Popover
+                            bodyContent="Filters by the hardware used to generate the benchmark. This is defined by the GPU type (e.g., A100) and the number of GPUs used for a single replica."
+                          >
+                            <Button variant="plain" aria-label="Hardware help" style={{ padding: '0.25rem' }}>
+                              <OutlinedQuestionCircleIcon />
+                        </Button>
+                        </Popover>
+                        </div>
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                  </ToolbarContent>
+                </Toolbar>
+              </div>
+
+            {/* Filter Chips Toolbar - shown below performance toolbar when toggle is ON */}
+            <Toolbar 
+              id="filter-chips-toolbar"
+              style={{ display: performanceFiltersEnabled ? 'block' : 'none' }}
             >
-              <ToggleGroupItem
-                buttonId="all-models"
-                isSelected={activeTab === 0}
-                text="All models"
-                onClick={() => setActiveTab(0)}
-              />
-              <ToggleGroupItem
-                buttonId="validated-models"
-                isSelected={activeTab === 1}
-                text="Red Hat AI validated models"
-                onClick={() => setActiveTab(1)}
-              />
-              <ToggleGroupItem
-                buttonId="redhat-models"
-                isSelected={activeTab === 2}
-                text="Red Hat AI models"
-                onClick={() => setActiveTab(2)}
-              />
-              <ToggleGroupItem
-                buttonId="community-models"
-                isSelected={activeTab === 3}
-                text="Community and custom models"
-                onClick={() => setActiveTab(3)}
-              />
-            </ToggleGroup>
+              {/* First row: All chips mixed together */}
+              <ToolbarContent>
+                <ToolbarGroup variant="filter-group" style={{ flexWrap: 'wrap', rowGap: '0.5rem' }}>
+                  {/* Task chips */}
+                  {selectedTasks.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Task" isClosable onClick={() => setSelectedTasks([])}>
+                {selectedTasks.map(task => (
+                          <Label key={task} onClose={() => handleTaskFilter(task, false)}>{formatTaskLabel(task)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Provider chips */}
+                  {selectedProviders.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Provider" isClosable onClick={() => setSelectedProviders([])}>
+                {selectedProviders.map(provider => (
+                          <Label key={provider} onClose={() => handleProviderFilter(provider, false)}>{formatProviderLabel(provider)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* License chips */}
+                  {selectedLicenses.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="License" isClosable onClick={() => setSelectedLicenses([])}>
+                {selectedLicenses.map(license => (
+                          <Label key={license} onClose={() => handleLicenseFilter(license, false)}>{license}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Language chips */}
+                  {selectedLanguages.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Language" isClosable onClick={() => setSelectedLanguages([])}>
+                        {selectedLanguages.map(lang => (
+                          <Label key={lang} onClose={() => handleLanguageFilter(lang, false)}>{formatLanguageLabel(lang)}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Workload Chip with undo icon */}
+                    {workload !== DEFAULT_WORKLOAD && (
+                    <ToolbarItem>
+                      <LabelGroup>
+                        <Label 
+                          onClose={() => setWorkload(DEFAULT_WORKLOAD)}
+                          closeBtn={
+                            <button
+                              type="button"
+                              aria-label="Reset workload filter"
+                              onClick={() => setWorkload(DEFAULT_WORKLOAD)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0', display: 'inline-flex', alignItems: 'center' }}
+                            >
+                              <FontAwesomeIcon icon={faUndo} style={{ fontSize: '0.625rem' }} />
+                            </button>
+                          }
+                        >
+                          Workload: {WORKLOAD_OPTIONS.find(o => o.value === workload)?.label || workload}
+                      </Label>
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                  {/* Latency Chips with single undo icon */}
+                  {(latencyMetric !== DEFAULT_LATENCY_METRIC || latencyPercentile !== DEFAULT_LATENCY_PERCENTILE || latencyValue !== DEFAULT_LATENCY_VALUE) && (
+                    <ToolbarItem>
+                      <div className="pf-v6-c-label-group pf-m-category">
+                        <div className="pf-v6-c-label-group__main">
+                          <span className="pf-v6-c-label-group__label">Latency</span>
+                          <ul className="pf-v6-c-label-group__list" role="list">
+                            <li className="pf-v6-c-label-group__list-item"><Label>Metric: {latencyMetric}</Label></li>
+                            <li className="pf-v6-c-label-group__list-item"><Label>Percentile: {latencyPercentile}</Label></li>
+                            <li className="pf-v6-c-label-group__list-item"><Label>Under {latencyValue}ms</Label></li>
+                          </ul>
+                        </div>
+                        <div className="pf-v6-c-label-group__close" style={{ marginLeft: '0.25rem', paddingLeft: 0, alignSelf: 'center' }}>
+                          <button
+                            type="button"
+                            aria-label="Reset latency filters"
+                            onClick={() => {
+                        setLatencyMetric(DEFAULT_LATENCY_METRIC);
+                        setLatencyPercentile(DEFAULT_LATENCY_PERCENTILE);
+                        setLatencyValue(DEFAULT_LATENCY_VALUE);
+                              setLatencyFilters(DEFAULT_LATENCY_METRIC, DEFAULT_LATENCY_PERCENTILE, DEFAULT_LATENCY_VALUE);
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0', display: 'inline-flex', alignItems: 'center' }}
+                          >
+                            <FontAwesomeIcon icon={faUndo} style={{ fontSize: '0.625rem' }} />
+                          </button>
+                        </div>
+                      </div>
+                    </ToolbarItem>
+                  )}
+                  {/* Max RPS Chip with undo icon */}
+                    {rpsValue !== DEFAULT_RPS_VALUE && (
+                    <ToolbarItem>
+                      <LabelGroup>
+                        <Label 
+                          onClose={() => setRpsValue(DEFAULT_RPS_VALUE)}
+                          closeBtn={
+                            <button
+                              type="button"
+                              aria-label="Reset RPS filter"
+                              onClick={() => setRpsValue(DEFAULT_RPS_VALUE)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0', display: 'inline-flex', alignItems: 'center' }}
+                            >
+                              <FontAwesomeIcon icon={faUndo} style={{ fontSize: '0.625rem' }} />
+                            </button>
+                          }
+                        >
+                        Max RPS: {rpsValue}
+                      </Label>
+                      </LabelGroup>
+                    </ToolbarItem>
+                    )}
+                  {/* Hardware chips */}
+                  {hardware.length > 0 && (
+                    <ToolbarItem>
+                      <LabelGroup categoryName="Hardware" isClosable onClick={() => setHardware([])}>
+                    {hardware.map(hw => (
+                          <Label key={hw} onClose={() => setHardware(hardware.filter(h => h !== hw))}>{hw}</Label>
+                        ))}
+                      </LabelGroup>
+                    </ToolbarItem>
+                  )}
+                </ToolbarGroup>
+              </ToolbarContent>
+              {/* Second row: Reset all filters button */}
+              {(selectedTasks.length > 0 || selectedProviders.length > 0 || selectedLicenses.length > 0 || selectedLanguages.length > 0 ||
+                workload !== DEFAULT_WORKLOAD || latencyMetric !== DEFAULT_LATENCY_METRIC || latencyPercentile !== DEFAULT_LATENCY_PERCENTILE || 
+                latencyValue !== DEFAULT_LATENCY_VALUE || rpsValue !== DEFAULT_RPS_VALUE || hardware.length > 0) && (
+                <ToolbarContent style={{ paddingTop: '0.5rem' }}>
+                  <ToolbarItem>
+                    <Button variant="link" isInline onClick={() => {
+                      setSearch('');
+                      setSearchInput('');
+                  setSelectedTasks([]);
+                  setSelectedProviders([]);
+                  setSelectedLicenses([]);
+                  setSelectedLanguages([]);
+                    resetPerformanceFilters();
+                }}>
+                  Reset all filters
+                </Button>
+                  </ToolbarItem>
+                </ToolbarContent>
+              )}
+            </Toolbar>
 
-            {/* Red Hat AI validated models section */}
-            {(activeTab === 0 || activeTab === 1) && getValidatedModels().length > 0 && (
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <Title headingLevel="h2" size="lg">
-                    Red Hat AI validated models
-                  </Title>
-                  <Button variant="link" onClick={handleModelNameClick}>
-                    Show all Red Hat AI validated models →
-                  </Button>
-                </div>
-                <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  Third-party models benchmarked for performance and quality by Red Hat using leading open-source evaluation datasets.
-                </p>
-                <Grid hasGutter>
-                  {getValidatedModels().slice(0, 4).map(renderModelCard)}
-                </Grid>
-              </div>
+            {/* Filter Changed Alert */}
+            {showFilterChangedAlert && performanceFiltersEnabled && (
+              <Alert
+                variant="info"
+                isInline
+                title="The results list has been updated to match the latest performance criteria set on the details page."
+                actionClose={
+                  <AlertActionCloseButton onClose={() => setShowFilterChangedAlert(false)} />
+                }
+                style={{ marginBottom: '1.5rem' }}
+              />
             )}
 
-            {/* Red Hat AI models section */}
-            {(activeTab === 0 || activeTab === 2) && getRedHatModels().length > 0 && (
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <Title headingLevel="h2" size="lg">
-                    Red Hat AI models
-                  </Title>
-                  <Button variant="link" onClick={handleModelNameClick}>
-                    Show all Red Hat AI models →
-                  </Button>
-                </div>
-                <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  Red Hat models with full support and legal indemnification.
-                </p>
-                <Grid hasGutter>
-                  {getRedHatModels().slice(0, 4).map(renderModelCard)}
-                </Grid>
-              </div>
-            )}
+            {/* Category Tabs and Sort in same row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <ToggleGroup 
+                aria-label="Model category filter"
+              >
+                <ToggleGroupItem
+                  buttonId="all-models"
+                  isSelected={category === null}
+                  text="All models"
+                  onClick={() => setCategory(null)}
+                />
+                <ToggleGroupItem
+                  buttonId="validated-models"
+                  isSelected={category === 'validated'}
+                  text="Red Hat AI validated models"
+                  onClick={() => setCategory('validated')}
+                />
+                <ToggleGroupItem
+                  buttonId="redhat-models"
+                  isSelected={category === 'redhat'}
+                  text="Red Hat AI models"
+                  onClick={() => setCategory('redhat')}
+                />
+                <ToggleGroupItem
+                  buttonId="community-models"
+                  isSelected={category === 'other'}
+                  text="Other models"
+                  onClick={() => setCategory('other')}
+                />
+              </ToggleGroup>
 
-            {/* Community and custom models section */}
-            {(activeTab === 0 || activeTab === 3) && getCommunityModels().length > 0 && (
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <Title headingLevel="h2" size="lg">
-                    Community and custom models
-                  </Title>
-                  <Button variant="link" onClick={handleModelNameClick}>
-                    Show all community and custom models →
-                  </Button>
+              {/* Sort dropdown when performance toggle is ON */}
+              {performanceFiltersEnabled && (
+                <Select
+                  isOpen={isSortOpen}
+                  onOpenChange={(isOpen) => setIsSortOpen(isOpen)}
+                  toggle={(toggleRef: React.Ref<HTMLButtonElement>) => (
+                    <MenuToggle 
+                      ref={toggleRef} 
+                      variant="plainText"
+                      onClick={() => setIsSortOpen(!isSortOpen)}
+                      isExpanded={isSortOpen}
+                    >
+                      Sort: {sortOption === 'latency' ? 'Lowest latency' : 'Recent publish'}
+                    </MenuToggle>
+                  )}
+                  selected={sortOption}
+                  onSelect={(_, value) => {
+                    setSortOption(value as 'latency' | 'updated');
+                    setIsSortOpen(false);
+                  }}
+                  popperProps={{ position: 'right' }}
+                >
+                  <SelectList>
+                    <SelectOption value="latency">Lowest latency</SelectOption>
+                    <SelectOption value="updated">Recent publish</SelectOption>
+                  </SelectList>
+                </Select>
+              )}
+            </div>
+
+            {/* Empty States */}
+            {(() => {
+              const hasFilters = search.trim() !== '' || selectedTasks.length > 0 || 
+                selectedProviders.length > 0 || selectedLicenses.length > 0 || 
+                selectedLanguages.length > 0 || (performanceFiltersEnabled && (
+                  latencyValue !== DEFAULT_LATENCY_VALUE || rpsValue !== DEFAULT_RPS_VALUE || 
+                  hardware.length > 0
+                ));
+              
+              const categoryHasNoBenchmarkedModels = category === 'redhat' || category === 'other';
+              const showPerformanceEmpty = performanceFiltersEnabled && categoryHasNoBenchmarkedModels;
+              const showStandardEmpty = !showPerformanceEmpty && hasFilters && filteredModels.length === 0;
+
+              // Wrapper component for FontAwesome icon to use with EmptyState
+              const ChartColumnIcon: React.FC = () => (
+                <FontAwesomeIcon icon={faChartColumn} />
+              );
+
+              if (showPerformanceEmpty) {
+                return (
+                  <div style={{ 
+                    width: 'calc(100vw - 320px - 240px - 6rem)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '3rem'
+                  }}>
+                    <EmptyState 
+                      variant={EmptyStateVariant.lg} 
+                      titleText="No performance data available in selected category" 
+                      headingLevel="h4" 
+                      icon={ChartColumnIcon}
+                    >
+                    <EmptyStateBody>
+                        Select the All models category to view all models with performance data, or turn Model performance view off to view models in the selected category.
+                      </EmptyStateBody>
+                      <EmptyStateFooter>
+                        <EmptyStateActions>
+                        <Button variant="primary" onClick={() => setCategory(null)}>
+                          View all models with performance data
+                        </Button>
+                        </EmptyStateActions>
+                        <EmptyStateActions>
+                        <Button variant="link" onClick={() => setPerformanceFiltersEnabled(false)}>
+                          Turn Model performance view off
+                        </Button>
+                        </EmptyStateActions>
+                      </EmptyStateFooter>
+                  </EmptyState>
+                  </div>
+                );
+              }
+              
+              if (showStandardEmpty) {
+                return (
+                  <div style={{ 
+                    width: 'calc(100vw - 320px - 240px - 6rem)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '3rem'
+                  }}>
+                    <EmptyState 
+                      variant={EmptyStateVariant.lg} 
+                      titleText="No results found" 
+                      headingLevel="h4" 
+                      icon={SearchIcon}
+                    >
+                    <EmptyStateBody>
+                        Adjust your filters and try again.
+                      </EmptyStateBody>
+                      <EmptyStateFooter>
+                        <EmptyStateActions>
+                          <Button variant="link" onClick={() => {
+                          setSearch('');
+                          setSearchInput('');
+                          setSelectedTasks([]);
+                          setSelectedProviders([]);
+                          setSelectedLicenses([]);
+                          setSelectedLanguages([]);
+                          if (performanceFiltersEnabled) {
+                            resetPerformanceFilters();
+                          }
+                        }}>
+                          Reset all filters
+                        </Button>
+                        </EmptyStateActions>
+                      </EmptyStateFooter>
+                  </EmptyState>
+                  </div>
+                );
+              }
+              
+              return null;
+            })()}
+
+            {/* Models List - Grouped view when no category and no filters, single list otherwise */}
+            {category === null && !hasActiveFiltersOrSearch ? (
+              <>
+                {/* Red Hat AI validated models section - One row (4 models) */}
+                {getValidatedModels.length > 0 && (
+                  <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Title headingLevel="h2" size="lg">
+                        Red Hat AI validated models
+                      </Title>
+                      <Button variant="link" onClick={() => setCategory('validated')}>
+                        Show all Red Hat AI validated models →
+                      </Button>
+                    </div>
+                    <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                      Third-party models benchmarked for performance and quality by Red Hat using leading open-source evaluation datasets.
+                    </p>
+                    <Gallery hasGutter minWidths={{ default: '280px' }} maxWidths={{ default: '1fr' }}>
+                      {getValidatedModels.slice(0, 4).map(model => {
+                        const modelCard = getFilteredModels().find(m => m.id === model.id);
+                        return modelCard ? renderModelCard(modelCard) : null;
+                      })}
+                    </Gallery>
+                  </div>
+                )}
+
+                {/* Red Hat AI models section - One row (4 models) */}
+                {getRedHatModels.length > 0 && (
+                  <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Title headingLevel="h2" size="lg">
+                        Red Hat AI models
+                      </Title>
+                      <Button variant="link" onClick={() => setCategory('redhat')}>
+                        Show all Red Hat AI models →
+                      </Button>
+                    </div>
+                    <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                      Red Hat models with full support and legal indemnification.
+                    </p>
+                    <Gallery hasGutter minWidths={{ default: '280px' }} maxWidths={{ default: '1fr' }}>
+                      {getRedHatModels.slice(0, 4).map(model => {
+                        const modelCard = getFilteredModels().find(m => m.id === model.id);
+                        return modelCard ? renderModelCard(modelCard) : null;
+                      })}
+                    </Gallery>
+                  </div>
+                )}
+
+                {/* Other models section - One row (4 models) */}
+                {getCommunityModels.length > 0 && (
+                  <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Title headingLevel="h2" size="lg">
+                        Other models
+                      </Title>
+                      <Button variant="link" onClick={() => setCategory('other')}>
+                        Show all other models →
+                      </Button>
+                    </div>
+                    <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                      Admin-configured and externally sourced models.
+                    </p>
+                    <Gallery hasGutter minWidths={{ default: '280px' }} maxWidths={{ default: '1fr' }}>
+                      {getCommunityModels.slice(0, 4).map(model => {
+                        const modelCard = getFilteredModels().find(m => m.id === model.id);
+                        return modelCard ? renderModelCard(modelCard) : null;
+                      })}
+                    </Gallery>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Single combined list when category is selected OR when filtering/searching */
+              filteredModels.length > 0 && (
+                <div style={{ width: '100%' }}>
+                <Gallery hasGutter minWidths={{ default: '280px' }} maxWidths={{ default: '1fr' }}>
+                    {getFilteredModels().slice(0, visibleCount).map(modelCard => renderModelCard(modelCard))}
+                </Gallery>
+                  {/* Load more button - only show if there are more models to load */}
+                  {visibleCount < filteredModels.length && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                      <Button 
+                        variant="tertiary" 
+                        size="lg"
+                        onClick={() => setVisibleCount(prev => prev + 10)}
+                      >
+                        Load more models
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <p style={{ color: '#6A6E73', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  A broad collection of third-party, community, and admin-configured models.
-                </p>
-                <Grid hasGutter>
-                  {getCommunityModels().slice(0, 4).map(renderModelCard)}
-                </Grid>
-              </div>
+              )
             )}
           </div>
-        </SidebarContent>
-      </Sidebar>
+        </div>
+      </div>
       
       {/* Benchmark Information Modal */}
       <Modal
@@ -1218,7 +2436,55 @@ const ModelCatalog: React.FunctionComponent = () => {
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Customize Columns Modal */}
+      <Modal
+        variant={ModalVariant.medium}
+        title="Customize columns"
+        isOpen={isCustomizeColumnsOpen}
+        onClose={() => setIsCustomizeColumnsOpen(false)}
+      >
+        <ModalHeader>
+          <Title headingLevel="h2" size="xl">Customize columns</Title>
+        </ModalHeader>
+        <ModalBody>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {(['hardware', 'metadata', 'latency', 'requestProfile'] as const).map(group => {
+              const groupColumns = COLUMN_DEFINITIONS.filter(col => col.group === group);
+              if (groupColumns.length === 0) return null;
+              
+              return (
+                <div key={group}>
+                  <Title headingLevel="h4" size="md" style={{ marginBottom: '0.75rem', textTransform: 'capitalize' }}>
+                    {group === 'requestProfile' ? 'Request Profile' : group}
+                  </Title>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {groupColumns.map(col => (
+                      <Checkbox
+                        key={col.id}
+                        id={col.id}
+                        label={col.label}
+                        isChecked={isColumnVisible(col.id)}
+                        onChange={(_, checked) => toggleColumn(col.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="link" onClick={restoreDefaults}>
+            Restore defaults
+          </Button>
+          <Button variant="primary" onClick={() => setIsCustomizeColumnsOpen(false)}>
+            Apply
+          </Button>
+        </ModalFooter>
+      </Modal>
     </PageSection>
+    </div>
   );
 };
 
