@@ -528,9 +528,35 @@ export const EntitiesListPage: React.FC = () => {
           <FlexItem>
             <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsFlexStart' }}>
               <FlexItem>
-                <Title headingLevel="h1" size="2xl">
-                  Entities
-                </Title>
+                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                  <FlexItem>
+                    <div style={{
+                      backgroundColor: 'var(--pf-t--global--background--color--secondary--default)',
+                      borderRadius: 'var(--pf-t--global--border--radius--small)',
+                      padding: 'var(--pf-t--global--spacer--sm)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <svg 
+                        viewBox="0 0 40 40" 
+                        fill="currentColor" 
+                        aria-hidden="true" 
+                        role="img" 
+                        width="24" 
+                        height="24"
+                        style={{ color: 'var(--pf-t--global--icon--color--regular)' }}
+                      >
+                        <path d="M28.125,9c0-1.99902-1.62598-3.625-3.625-3.625s-3.625,1.62598-3.625,3.625c0,1.78497,1.29919,3.26373,3,3.56177v2.43823c0,1.30957-1.06543,2.375-2.375,2.375h-6c-1.33502,0-2.53003.57721-3.375,1.48492v-8.29816c1.70081-.29803,3-1.77679,3-3.56177,0-1.99902-1.62598-3.625-3.625-3.625s-3.625,1.62598-3.625,3.625c0,1.78497,1.29919,3.26373,3,3.56177v14.87646c-1.70081.29803-3,1.77679-3,3.56177,0,1.99902,1.62598,3.625,3.625,3.625s3.625-1.62598,3.625-3.625c0-1.78497-1.29919-3.26373-3-3.56177v-3.43823c0-1.86133,1.51416-3.375,3.375-3.375h6c1.99902,0,3.625-1.62598,3.625-3.625v-2.43823c1.70081-.29803,3-1.77679,3-3.56177ZM9.125,7c0-1.30957,1.06543-2.375,2.375-2.375s2.375,1.06543,2.375,2.375-1.06543,2.375-2.375,2.375-2.375-1.06543-2.375-2.375ZM13.875,29c0,1.30957-1.06543,2.375-2.375,2.375s-2.375-1.06543-2.375-2.375,1.06543-2.375,2.375-2.375,2.375,1.06543,2.375,2.375ZM24.5,11.375c-1.30957,0-2.375-1.06543-2.375-2.375s1.06543-2.375,2.375-2.375,2.375,1.06543,2.375,2.375-1.06543,2.375-2.375,2.375Z"></path>
+                      </svg>
+                    </div>
+                  </FlexItem>
+                  <FlexItem>
+                    <Title headingLevel="h1" size="2xl">
+                      Entities
+                    </Title>
+                  </FlexItem>
+                </Flex>
               </FlexItem>
               
               {/* Global Search Bar - Top Right aligned with header */}
