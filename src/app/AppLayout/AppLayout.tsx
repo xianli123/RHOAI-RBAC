@@ -52,8 +52,8 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const location = useLocation();
   
   // Environment variable controls for prototype appearance
-  const useGenericLogo = (import.meta as any).env.VITE_GENERIC_LOGO === 'true';
-  const hidePrototypeBar = (import.meta as any).env.VITE_PROTOTYPE_BAR === 'false';
+  const useGenericLogo = process.env.GENERIC_LOGO === 'true';
+  const hidePrototypeBar = process.env.PROTOTYPE_BAR === 'false';
   
   // Fidelity switcher state
   const [fidelitySelectOpen, setFidelitySelectOpen] = React.useState(false);
@@ -67,7 +67,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     }
     
     // Check environment variable for default fidelity
-    const defaultFidelity = (import.meta as any).env.VITE_DEFAULT_FIDELITY;
+    const defaultFidelity = process.env.DEFAULT_FIDELITY;
     if (defaultFidelity === 'low' || defaultFidelity === 'high') {
       return defaultFidelity;
     }

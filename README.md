@@ -1,127 +1,135 @@
-# RHOAI UXD Prototypes
+# Patternfly Seed 
 
-## Introduction
+Patternfly Seed is an open source build scaffolding utility for web apps. The primary purpose of this project is to give developers a jump start when creating new projects that will use patternfly. A secondary purpose of this project is to serve as a reference for how to configure various aspects of an application that uses patternfly, webpack, react, typescript, etc.
 
-This repository contains code-based UX prototypes that are used to inform future experiences we build for Red Hat OpenShift AI (RHOAI).
+Out of the box you'll get an app layout with chrome (header/sidebar), routing, build pipeline, test suite, and some code quality tools. Basically, all the essentials.
 
-This project is built with **Vite**, **React**, **TypeScript**, and **PatternFly** components, providing a modern development experience with fast hot module replacement and optimized production builds.
-
-## Notes
-
-* This repo contains internal-only context and forward-looking roadmap items and should not be cloned to GitHub or other public locations.
-* In a future release (TBD) we may switch to using the real RHOAI Dashboard codebase [here](https://github.com/opendatahub-io/odh-dashboard) instead.
+<img width="1058" alt="Out of box dashboard view of patternfly seed" src="https://github.com/user-attachments/assets/0227b366-67f1-4df8-8d92-e8e95d6e08b3" />
 
 ## Quick-start
 
 ```bash
-git clone <repository-url>
-cd rhoai-feature-stores
-npm install
-npm run dev
+git clone https://github.com/patternfly/patternfly-react-seed
+cd patternfly-react-seed
+npm install && npm run start:dev
 ```
-
 ## Development scripts
-
 ```sh
 # Install development/build dependencies
 npm install
 
-# Start the development server (Vite)
-npm run dev
+# Start the development server
+npm run start:dev
 
 # Run a production build (outputs to "dist" dir)
 npm run build
 
-# Preview production build locally
-npm run preview
+# Run the test suite
+npm run test
+
+# Run the test suite with coverage
+npm run test:coverage
 
 # Run the linter
 npm run lint
+
+# Run the code formatter
+npm run format
+
+# Launch a tool to inspect the bundle size
+npm run bundle-profile:analyze
+
+# Start the express server (run a production build first)
+npm run start
 ```
 
 ## Configurations
-
 * [TypeScript Config](./tsconfig.json)
-* [Vite Config](./vite.config.ts)
-* [Editor Config](./.editorconfig) (if present)
+* [Webpack Config](./webpack.common.js)
+* [Jest Config](./jest.config.js)
+* [Editor Config](./.editorconfig)
 
-## Asset imports
+## Raster image support
 
-### Raster images
+To use an image asset that's shipped with PatternFly core, you'll prefix the paths with "@assets". `@assets` is an alias for the PatternFly assets directory in node_modules.
 
-You can import images directly in your React components:
-
+For example:
 ```js
-import imgSrc from './assets/images/example.png';
-<img src={imgSrc} alt="Example" />
+import imgSrc from '@assets/images/g_sizing.png';
+<img src={imgSrc} alt="Some image" />
 ```
 
-### Vector images (SVG)
-
-Vite supports importing SVG files directly:
+You can use a similar technique to import assets from your local app, just prefix the paths with "@app". `@app` is an alias for the main src/app directory.
 
 ```js
-import logo from './assets/images/logo.svg';
-<img src={logo} alt="Logo" />
+import loader from '@app/assets/images/loader.gif';
+<img src={loader} alt="Content loading" />
 ```
 
-You can also inline SVG content if needed.
+## Vector image support
+Inlining SVG in the app's markup is also possible.
+
+```js
+import logo from '@app/assets/images/logo.svg';
+<span dangerouslySetInnerHTML={{__html: logo}} />
+```
+
+You can also use SVG when applying background images with CSS. To do this, your SVG's must live under a `bgimages` directory (this directory name is configurable in [webpack.common.js](./webpack.common.js#L5)). This is necessary because you may need to use SVG's in several other context (inline images, fonts, icons, etc.) and so we need to be able to differentiate between these usages so the appropriate loader is invoked.
+```css
+body {
+  background: url(./assets/bgimages/img_avatar.svg);
+}
+```
+
+## Adding custom CSS
+When importing CSS from a third-party package for the first time, you may encounter the error `Module parse failed: Unexpected token... You may need an appropriate loader to handle this file typ...`. You need to register the path to the stylesheet directory in [stylePaths.js](./stylePaths.js). We specify these explicitly for performance reasons to avoid webpack needing to crawl through the entire node_modules directory when parsing CSS modules.
 
 ## Code quality tools
-
+* For accessibility compliance, we use [react-axe](https://github.com/dequelabs/react-axe)
+* To keep our bundle size in check, we use [webpack-bundle-analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer)
 * To keep our code formatting in check, we use [prettier](https://github.com/prettier/prettier)
+* To keep our code logic and test coverage in check, we use [jest](https://github.com/facebook/jest)
 * To ensure code styles remain consistent, we use [eslint](https://eslint.org/)
-* For TypeScript type checking, we use the TypeScript compiler
 
-## Environment configuration
-
-This project uses Vite's built-in environment variable support. Create a `.env` file in the root directory with your key-value pairs:
+## Multi environment configuration
+This project uses [dotenv-webpack](https://www.npmjs.com/package/dotenv-webpack) for exposing environment variables to your code. Either export them at the system level like `export MY_ENV_VAR=http://dev.myendpoint.com && npm run start:dev` or simply drop a `.env` file in the root that contains your key-value pairs like below:
 
 ```sh
-VITE_API_URL=http://api.example.com
-VITE_FEATURE_FLAG=true
+ENV_1=http://1.myendpoint.com
+ENV_2=http://2.myendpoint.com
 ```
 
-With that in place, you can use the values in your code like `console.log(import.meta.env.VITE_API_URL);`
-
-**Note:** Environment variables must be prefixed with `VITE_` to be exposed to client-side code.
+With that in place, you can use the values in your code like `console.log(process.env.ENV_1);`
 
 ## Prototype Appearance Configuration
-
 The prototype supports configurable appearance settings to prepare it for different contexts (e.g., user research, demos). Create a `.env` file in the root directory with the following options:
 
 ```sh
 # Use generic "AI Platform" text instead of branded logo
-VITE_GENERIC_LOGO=true
+GENERIC_LOGO=true
 
 # Hide the orange "UXD PROTOTYPE" banner
-VITE_PROTOTYPE_BAR=false
+PROTOTYPE_BAR=false
 
 # Set default fidelity mode
-VITE_DEFAULT_FIDELITY=low
+DEFAULT_FIDELITY=low
 ```
 
 ### Available Options:
 
-**VITE_GENERIC_LOGO**
+**GENERIC_LOGO**
 - `true`: Shows "AI Platform" as text (generic, unbranded)
 - `false` (default): Shows the branded product logo
 
-**VITE_PROTOTYPE_BAR**
+**PROTOTYPE_BAR**
 - `true` (default): Shows the orange "UXD PROTOTYPE" banner with fidelity controls
 - `false`: Hides the banner completely
 
-**VITE_DEFAULT_FIDELITY**
+**DEFAULT_FIDELITY**
 - `high` (default): Starts with high fidelity mode
 - `low`: Starts with low fidelity mode
 - Note: URL query parameter `?fidelity=low` or `?fidelity=high` will override this setting
 
 You can use these independently or together depending on your needs:
-- For user research: Set `VITE_GENERIC_LOGO=true`, `VITE_PROTOTYPE_BAR=false`, and optionally `VITE_DEFAULT_FIDELITY=low`
+- For user research: Set `GENERIC_LOGO=true`, `PROTOTYPE_BAR=false`, and optionally `DEFAULT_FIDELITY=low`
 - For internal demos: Keep defaults or customize as needed
-
-## Designer setup
-
-[Video Here]
-
-[Instructions Here]

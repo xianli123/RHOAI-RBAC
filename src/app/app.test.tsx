@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as React from 'react';
 import App from '@app/index';
 import { render, screen } from '@testing-library/react';
