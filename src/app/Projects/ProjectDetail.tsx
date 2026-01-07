@@ -42,7 +42,6 @@ import {
   OutlinedFolderIcon,
   OutlinedQuestionCircleIcon,
   EllipsisVIcon,
-  PlusCircleIcon,
 } from '@patternfly/react-icons';
 
 // Mock data for users
@@ -443,7 +442,7 @@ const ProjectDetail: React.FunctionComponent = () => {
             </div>
 
             {/* Users Section */}
-            <div className="pf-v6-l-stack__item" style={{ marginBottom: 'var(--pf-v5-global--spacer--2xl)' }}>
+            <div className="pf-v6-l-stack__item" style={{ marginBottom: '24px' }}>
               <div className="pf-v6-l-stack pf-m-gutter">
                 <div className="pf-v6-l-stack__item">
                   <div className="pf-v6-l-flex pf-m-row pf-m-align-items-center pf-m-gap-sm user">
@@ -561,22 +560,6 @@ const ProjectDetail: React.FunctionComponent = () => {
                       ))}
                     </Tbody>
                   </Table>
-                </div>
-
-                <div className="pf-v6-l-stack__item" style={{ marginBottom: '15px' }}>
-                  <Button 
-                    variant="link" 
-                    isInline 
-                    icon={<PlusCircleIcon />}
-                    data-testid="add-button user"
-                    className="pf-v6-c-button pf-m-link pf-m-inline"
-                    data-ouia-component-type="PF6/Button"
-                    data-ouia-safe="true"
-                    data-ouia-component-id="OUIA-Generated-Button-link-1"
-                    style={{ paddingLeft: 'var(--pf-t--global--spacer--lg)' }}
-                  >
-                    Add user
-                  </Button>
                 </div>
               </div>
             </div>
@@ -700,22 +683,6 @@ const ProjectDetail: React.FunctionComponent = () => {
                       ))}
                     </Tbody>
                   </Table>
-                </div>
-
-                <div className="pf-v6-l-stack__item">
-                  <Button 
-                    variant="link" 
-                    isInline 
-                    icon={<PlusCircleIcon />}
-                    data-testid="add-button group"
-                    className="pf-v6-c-button pf-m-link pf-m-inline"
-                    data-ouia-component-type="PF6/Button"
-                    data-ouia-safe="true"
-                    data-ouia-component-id="OUIA-Generated-Button-link-2"
-                    style={{ paddingLeft: 'var(--pf-t--global--spacer--lg)' }}
-                  >
-                    Add group
-                  </Button>
                 </div>
               </div>
             </div>

@@ -252,10 +252,11 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
       </PageSection>
 
       <PageSection isFilled>
-        <Stack hasGutter>
-          <StackItem>
-            <Form>
-              <FormGroup label="Subject type" fieldId="subject-type">
+        <div style={{ maxWidth: '840px' }}>
+          <Stack hasGutter>
+            <StackItem>
+              <Form>
+                <FormGroup label="Subject type" fieldId="subject-type">
                 <Flex spaceItems={{ default: 'spaceItemsLg' }}>
                   <Radio
                     id="subject-type-user"
@@ -421,6 +422,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
             )}
           </StackItem>
         </Stack>
+        </div>
       </PageSection>
 
       <PageSection className="pf-m-sticky-bottom">

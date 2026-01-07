@@ -296,9 +296,10 @@ const EditRolesPage: React.FunctionComponent = () => {
       </PageSection>
 
       <PageSection isFilled>
-        <Stack hasGutter>
-          <StackItem>
-            <Title headingLevel="h2" size="lg">Subject</Title>
+        <div style={{ maxWidth: '840px' }}>
+          <Stack hasGutter>
+            <StackItem>
+              <Title headingLevel="h2" size="lg">Subject</Title>
             <Form style={{ marginTop: '16px' }}>
               <div className="pf-v6-c-form__group">
                 <div className="pf-v6-c-form__group-label">
@@ -346,39 +347,40 @@ const EditRolesPage: React.FunctionComponent = () => {
                   <Th>Description</Th>
                   <Th sort={getStatusSortParams()}>
                     Status
-                    {statusSortBy.direction === 'asc' ? (
-                      <ChevronUpIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                    ) : (
+                    {statusSortBy.direction === 'desc' && (
                       <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
                     )}
                   </Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {sortedRoles.map((role) => {
+                {sortedRoles.map((role, rowIndex) => {
                   const isExpanded = expandedRoles.has(role.id);
                   const status = getRoleStatus(role);
+                  const hasRules = role.rules && role.rules.length > 0;
                   
                   return (
                     <React.Fragment key={role.id}>
                       <Tr>
-                        <Td>
-                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                        <Td
+                          treeRow={{
+                            onCollapse: () => toggleRoleExpansion(role.id),
+                            rowIndex: rowIndex,
+                            props: {
+                              'aria-level': 1,
+                              'aria-setsize': sortedRoles.length,
+                              'aria-posinset': rowIndex + 1,
+                            },
+                          }}
+                        >
+                          <div style={{ marginLeft: '0px' }}>
                             <Checkbox
                               id={`role-${role.id}`}
                               isChecked={role.currentlyAssigned}
                               onChange={() => handleRoleToggle(role.id)}
                               aria-label={`Select role ${role.name}`}
                             />
-                            <Button
-                              variant="plain"
-                              onClick={() => toggleRoleExpansion(role.id)}
-                              aria-label="Expand role rules"
-                              style={{ padding: 0 }}
-                            >
-                              {isExpanded ? <AngleDownIcon /> : <AngleRightIcon />}
-                            </Button>
-                          </Flex>
+                          </div>
                         </Td>
                         <Td>
                           <div>
@@ -394,7 +396,7 @@ const EditRolesPage: React.FunctionComponent = () => {
                         <Td>{renderStatusBadge(status)}</Td>
                       </Tr>
                       {isExpanded && role.rules && (
-                        <Tr>
+                        <Tr isExpanded={isExpanded}>
                           <Td colSpan={4}>
                             <div style={{ padding: 'var(--pf-v5-global--spacer--md)', marginLeft: 'var(--pf-v5-global--spacer--xl)' }}>
                               <Table variant="compact" aria-label="Role rules">
@@ -428,6 +430,7 @@ const EditRolesPage: React.FunctionComponent = () => {
             </Table>
           </StackItem>
         </Stack>
+        </div>
       </PageSection>
 
       <PageSection className="pf-m-sticky-bottom">
