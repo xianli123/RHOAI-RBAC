@@ -10,6 +10,8 @@ import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 import { Home } from '@app/Home/Home';
 import { Projects } from '@app/Projects/Projects';
 import { ProjectDetail } from '@app/Projects/ProjectDetail';
+import { EditRolesPage } from '@app/Projects/EditRolesPage';
+import { RoleAssignmentPage } from '@app/Projects/RoleAssignmentPage';
 
 // AIAssets - imported from migrated src-3.0
 import { Models } from '@app/AIAssets/Models/Models';
@@ -130,6 +132,18 @@ const routes: AppRouteConfig[] = [
     exact: true,
     path: '/projects/:projectId',
     title: 'RHOAI 3.1 Console | Project Details',
+  },
+  {
+    element: <EditRolesPage />,
+    exact: true,
+    path: '/projects/:projectId/permissions/edit-roles',
+    title: 'RHOAI 3.1 Console | Edit Role Assignment',
+  },
+  {
+    element: <RoleAssignmentPage />,
+    exact: true,
+    path: '/projects/:projectId/permissions/assign-roles',
+    title: 'RHOAI 3.1 Console | Assign Roles',
   },
   {
     label: 'AI hub',

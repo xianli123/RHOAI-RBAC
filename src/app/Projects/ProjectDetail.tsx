@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   PageSection,
   Title,
@@ -15,8 +15,19 @@ import {
   DropdownList,
   DropdownItem,
   MenuToggle,
+  MenuToggleElement,
   Flex,
   FlexItem,
+  Toolbar,
+  ToolbarContent,
+  ToolbarItem,
+  ToolbarGroup,
+  SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
+  Divider,
+  Label,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -38,24 +49,41 @@ import {
 interface User {
   id: string;
   name: string;
-  permission: string;
-  dateAdded: string;
+  role: string;
+  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+  dateCreated: string;
 }
 
 // Mock data for groups
 interface Group {
   id: string;
   name: string;
-  permission: string;
-  dateAdded: string;
+  role: string;
+  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+  dateCreated: string;
 }
 
 const mockUsers: User[] = [
   {
     id: '1',
-    name: 'uxdpoc6',
-    permission: 'Admin',
-    dateAdded: '11 months ago',
+    name: 'Maude',
+    role: 'Admin',
+    roleType: 'openshift-default',
+    dateCreated: '30 Oct 2024',
+  },
+  {
+    id: '2',
+    name: 'John',
+    role: 'Contributor',
+    roleType: 'openshift-default',
+    dateCreated: '30 Oct 2024',
+  },
+  {
+    id: '3',
+    name: 'Deena',
+    role: 'Deployment maintainer',
+    roleType: 'regular',
+    dateCreated: '30 Oct 2024',
   },
 ];
 
@@ -63,32 +91,31 @@ const mockGroups: Group[] = [
   {
     id: '1',
     name: 'dedicated-admins',
-    permission: 'Custom',
-    dateAdded: '11 months ago',
+    role: 'Admin',
+    roleType: 'openshift-default',
+    dateCreated: '30 Oct 2024',
   },
   {
     id: '2',
-    name: 'dedicated-admins',
-    permission: 'Admin',
-    dateAdded: '11 months ago',
-  },
-  {
-    id: '3',
-    name: 'dedicated-admins',
-    permission: 'Custom',
-    dateAdded: '11 months ago',
-  },
-  {
-    id: '4',
     name: 'system:serviceaccounts:dedicated-admin',
-    permission: 'Custom',
-    dateAdded: '11 months ago',
+    role: 'custom-pipeline-super-user',
+    roleType: 'openshift-custom',
+    dateCreated: '30 Oct 2024',
   },
 ];
 
 const ProjectDetail: React.FunctionComponent = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const [activeTabKey, setActiveTabKey] = React.useState<string | number>('permissions');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTabKey, setActiveTabKey] = React.useState<string | number>(tabParam || 'overview');
+
+  React.useEffect(() => {
+    if (tabParam) {
+      setActiveTabKey(tabParam);
+    }
+  }, [tabParam]);
   const [isActionsOpen, setIsActionsOpen] = React.useState(false);
   const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
   const [usersSortBy, setUsersSortBy] = React.useState<ISortBy>({
@@ -99,6 +126,13 @@ const ProjectDetail: React.FunctionComponent = () => {
     index: 0,
     direction: 'asc',
   });
+  
+  // Toolbar state
+  const [subjectFilter, setSubjectFilter] = React.useState<string>('All subjects');
+  const [isSubjectFilterOpen, setIsSubjectFilterOpen] = React.useState(false);
+  const [nameFilter, setNameFilter] = React.useState<string>('Name');
+  const [isNameFilterOpen, setIsNameFilterOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState<string>('');
 
   const toggleKebabMenu = (id: string) => {
     setOpenKebabMenus((prev) => {
@@ -127,6 +161,37 @@ const ProjectDetail: React.FunctionComponent = () => {
     },
     columnIndex,
   });
+
+  const renderRoleBadge = (role: string, roleType: 'openshift-default' | 'openshift-custom' | 'regular') => {
+    if (roleType === 'openshift-default') {
+      return (
+        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <span>{role}</span>
+          <Label color="blue" variant="outline" isCompact>OpenShift default</Label>
+        </Flex>
+      );
+    } else if (roleType === 'openshift-custom') {
+      return (
+        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <span>{role}</span>
+          <Label color="purple" variant="outline" isCompact>OpenShift custom</Label>
+        </Flex>
+      );
+    }
+    return <span>{role}</span>;
+  };
+
+  const handleAssignRoles = () => {
+    navigate(`/projects/${projectId}/permissions/assign-roles`);
+  };
+
+  const handleEditUser = (userId: string, userName: string) => {
+    navigate(`/projects/${projectId}/permissions/edit-roles?subjectType=User&subjectName=${encodeURIComponent(userName)}`);
+  };
+
+  const handleEditGroup = (groupId: string, groupName: string) => {
+    navigate(`/projects/${projectId}/permissions/edit-roles?subjectType=Group&subjectName=${encodeURIComponent(groupName)}`);
+  };
 
   // User icon component
   const UserIconCircle = () => (
@@ -286,17 +351,95 @@ const ProjectDetail: React.FunctionComponent = () => {
       <PageSection isFilled>
         {activeTabKey === 'permissions' && (
           <>
-            <Alert
-              variant={AlertVariant.warning}
-              isInline
-              title="Warning"
-              style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}
-            >
-              Changing user or group permissions may remove their access to this resource.
-            </Alert>
-
             <div className="pf-v6-l-stack__item" style={{ margin: '15px 0' }}>
               Add users and groups that can access the project.
+            </div>
+
+            {/* Toolbar */}
+            <div style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}>
+              <Toolbar id="permissions-toolbar">
+                <ToolbarContent>
+                  <ToolbarGroup variant="filter-group">
+                    <ToolbarItem>
+                      <Select
+                        aria-label="Subject filter"
+                        isOpen={isSubjectFilterOpen}
+                        selected={subjectFilter}
+                        onSelect={(_event, value) => {
+                          setSubjectFilter(value as string);
+                          setIsSubjectFilterOpen(false);
+                        }}
+                        onOpenChange={(isOpen) => setIsSubjectFilterOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsSubjectFilterOpen(!isSubjectFilterOpen)}
+                            isExpanded={isSubjectFilterOpen}
+                            style={{ minWidth: '150px' }}
+                          >
+                            {subjectFilter}
+                          </MenuToggle>
+                        )}
+                        shouldFocusToggleOnSelect
+                      >
+                        <SelectList>
+                          <SelectOption value="All subjects">All subjects</SelectOption>
+                          <SelectOption value="Users">Users</SelectOption>
+                          <SelectOption value="Groups">Groups</SelectOption>
+                        </SelectList>
+                      </Select>
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                  <ToolbarItem>
+                    <Divider orientation={{ default: 'vertical' }} style={{ height: '32px', marginLeft: '0.5rem', marginRight: '0.5rem' }} />
+                  </ToolbarItem>
+                  <ToolbarGroup variant="filter-group">
+                    <ToolbarItem>
+                      <Select
+                        aria-label="Name filter"
+                        isOpen={isNameFilterOpen}
+                        selected={nameFilter}
+                        onSelect={(_event, value) => {
+                          setNameFilter(value as string);
+                          setIsNameFilterOpen(false);
+                        }}
+                        onOpenChange={(isOpen) => setIsNameFilterOpen(isOpen)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsNameFilterOpen(!isNameFilterOpen)}
+                            isExpanded={isNameFilterOpen}
+                            style={{ minWidth: '120px' }}
+                          >
+                            {nameFilter}
+                          </MenuToggle>
+                        )}
+                        shouldFocusToggleOnSelect
+                      >
+                        <SelectList>
+                          <SelectOption value="Name">Name</SelectOption>
+                          <SelectOption value="Role">Role</SelectOption>
+                          <SelectOption value="Date created">Date created</SelectOption>
+                        </SelectList>
+                      </Select>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <SearchInput
+                        placeholder="Find by name"
+                        value={searchValue}
+                        onChange={(_event, value) => setSearchValue(value)}
+                        onClear={() => setSearchValue('')}
+                        aria-label="Find by name"
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                  <ToolbarItem>
+                    <Button variant="primary" id="assign-roles-button" onClick={handleAssignRoles}>
+                      Assign roles
+                    </Button>
+                  </ToolbarItem>
+                </ToolbarContent>
+              </Toolbar>
             </div>
 
             {/* Users Section */}
@@ -334,8 +477,8 @@ const ProjectDetail: React.FunctionComponent = () => {
                     <Thead className="pf-v6-c-table__thead pf-m-nowrap">
                       <Tr>
                         <Th sort={getUsersSortParams(0)} className="pf-v6-c-table__th pf-m-width-30">Name</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-20">Permission</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-25">Date added</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-20">Role</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-25">Date created</Th>
                         <Th />
                       </Tr>
                     </Thead>
@@ -354,17 +497,17 @@ const ProjectDetail: React.FunctionComponent = () => {
                               </span>
                             </p>
                           </Td>
-                          <Td dataLabel="Permission">
+                          <Td dataLabel="Role">
                             <p 
                               data-ouia-component-type="PF6/Content"
                               data-ouia-safe="true"
                               data-pf-content="true"
                               className="pf-v6-c-content--p"
                             >
-                              {user.permission}
+                              {renderRoleBadge(user.role, user.roleType)}
                             </p>
                           </Td>
-                          <Td dataLabel="Date added">
+                          <Td dataLabel="Date created">
                             <p 
                               data-ouia-component-type="PF6/Content"
                               data-ouia-safe="true"
@@ -373,7 +516,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                             >
                               <div style={{ display: 'contents' }}>
                                 <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
-                                  <time className="pf-v6-c-timestamp__text">{user.dateAdded}</time>
+                                  <time className="pf-v6-c-timestamp__text">{user.dateCreated}</time>
                                 </span>
                               </div>
                             </p>
@@ -401,7 +544,15 @@ const ProjectDetail: React.FunctionComponent = () => {
                               )}
                             >
                               <DropdownList>
-                                <DropdownItem key="edit">Edit</DropdownItem>
+                                <DropdownItem 
+                                  key="edit" 
+                                  onClick={() => {
+                                    handleEditUser(user.id, user.name);
+                                    toggleKebabMenu(`user-${user.id}`);
+                                  }}
+                                >
+                                  Edit
+                                </DropdownItem>
                                 <DropdownItem key="remove">Remove</DropdownItem>
                               </DropdownList>
                             </Dropdown>
@@ -465,8 +616,8 @@ const ProjectDetail: React.FunctionComponent = () => {
                     <Thead className="pf-v6-c-table__thead pf-m-nowrap">
                       <Tr>
                         <Th sort={getGroupsSortParams(0)} className="pf-v6-c-table__th pf-m-width-30">Name</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-20">Permission</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-25">Date added</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-20">Role</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-25">Date created</Th>
                         <Th />
                       </Tr>
                     </Thead>
@@ -485,17 +636,17 @@ const ProjectDetail: React.FunctionComponent = () => {
                               </span>
                             </p>
                           </Td>
-                          <Td dataLabel="Permission">
+                          <Td dataLabel="Role">
                             <p 
                               data-ouia-component-type="PF6/Content"
                               data-ouia-safe="true"
                               data-pf-content="true"
                               className="pf-v6-c-content--p"
                             >
-                              {group.permission}
+                              {renderRoleBadge(group.role, group.roleType)}
                             </p>
                           </Td>
-                          <Td dataLabel="Date added">
+                          <Td dataLabel="Date created">
                             <p 
                               data-ouia-component-type="PF6/Content"
                               data-ouia-safe="true"
@@ -504,7 +655,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                             >
                               <div style={{ display: 'contents' }}>
                                 <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
-                                  <time className="pf-v6-c-timestamp__text">{group.dateAdded}</time>
+                                  <time className="pf-v6-c-timestamp__text">{group.dateCreated}</time>
                                 </span>
                               </div>
                             </p>
@@ -532,7 +683,15 @@ const ProjectDetail: React.FunctionComponent = () => {
                               )}
                             >
                               <DropdownList>
-                                <DropdownItem key="edit">Edit</DropdownItem>
+                                <DropdownItem 
+                                  key="edit" 
+                                  onClick={() => {
+                                    handleEditGroup(group.id, group.name);
+                                    toggleKebabMenu(`group-${group.id}`);
+                                  }}
+                                >
+                                  Edit
+                                </DropdownItem>
                                 <DropdownItem key="remove">Remove</DropdownItem>
                               </DropdownList>
                             </Dropdown>
