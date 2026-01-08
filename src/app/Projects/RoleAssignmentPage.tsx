@@ -24,6 +24,7 @@ import {
   DropdownList,
   DropdownItem,
   SearchInput,
+  Content,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -35,9 +36,6 @@ import {
   ISortBy,
 } from '@patternfly/react-table';
 import {
-  AngleDownIcon,
-  AngleRightIcon,
-  ChevronUpIcon,
   ChevronDownIcon,
 } from '@patternfly/react-icons';
 
@@ -123,15 +121,16 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   const [roles, setRoles] = React.useState<Role[]>(mockAvailableRoles.map(role => ({ ...role })));
   const [expandedRoles, setExpandedRoles] = React.useState<Set<string>>(new Set());
   const [statusSortBy, setStatusSortBy] = React.useState<ISortBy>({
-    index: 3,
+    index: 2,
     direction: 'asc',
   });
-  const [roleSearchValue, setRoleSearchValue] = React.useState('');
+  const [searchValue, setSearchValue] = React.useState('');
 
   React.useEffect(() => {
     // Reset state when subject type changes
     setSelectedSubject('');
     setSubjectSearchValue('');
+    setSearchValue('');
     setRoles(mockAvailableRoles.map(role => ({ ...role })));
   }, [subjectType]);
 
@@ -157,22 +156,20 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
 
   const getRoleStatus = (role: Role): string => {
     if (role.currentlyAssigned) {
-      return 'Currently assigned';
+      return 'To be assigned';
     }
     return '---';
   };
 
   const getStatusPriority = (status: string): number => {
-    if (status === 'Currently assigned') return 1;
-    if (status === 'To be assigned') return 2;
-    if (status === 'To be removed') return 3;
-    return 4; // '---'
+    if (status === 'To be assigned') return 1;
+    return 2; // '---'
   };
 
   const getFilteredRoles = (): Role[] => {
-    if (!roleSearchValue) return roles;
+    if (!searchValue) return roles;
     return roles.filter((role) =>
-      role.name.toLowerCase().includes(roleSearchValue.toLowerCase())
+      role.name.toLowerCase().includes(searchValue.toLowerCase())
     );
   };
 
@@ -198,7 +195,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     onSort: (_event: any, index: number, direction: 'asc' | 'desc') => {
       setStatusSortBy({ index, direction });
     },
-    columnIndex: 3,
+    columnIndex: 2,
   });
 
   const renderRoleBadge = (role: Role) => {
@@ -210,13 +207,10 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     return null;
   };
 
-  const renderStatusBadge = (status: string) => {
-    if (status === 'Currently assigned') {
-      return <Label color="green" variant="outline" isCompact>{status}</Label>;
-    } else if (status === 'To be assigned') {
+  const renderStatusBadge = (role: Role) => {
+    const status = getRoleStatus(role);
+    if (status === 'To be assigned') {
       return <Label color="blue" variant="outline" isCompact>{status}</Label>;
-    } else if (status === 'To be removed') {
-      return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
     return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>---</span>;
   };
@@ -320,18 +314,21 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
             </Form>
           </StackItem>
 
-          <StackItem>
-            {selectedSubject && (
-              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                <SearchInput
-                  placeholder="Find by name"
-                  value={roleSearchValue}
-                  onChange={(_event, value) => setRoleSearchValue(value)}
-                  onClear={() => setRoleSearchValue('')}
-                  aria-label="Find by name"
-                />
-              </div>
-            )}
+          <StackItem style={{ marginTop: '40px' }}>
+            <Title headingLevel="h2" size="lg">Role assignment</Title>
+            <Content style={{ marginTop: '16px', marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+              Check the role to grant the relevant permissions.
+            </Content>
+
+            <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+              <SearchInput
+                placeholder="Find by name"
+                value={searchValue}
+                onChange={(_event, value) => setSearchValue(value)}
+                onClear={() => setSearchValue('')}
+                aria-label="Find by name"
+              />
+            </div>
 
             {!selectedSubject ? (
               <Alert variant={AlertVariant.info} isInline title="Select a subject">
@@ -339,86 +336,92 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
               </Alert>
             ) : (
               <Table variant="compact" aria-label="Roles table">
-                <Thead>
-                  <Tr>
-                    <Th />
-                    <Th>Role name</Th>
-                    <Th>Description</Th>
-                    <Th sort={getStatusSortParams()}>
-                      Status
-                      {statusSortBy.direction === 'asc' ? (
-                        <ChevronUpIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                      ) : (
-                        <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                      )}
-                    </Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {sortedRoles.map((role) => {
-                    const isExpanded = expandedRoles.has(role.id);
-                    const status = getRoleStatus(role);
-                    
-                    return (
-                      <React.Fragment key={role.id}>
-                        <Tr>
-                          <Td>
-                            <Button
-                              variant="plain"
-                              onClick={() => toggleRoleExpansion(role.id)}
-                              aria-label="Expand role rules"
-                            >
-                              {isExpanded ? <AngleDownIcon /> : <AngleRightIcon />}
-                            </Button>
-                          </Td>
-                          <Td>
-                            <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
-                              <Checkbox
-                                id={`role-${role.id}`}
-                                isChecked={role.currentlyAssigned}
-                                onChange={() => handleRoleToggle(role.id)}
-                                aria-label={`Select role ${role.name}`}
-                              />
-                              <span>{role.name}</span>
-                              {renderRoleBadge(role)}
-                            </Flex>
-                          </Td>
-                          <Td>{role.description}</Td>
-                          <Td>{renderStatusBadge(status)}</Td>
-                        </Tr>
-                        {isExpanded && role.rules && (
+                  <Thead>
+                    <Tr>
+                      <Th />
+                      <Th>Role name</Th>
+                      <Th>Description</Th>
+                      <Th sort={getStatusSortParams()}>
+                        Status
+                        {statusSortBy.direction === 'desc' && (
+                          <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
+                        )}
+                      </Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {sortedRoles.map((role, rowIndex) => {
+                      const isExpanded = expandedRoles.has(role.id);
+                      
+                      return (
+                        <React.Fragment key={role.id}>
                           <Tr>
-                            <Td colSpan={4}>
-                              <div style={{ padding: 'var(--pf-v5-global--spacer--md)', marginLeft: 'var(--pf-v5-global--spacer--xl)' }}>
-                                <Table variant="compact" aria-label="Role rules">
-                                  <Thead>
-                                    <Tr>
-                                      <Th>Actions</Th>
-                                      <Th>API groups</Th>
-                                      <Th>Resources</Th>
-                                      <Th>Resource names</Th>
-                                    </Tr>
-                                  </Thead>
-                                  <Tbody>
-                                    {role.rules.map((rule, index) => (
-                                      <Tr key={index}>
-                                        <Td>{rule.actions.join(', ')}</Td>
-                                        <Td>{rule.apiGroups.join(', ')}</Td>
-                                        <Td>{rule.resources.join(', ')}</Td>
-                                        <Td>{rule.resourceNames?.join(', ') || '-'}</Td>
-                                      </Tr>
-                                    ))}
-                                  </Tbody>
-                                </Table>
+                            <Td
+                              treeRow={{
+                                onCollapse: () => toggleRoleExpansion(role.id),
+                                rowIndex: rowIndex,
+                                props: {
+                                  'aria-level': 1,
+                                  'aria-setsize': sortedRoles.length,
+                                  'aria-posinset': rowIndex + 1,
+                                },
+                              }}
+                            >
+                              <div style={{ marginLeft: '0px' }}>
+                                <Checkbox
+                                  id={`role-${role.id}`}
+                                  isChecked={role.currentlyAssigned}
+                                  onChange={() => handleRoleToggle(role.id)}
+                                  aria-label={`Select role ${role.name}`}
+                                />
                               </div>
                             </Td>
+                            <Td>
+                              <div>
+                                <div>{role.name}</div>
+                                {renderRoleBadge(role) && (
+                                  <div style={{ marginTop: 'var(--pf-v5-global--spacer--xs)' }}>
+                                    {renderRoleBadge(role)}
+                                  </div>
+                                )}
+                              </div>
+                            </Td>
+                            <Td>{role.description}</Td>
+                            <Td>{renderStatusBadge(role)}</Td>
                           </Tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </Tbody>
-              </Table>
+                          {isExpanded && role.rules && (
+                            <Tr isExpanded={isExpanded}>
+                              <Td colSpan={4}>
+                                <div style={{ padding: 'var(--pf-v5-global--spacer--md)', marginLeft: 'var(--pf-v5-global--spacer--xl)' }}>
+                                  <Table variant="compact" aria-label="Role rules">
+                                    <Thead>
+                                      <Tr>
+                                        <Th>Actions</Th>
+                                        <Th>API groups</Th>
+                                        <Th>Resources</Th>
+                                        <Th>Resource names</Th>
+                                      </Tr>
+                                    </Thead>
+                                    <Tbody>
+                                      {role.rules.map((rule, index) => (
+                                        <Tr key={index}>
+                                          <Td>{rule.actions.join(', ')}</Td>
+                                          <Td>{rule.apiGroups.join(', ')}</Td>
+                                          <Td>{rule.resources.join(', ')}</Td>
+                                          <Td>{rule.resourceNames?.join(', ') || '-'}</Td>
+                                        </Tr>
+                                      ))}
+                                    </Tbody>
+                                  </Table>
+                                </div>
+                              </Td>
+                            </Tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </Tbody>
+                </Table>
             )}
           </StackItem>
         </Stack>

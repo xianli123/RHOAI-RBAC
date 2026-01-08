@@ -158,6 +158,18 @@ const mockRoles: Role[] = [
   },
 ];
 
+// Mock data for users and groups (matching ProjectDetail.tsx)
+const mockUsersData = [
+  { name: 'Maude', role: 'Admin' },
+  { name: 'John', role: 'Contributor' },
+  { name: 'Deena', role: 'Deployment maintainer' },
+];
+
+const mockGroupsData = [
+  { name: 'dedicated-admins', role: 'Admin' },
+  { name: 'system:serviceaccounts:dedicated-admin', role: 'custom-pipeline-super-user' },
+];
+
 const EditRolesPage: React.FunctionComponent = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
@@ -166,7 +178,48 @@ const EditRolesPage: React.FunctionComponent = () => {
   const subjectType = searchParams.get('subjectType') || 'User';
   const subjectName = searchParams.get('subjectName') || '';
   
-  const [roles, setRoles] = React.useState<Role[]>(mockRoles.map(role => ({ ...role })));
+  // Determine which roles are originally assigned based on the subject's current role
+  const getSubjectCurrentRole = (): string | null => {
+    if (subjectType === 'User') {
+      const user = mockUsersData.find(u => u.name === subjectName);
+      return user?.role || null;
+    } else {
+      const group = mockGroupsData.find(g => g.name === subjectName);
+      return group?.role || null;
+    }
+  };
+  
+  // Check if subject has any OpenShift custom roles
+  const subjectHasOpenShiftCustomRole = (): boolean => {
+    const currentRole = getSubjectCurrentRole();
+    if (!currentRole) return false;
+    const role = mockRoles.find(r => r.name === currentRole);
+    return role?.roleType === 'openshift-custom';
+  };
+  
+  // Initialize roles with correct originallyAssigned status
+  const initializeRoles = (): Role[] => {
+    const currentRole = getSubjectCurrentRole();
+    const hasOpenShiftCustom = subjectHasOpenShiftCustomRole();
+    
+    // Filter out OpenShift custom roles if subject doesn't have any
+    const filteredRoles = hasOpenShiftCustom 
+      ? mockRoles 
+      : mockRoles.filter(role => role.roleType !== 'openshift-custom');
+    
+    return filteredRoles.map(role => ({
+      ...role,
+      originallyAssigned: role.name === currentRole,
+      currentlyAssigned: role.name === currentRole,
+    }));
+  };
+  
+  const [roles, setRoles] = React.useState<Role[]>(initializeRoles());
+  
+  // Re-initialize roles when subject changes
+  React.useEffect(() => {
+    setRoles(initializeRoles());
+  }, [subjectName, subjectType]);
   const [expandedRoles, setExpandedRoles] = React.useState<Set<string>>(new Set());
   const [statusSortBy, setStatusSortBy] = React.useState<ISortBy>({
     index: 2,
@@ -253,7 +306,20 @@ const EditRolesPage: React.FunctionComponent = () => {
     return null;
   };
 
-  const renderStatusBadge = (status: string) => {
+  const renderStatusBadge = (role: Role) => {
+    const status = getRoleStatus(role);
+    
+    // If role was originally assigned but is now deselected, show both labels
+    if (role.originallyAssigned && !role.currentlyAssigned) {
+      return (
+        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <Label color="green" variant="outline" isCompact>Currently assigned</Label>
+          <Label color="orange" variant="outline" isCompact>To be removed</Label>
+        </Flex>
+      );
+    }
+    
+    // Otherwise show single status label
     if (status === 'Currently assigned') {
       return <Label color="green" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'To be assigned') {
@@ -266,8 +332,8 @@ const EditRolesPage: React.FunctionComponent = () => {
 
   const sortedRoles = getSortedRoles();
   const hasChanges = roles.some((role) => {
-    const original = mockRoles.find((r) => r.id === role.id);
-    return role.currentlyAssigned !== original?.currentlyAssigned;
+    // Check if the role's currentlyAssigned state differs from its originallyAssigned state
+    return role.currentlyAssigned !== role.originallyAssigned;
   });
 
   return (
@@ -393,7 +459,7 @@ const EditRolesPage: React.FunctionComponent = () => {
                           </div>
                         </Td>
                         <Td>{role.description}</Td>
-                        <Td>{renderStatusBadge(status)}</Td>
+                        <Td>{renderStatusBadge(role)}</Td>
                       </Tr>
                       {isExpanded && role.rules && (
                         <Tr isExpanded={isExpanded}>
