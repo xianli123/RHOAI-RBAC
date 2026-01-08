@@ -158,14 +158,15 @@ const getRoleAssignees = (roleName: string): RoleAssignee[] => {
     ];
   }
   // Default assignees for other roles
-  return mockUsers
+  const userAssignees: RoleAssignee[] = mockUsers
     .filter(u => u.role === roleName)
-    .map(u => ({ subject: u.name, subjectType: 'User' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: u.dateCreated }))
-    .concat(
-      mockGroups
-        .filter(g => g.role === roleName)
-        .map(g => ({ subject: g.name, subjectType: 'Group' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: g.dateCreated }))
-    );
+    .map(u => ({ subject: u.name, subjectType: 'User' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: u.dateCreated }));
+  
+  const groupAssignees: RoleAssignee[] = mockGroups
+    .filter(g => g.role === roleName)
+    .map(g => ({ subject: g.name, subjectType: 'Group' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: g.dateCreated }));
+  
+  return [...userAssignees, ...groupAssignees];
 };
 
 const ProjectDetail: React.FunctionComponent = () => {
