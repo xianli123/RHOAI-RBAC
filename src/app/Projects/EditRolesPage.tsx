@@ -533,19 +533,19 @@ const EditRolesPage: React.FunctionComponent = () => {
     <>
       <div style={{ 
         backgroundColor: '#f0e6ff', 
-        padding: 'var(--pf-v5-global--spacer--md) var(--pf-v5-global--spacer--lg)',
+        padding: 'var(--pf-v5-global--spacer--lg) var(--pf-v5-global--spacer--xl)',
         borderBottom: '1px solid var(--pf-v5-global--BorderColor--200)'
       }}>
-        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
           <FlexItem>
-            <span style={{ fontWeight: 600 }}>Design Option:</span>
+            <span style={{ fontWeight: 600, fontSize: 'var(--pf-v5-global--FontSize--md)' }}>Design Option:</span>
           </FlexItem>
           <FlexItem>
             <Radio
               isChecked={selectedOption === 'option1'}
               name="design-option"
               onChange={() => setSelectedOption('option1')}
-              label="Option 1"
+              label="Sorted by the status"
               id="option1-radio"
             />
           </FlexItem>
@@ -554,7 +554,7 @@ const EditRolesPage: React.FunctionComponent = () => {
               isChecked={selectedOption === 'option2'}
               name="design-option"
               onChange={() => setSelectedOption('option2')}
-              label="Option 2"
+              label="Sorted by role name and status"
               id="option2-radio"
             />
           </FlexItem>
@@ -654,7 +654,7 @@ const EditRolesPage: React.FunctionComponent = () => {
               <Tbody>
                 {sortedRoles.length === 0 ? (
                   <Tr>
-                    <Td colSpan={4} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--xl)' }}>
+                    <Td colSpan={5} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--xl)' }}>
                       No roles available
                     </Td>
                   </Tr>
@@ -668,25 +668,20 @@ const EditRolesPage: React.FunctionComponent = () => {
                       <React.Fragment key={role.id}>
                         <Tr>
                           <Td
-                            treeRow={{
-                              onCollapse: () => toggleRoleExpansion(role.id),
+                            expand={{
                               rowIndex: rowIndex,
-                              props: {
-                                'aria-level': 1,
-                                'aria-setsize': sortedRoles.length,
-                                'aria-posinset': rowIndex + 1,
-                                'aria-expanded': isExpanded,
-                              },
+                              isExpanded: isExpanded,
+                              onToggle: () => toggleRoleExpansion(role.id),
+                              expandId: `role-expand-${role.id}`,
                             }}
-                          >
-                            <div style={{ marginLeft: '0px' }}>
-                              <Checkbox
-                                id={`role-${role.id}`}
-                                isChecked={role.currentlyAssigned}
-                                onChange={() => handleRoleToggle(role.id)}
-                                aria-label={`Select role ${role.name}`}
-                              />
-                            </div>
+                          />
+                          <Td>
+                            <Checkbox
+                              id={`role-${role.id}`}
+                              isChecked={role.currentlyAssigned}
+                              onChange={() => handleRoleToggle(role.id)}
+                              aria-label={`Select role ${role.name}`}
+                            />
                           </Td>
                           <Td>
                             <div>
@@ -703,7 +698,7 @@ const EditRolesPage: React.FunctionComponent = () => {
                         </Tr>
                         {isExpanded && (
                           <Tr isExpanded={isExpanded}>
-                            <Td colSpan={4}>
+                            <Td colSpan={5}>
                               <div style={{ padding: 'var(--pf-v5-global--spacer--md)', marginLeft: 'var(--pf-v5-global--spacer--xl)' }}>
                                 <div style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)', fontWeight: 600 }}>
                                   Rules
