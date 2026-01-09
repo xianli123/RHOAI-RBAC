@@ -50,63 +50,35 @@ import {
 } from '@patternfly/react-icons';
 
 // Mock data for users
+interface UserRole {
+  role: string;
+  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+}
+
 interface User {
   id: string;
   name: string;
-  role: string;
-  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+  roles: UserRole[];
   dateCreated: string;
 }
 
 // Mock data for groups
+interface GroupRole {
+  role: string;
+  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+}
+
 interface Group {
   id: string;
   name: string;
-  role: string;
-  roleType: 'openshift-default' | 'openshift-custom' | 'regular';
+  roles: GroupRole[];
   dateCreated: string;
 }
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Maude',
-    role: 'Admin',
-    roleType: 'openshift-default',
-    dateCreated: '30 Oct 2024',
-  },
-  {
-    id: '2',
-    name: 'John',
-    role: 'Contributor',
-    roleType: 'openshift-default',
-    dateCreated: '30 Oct 2024',
-  },
-  {
-    id: '3',
-    name: 'Deena',
-    role: 'Deployment maintainer',
-    roleType: 'regular',
-    dateCreated: '30 Oct 2024',
-  },
-];
+import { mockUsers as sharedMockUsers, mockGroups as sharedMockGroups } from './sharedPermissionsData';
 
-const mockGroups: Group[] = [
-  {
-    id: '1',
-    name: 'dedicated-admins',
-    role: 'Admin',
-    roleType: 'openshift-default',
-    dateCreated: '30 Oct 2024',
-  },
-  {
-    id: '2',
-    name: 'system:serviceaccounts:dedicated-admin',
-    role: 'custom-pipeline-super-user',
-    roleType: 'openshift-custom',
-    dateCreated: '30 Oct 2024',
-  },
-];
+// Use shared data directly - will be updated when roles are saved
+// We'll use React state to ensure re-renders when data changes
 
 // Mock data for role details (permissions/rules)
 interface RoleRule {
@@ -157,13 +129,13 @@ const getRoleAssignees = (roleName: string): RoleAssignee[] => {
       { subject: 'youth team', subjectType: 'Group', roleBinding: 'rb-wb-updater-in-cli', dateCreated: '30 Oct 2024' },
     ];
   }
-  // Default assignees for other roles
-  const userAssignees: RoleAssignee[] = mockUsers
-    .filter(u => u.role === roleName)
+  // Default assignees for other roles - use shared data directly
+  const userAssignees: RoleAssignee[] = sharedMockUsers
+    .filter(u => u.roles.some(r => r.role === roleName))
     .map(u => ({ subject: u.name, subjectType: 'User' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: u.dateCreated }));
   
-  const groupAssignees: RoleAssignee[] = mockGroups
-    .filter(g => g.role === roleName)
+  const groupAssignees: RoleAssignee[] = sharedMockGroups
+    .filter(g => g.roles.some(r => r.role === roleName))
     .map(g => ({ subject: g.name, subjectType: 'Group' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: g.dateCreated }));
   
   return [...userAssignees, ...groupAssignees];
@@ -175,12 +147,19 @@ const ProjectDetail: React.FunctionComponent = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(tabParam || 'overview');
+  
+  // Use shared data with state to ensure re-renders when data changes
+  const [mockUsers, setMockUsers] = React.useState<User[]>(sharedMockUsers as User[]);
+  const [mockGroups, setMockGroups] = React.useState<Group[]>(sharedMockGroups as Group[]);
 
   React.useEffect(() => {
     if (tabParam) {
       setActiveTabKey(tabParam);
     }
-  }, [tabParam]);
+    // Update state when component mounts or when navigating back from edit pages
+    setMockUsers([...sharedMockUsers] as User[]);
+    setMockGroups([...sharedMockGroups] as Group[]);
+  }, [tabParam, searchParams]); // Re-run when URL params change (e.g., when navigating back)
   const [isActionsOpen, setIsActionsOpen] = React.useState(false);
   const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
   const [usersSortBy, setUsersSortBy] = React.useState<ISortBy>({
@@ -576,80 +555,97 @@ const ProjectDetail: React.FunctionComponent = () => {
                     </Thead>
                     <Tbody>
                       {mockUsers.map((user) => (
-                        <Tr key={user.id}>
-                          <Td dataLabel="Username">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              <span className="pf-v6-c-truncate">
-                                <span className="pf-v6-c-truncate__start">{user.name}</span>
-                              </span>
-                            </p>
-                          </Td>
-                          <Td dataLabel="Role">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              {renderRoleBadge(user.role, user.roleType, 'User', user.name)}
-                            </p>
-                          </Td>
-                          <Td dataLabel="Date created">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              <div style={{ display: 'contents' }}>
-                                <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
-                                  <time className="pf-v6-c-timestamp__text">{user.dateCreated}</time>
-                                </span>
-                              </div>
-                            </p>
-                          </Td>
-                          <Td isActionCell className="pf-v6-c-table__td pf-v6-c-table__action pf-m-nowrap" style={{ textAlign: 'right' }}>
-                            <Dropdown
-                              isOpen={openKebabMenus.has(`user-${user.id}`)}
-                              onSelect={() => toggleKebabMenu(`user-${user.id}`)}
-                              onOpenChange={(isOpen: boolean) => {
-                                if (!isOpen) {
-                                  toggleKebabMenu(`user-${user.id}`);
-                                }
-                              }}
-                              toggle={(toggleRef) => (
-                                <MenuToggle
-                                  ref={toggleRef}
-                                  aria-label="Kebab toggle"
-                                  variant="plain"
-                                  onClick={() => toggleKebabMenu(`user-${user.id}`)}
-                                  isExpanded={openKebabMenus.has(`user-${user.id}`)}
-                                  className="pf-v6-c-menu-toggle pf-m-plain"
+                        user.roles.map((userRole, roleIndex) => (
+                          <Tr key={`${user.id}-${roleIndex}`}>
+                            {roleIndex === 0 && (
+                              <Td 
+                                dataLabel="Username" 
+                                rowSpan={user.roles.length}
+                              >
+                                <p 
+                                  data-ouia-component-type="PF6/Content"
+                                  data-ouia-safe="true"
+                                  data-pf-content="true"
+                                  className="pf-v6-c-content--p"
                                 >
-                                  <EllipsisVIcon />
-                                </MenuToggle>
-                              )}
+                                  <span className="pf-v6-c-truncate">
+                                    <span className="pf-v6-c-truncate__start">{user.name}</span>
+                                  </span>
+                                </p>
+                              </Td>
+                            )}
+                            <Td 
+                              dataLabel="Role"
+                              style={roleIndex > 0 ? { paddingInlineStart: 'var(--pf-v6-c-table--cell--Padding--base)' } : undefined}
                             >
-                              <DropdownList>
-                                <DropdownItem 
-                                  key="edit" 
-                                  onClick={() => {
-                                    handleEditUser(user.id, user.name);
-                                    toggleKebabMenu(`user-${user.id}`);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownItem>
-                                <DropdownItem key="remove">Remove</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </Td>
-                        </Tr>
+                              <p 
+                                data-ouia-component-type="PF6/Content"
+                                data-ouia-safe="true"
+                                data-pf-content="true"
+                                className="pf-v6-c-content--p"
+                              >
+                                {renderRoleBadge(userRole.role, userRole.roleType, 'User', user.name)}
+                              </p>
+                            </Td>
+                            <Td 
+                              dataLabel="Date created"
+                              style={roleIndex > 0 ? { paddingInlineStart: 'var(--pf-v6-c-table--cell--Padding--base)' } : undefined}
+                            >
+                              <p 
+                                data-ouia-component-type="PF6/Content"
+                                data-ouia-safe="true"
+                                data-pf-content="true"
+                                className="pf-v6-c-content--p"
+                              >
+                                <div style={{ display: 'contents' }}>
+                                  <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
+                                    <time className="pf-v6-c-timestamp__text">{user.dateCreated}</time>
+                                  </span>
+                                </div>
+                              </p>
+                            </Td>
+                            <Td 
+                              isActionCell 
+                              className="pf-v6-c-table__td pf-v6-c-table__action pf-m-nowrap" 
+                              style={{ textAlign: 'right' }}
+                            >
+                              <Dropdown
+                                isOpen={openKebabMenus.has(`user-${user.id}-${roleIndex}`)}
+                                onSelect={() => toggleKebabMenu(`user-${user.id}-${roleIndex}`)}
+                                onOpenChange={(isOpen: boolean) => {
+                                  if (!isOpen) {
+                                    toggleKebabMenu(`user-${user.id}-${roleIndex}`);
+                                  }
+                                }}
+                                toggle={(toggleRef) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    aria-label="Kebab toggle"
+                                    variant="plain"
+                                    onClick={() => toggleKebabMenu(`user-${user.id}-${roleIndex}`)}
+                                    isExpanded={openKebabMenus.has(`user-${user.id}-${roleIndex}`)}
+                                    className="pf-v6-c-menu-toggle pf-m-plain"
+                                  >
+                                    <EllipsisVIcon />
+                                  </MenuToggle>
+                                )}
+                              >
+                                <DropdownList>
+                                  <DropdownItem 
+                                    key="edit" 
+                                    onClick={() => {
+                                      handleEditUser(user.id, user.name);
+                                      toggleKebabMenu(`user-${user.id}-${roleIndex}`);
+                                    }}
+                                  >
+                                    Edit
+                                  </DropdownItem>
+                                  <DropdownItem key="remove">Remove</DropdownItem>
+                                </DropdownList>
+                              </Dropdown>
+                            </Td>
+                          </Tr>
+                        ))
                       ))}
                     </Tbody>
                   </Table>
@@ -699,80 +695,97 @@ const ProjectDetail: React.FunctionComponent = () => {
                     </Thead>
                     <Tbody>
                       {mockGroups.map((group) => (
-                        <Tr key={group.id}>
-                          <Td dataLabel="Name">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              <span className="pf-v6-c-truncate">
-                                <span className="pf-v6-c-truncate__start">{group.name}</span>
-                              </span>
-                            </p>
-                          </Td>
-                          <Td dataLabel="Role">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              {renderRoleBadge(group.role, group.roleType, 'Group', group.name)}
-                            </p>
-                          </Td>
-                          <Td dataLabel="Date created">
-                            <p 
-                              data-ouia-component-type="PF6/Content"
-                              data-ouia-safe="true"
-                              data-pf-content="true"
-                              className="pf-v6-c-content--p"
-                            >
-                              <div style={{ display: 'contents' }}>
-                                <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
-                                  <time className="pf-v6-c-timestamp__text">{group.dateCreated}</time>
-                                </span>
-                              </div>
-                            </p>
-                          </Td>
-                          <Td isActionCell className="pf-v6-c-table__td pf-v6-c-table__action pf-m-nowrap" style={{ textAlign: 'right' }}>
-                            <Dropdown
-                              isOpen={openKebabMenus.has(`group-${group.id}`)}
-                              onSelect={() => toggleKebabMenu(`group-${group.id}`)}
-                              onOpenChange={(isOpen: boolean) => {
-                                if (!isOpen) {
-                                  toggleKebabMenu(`group-${group.id}`);
-                                }
-                              }}
-                              toggle={(toggleRef) => (
-                                <MenuToggle
-                                  ref={toggleRef}
-                                  aria-label="Kebab toggle"
-                                  variant="plain"
-                                  onClick={() => toggleKebabMenu(`group-${group.id}`)}
-                                  isExpanded={openKebabMenus.has(`group-${group.id}`)}
-                                  className="pf-v6-c-menu-toggle pf-m-plain"
+                        group.roles.map((groupRole, roleIndex) => (
+                          <Tr key={`${group.id}-${roleIndex}`}>
+                            {roleIndex === 0 && (
+                              <Td 
+                                dataLabel="Name" 
+                                rowSpan={group.roles.length}
+                              >
+                                <p 
+                                  data-ouia-component-type="PF6/Content"
+                                  data-ouia-safe="true"
+                                  data-pf-content="true"
+                                  className="pf-v6-c-content--p"
                                 >
-                                  <EllipsisVIcon />
-                                </MenuToggle>
-                              )}
+                                  <span className="pf-v6-c-truncate">
+                                    <span className="pf-v6-c-truncate__start">{group.name}</span>
+                                  </span>
+                                </p>
+                              </Td>
+                            )}
+                            <Td 
+                              dataLabel="Role"
+                              style={roleIndex > 0 ? { paddingInlineStart: 'var(--pf-v6-c-table--cell--Padding--base)' } : undefined}
                             >
-                              <DropdownList>
-                                <DropdownItem 
-                                  key="edit" 
-                                  onClick={() => {
-                                    handleEditGroup(group.id, group.name);
-                                    toggleKebabMenu(`group-${group.id}`);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownItem>
-                                <DropdownItem key="remove">Remove</DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </Td>
-                        </Tr>
+                              <p 
+                                data-ouia-component-type="PF6/Content"
+                                data-ouia-safe="true"
+                                data-pf-content="true"
+                                className="pf-v6-c-content--p"
+                              >
+                                {renderRoleBadge(groupRole.role, groupRole.roleType, 'Group', group.name)}
+                              </p>
+                            </Td>
+                            <Td 
+                              dataLabel="Date created"
+                              style={roleIndex > 0 ? { paddingInlineStart: 'var(--pf-v6-c-table--cell--Padding--base)' } : undefined}
+                            >
+                              <p 
+                                data-ouia-component-type="PF6/Content"
+                                data-ouia-safe="true"
+                                data-pf-content="true"
+                                className="pf-v6-c-content--p"
+                              >
+                                <div style={{ display: 'contents' }}>
+                                  <span className="pf-v6-c-timestamp pf-m-help-text" tabIndex={0}>
+                                    <time className="pf-v6-c-timestamp__text">{group.dateCreated}</time>
+                                  </span>
+                                </div>
+                              </p>
+                            </Td>
+                            <Td 
+                              isActionCell 
+                              className="pf-v6-c-table__td pf-v6-c-table__action pf-m-nowrap" 
+                              style={{ textAlign: 'right' }}
+                            >
+                              <Dropdown
+                                isOpen={openKebabMenus.has(`group-${group.id}-${roleIndex}`)}
+                                onSelect={() => toggleKebabMenu(`group-${group.id}-${roleIndex}`)}
+                                onOpenChange={(isOpen: boolean) => {
+                                  if (!isOpen) {
+                                    toggleKebabMenu(`group-${group.id}-${roleIndex}`);
+                                  }
+                                }}
+                                toggle={(toggleRef) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    aria-label="Kebab toggle"
+                                    variant="plain"
+                                    onClick={() => toggleKebabMenu(`group-${group.id}-${roleIndex}`)}
+                                    isExpanded={openKebabMenus.has(`group-${group.id}-${roleIndex}`)}
+                                    className="pf-v6-c-menu-toggle pf-m-plain"
+                                  >
+                                    <EllipsisVIcon />
+                                  </MenuToggle>
+                                )}
+                              >
+                                <DropdownList>
+                                  <DropdownItem 
+                                    key="edit" 
+                                    onClick={() => {
+                                      handleEditGroup(group.id, group.name);
+                                      toggleKebabMenu(`group-${group.id}-${roleIndex}`);
+                                    }}
+                                  >
+                                    Edit
+                                  </DropdownItem>
+                                  <DropdownItem key="remove">Remove</DropdownItem>
+                                </DropdownList>
+                              </Dropdown>
+                            </Td>
+                          </Tr>
+                        ))
                       ))}
                     </Tbody>
                   </Table>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { updateUserRoles, updateGroupRoles, mockUsers, mockGroups } from './sharedPermissionsData';
 import {
   PageSection,
   Title,
@@ -158,18 +159,6 @@ const mockRoles: Role[] = [
   },
 ];
 
-// Mock data for users and groups (matching ProjectDetail.tsx)
-const mockUsersData = [
-  { name: 'Maude', role: 'Admin' },
-  { name: 'John', role: 'Contributor' },
-  { name: 'Deena', role: 'Deployment maintainer' },
-];
-
-const mockGroupsData = [
-  { name: 'dedicated-admins', role: 'Admin' },
-  { name: 'system:serviceaccounts:dedicated-admin', role: 'custom-pipeline-super-user' },
-];
-
 const EditRolesPage: React.FunctionComponent = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams] = useSearchParams();
@@ -178,28 +167,35 @@ const EditRolesPage: React.FunctionComponent = () => {
   const subjectType = searchParams.get('subjectType') || 'User';
   const subjectName = searchParams.get('subjectName') || '';
   
-  // Determine which roles are originally assigned based on the subject's current role
-  const getSubjectCurrentRole = (): string | null => {
+  // Get current shared data dynamically (will be updated when roles are saved)
+  const getMockUsersData = () => mockUsers.map(u => ({ name: u.name, roles: u.roles }));
+  const getMockGroupsData = () => mockGroups.map(g => ({ name: g.name, roles: g.roles }));
+  
+  // Get subject's current roles from Permissions tab data (reads from shared data)
+  const getSubjectRoles = (): string[] => {
     if (subjectType === 'User') {
-      const user = mockUsersData.find(u => u.name === subjectName);
-      return user?.role || null;
+      const user = mockUsers.find(u => u.name === subjectName);
+      return user?.roles.map(r => r.role) || [];
     } else {
-      const group = mockGroupsData.find(g => g.name === subjectName);
-      return group?.role || null;
+      const group = mockGroups.find(g => g.name === subjectName);
+      return group?.roles.map(r => r.role) || [];
     }
   };
   
   // Check if subject has any OpenShift custom roles
   const subjectHasOpenShiftCustomRole = (): boolean => {
-    const currentRole = getSubjectCurrentRole();
-    if (!currentRole) return false;
-    const role = mockRoles.find(r => r.name === currentRole);
-    return role?.roleType === 'openshift-custom';
+    if (subjectType === 'User') {
+      const user = mockUsers.find(u => u.name === subjectName);
+      return user?.roles.some(r => r.roleType === 'openshift-custom') || false;
+    } else {
+      const group = mockGroups.find(g => g.name === subjectName);
+      return group?.roles.some(r => r.roleType === 'openshift-custom') || false;
+    }
   };
   
-  // Initialize roles with correct originallyAssigned status
+  // Initialize roles with correct originallyAssigned status based on Permissions tab data
   const initializeRoles = (): Role[] => {
-    const currentRole = getSubjectCurrentRole();
+    const subjectRoles = getSubjectRoles();
     const hasOpenShiftCustom = subjectHasOpenShiftCustomRole();
     
     // Filter out OpenShift custom roles if subject doesn't have any
@@ -207,19 +203,23 @@ const EditRolesPage: React.FunctionComponent = () => {
       ? mockRoles 
       : mockRoles.filter(role => role.roleType !== 'openshift-custom');
     
-    return filteredRoles.map(role => ({
-      ...role,
-      originallyAssigned: role.name === currentRole,
-      currentlyAssigned: role.name === currentRole,
-    }));
+    return filteredRoles.map(role => {
+      const isAssigned = subjectRoles.includes(role.name);
+      return {
+        ...role,
+        originallyAssigned: isAssigned,
+        currentlyAssigned: isAssigned,
+      };
+    });
   };
   
   const [roles, setRoles] = React.useState<Role[]>(initializeRoles());
   
-  // Re-initialize roles when subject changes
+  // Re-initialize roles when subject changes or when navigating to this page
+  // This ensures we always read the latest shared data
   React.useEffect(() => {
     setRoles(initializeRoles());
-  }, [subjectName, subjectType]);
+  }, [subjectName, subjectType, searchParams]); // Include searchParams to detect navigation
   const [expandedRoles, setExpandedRoles] = React.useState<Set<string>>(new Set());
   const [statusSortBy, setStatusSortBy] = React.useState<ISortBy>({
     index: 2,
@@ -518,7 +518,19 @@ const EditRolesPage: React.FunctionComponent = () => {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        // Handle save
+                        // Get all currently assigned roles
+                        const assignedRoles = roles
+                          .filter(role => role.currentlyAssigned)
+                          .map(role => role.name);
+                        
+                        // Update shared data
+                        if (subjectType === 'User') {
+                          updateUserRoles(subjectName, assignedRoles);
+                        } else {
+                          updateGroupRoles(subjectName, assignedRoles);
+                        }
+                        
+                        // Navigate back to permissions tab
                         navigate(`/projects/${projectId}?tab=permissions`);
                       }}
                       isDisabled={!hasChanges}

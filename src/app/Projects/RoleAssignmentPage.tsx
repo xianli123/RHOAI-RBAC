@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { updateUserRoles, updateGroupRoles } from './sharedPermissionsData';
 import {
   PageSection,
   Title,
@@ -443,7 +444,19 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        // Handle save
+                        // Get all currently assigned roles
+                        const assignedRoles = roles
+                          .filter(role => role.currentlyAssigned)
+                          .map(role => role.name);
+                        
+                        // Update shared data
+                        if (subjectType === 'User') {
+                          updateUserRoles(selectedSubject, assignedRoles);
+                        } else {
+                          updateGroupRoles(selectedSubject, assignedRoles);
+                        }
+                        
+                        // Navigate back to permissions tab
                         navigate(`/projects/${projectId}?tab=permissions`);
                       }}
                       isDisabled={!hasSelectedRoles || !selectedSubject}
