@@ -78,6 +78,15 @@ interface User {
    - Each role has its own Date created and kebab menu
    - Role names are clickable, open modal with role details and assignees
    - Toolbar with filters, search, and "Assign roles" button
+   - **Role Table Variants**: Three design options for comparison
+     - Variant switcher above breadcrumb (light purple background)
+     - Option 1: Original 3.3 list view (existing labels)
+     - Option 2: Display label on every role (all labels with popovers)
+     - Option 3: Don't show any labels (no labels)
+   - **Label Popovers (Option 2)**: Clickable labels show popovers with placeholder content
+     - Popover header: Title text (semibold, no icon)
+     - Popover body: "This is a placeholder. Not real data."
+     - Close button (X) in header
 
 2. **Role details modal:**
    - Opens when clicking role names in Permissions tab
@@ -122,6 +131,9 @@ interface User {
 
 **State Management:**
 - `ProjectDetail`: Uses React state to store shared data, updates on navigation
+  - `rolesVariant`: State for design option ('option1' | 'option2' | 'option3')
+  - `openPopovers`: Set of open popover IDs for label popovers
+  - `togglePopover`: Function to toggle popover visibility
 - `EditRolesPage`: Reads directly from shared data, re-initializes on mount/navigation
 - `RoleAssignmentPage`: Updates shared data on save
 
@@ -139,6 +151,17 @@ interface User {
 - Expandable rows show rules in nested table format
 - CSS transform rotates arrow icon 90° when expanded
 
+**Label Rendering (Permissions Tab):**
+- `renderAILabel()`: Renders AI label with sparkle icon, wrapped in Popover for Option 2
+- `renderRoleBadge()`: Renders role name and labels based on variant
+  - Option 1: Original labels (outline variant)
+  - Option 2: All labels (filled variant) with popovers
+  - Option 3: No labels
+- `getLabelPopoverContent()`: Returns title and body for popover content
+- Labels use onClick handlers to manually open popovers
+- Popover state managed via `openPopovers` Set and `setOpenPopovers` function
+- Popover uses `shouldOpen`/`shouldClose` callbacks to manage visibility
+
 ### Current Branch
 - Branch: `Project-RBAC`
 - GitLab Pages: https://rhoai-0024f5.pages.redhat.com
@@ -146,7 +169,34 @@ interface User {
 
 ## Recent Changes (Latest Session)
 
-1. **Edit Role Assignment Page Enhancements:**
+1. **Permissions Tab - Role Table Variants:**
+   - **Variant Switcher**: Added "Role table comparison" section above breadcrumb with light purple background (#f0e6ff)
+     - Section title: "Role table comparison"
+     - Option 1: "Option 1 - 3.3 list view" (original behavior)
+     - Option 2: "Option 2 - Display label on every role" (all labels shown)
+     - Option 3: "Option 3 - Don't show any labels in the list view" (no labels)
+     - 24px gap between each option, 16px padding in section
+   - **Option 1 (Original)**: 
+     - Keeps existing label behavior (OpenShift default/custom labels only where applicable)
+     - Labels use `variant="outline"`
+   - **Option 2 (All Labels)**:
+     - All labels use `variant="filled"`
+     - AI label added to all roles (including Admin and Contributor before OpenShift default label)
+     - AI label: compact, gray background (#f5f5f5), with sparkle icon SVG
+     - OpenShift default/custom labels: include OpenShift icon (red circle with 'O' path) before text
+     - 4px gap between icon and text in OpenShift labels
+     - 4px gap between AI label and OpenShift label when both present
+     - Question mark icon added after "Role" column header (only in Option 2)
+     - **Label Popovers**: All labels are clickable and show popovers
+       - Popover header: Title text only (no Alert icon), semibold (fontWeight: 600)
+       - Popover body: "This is a placeholder. Not real data."
+       - Popover includes close button (X) via `showClose` prop
+       - Popover state managed with `openPopovers` Set and `togglePopover` function
+   - **Option 3 (No Labels)**:
+     - All labels removed from role display
+     - Only role names shown
+
+2. **Edit Role Assignment Page Enhancements:**
    - **Design Option Toggle**: Added comparison between two design options
      - Toggle section with light purple background above breadcrumb
      - Option 1: "Sorted by the status" (original behavior)
@@ -163,18 +213,18 @@ interface User {
    - **Rule Data**: Added comprehensive rule data for all roles based on their permissions
    - **Table Structure**: Fixed column alignment (4 columns: expand/checkbox, Role name, Description, Status)
 
-2. **Data Synchronization:**
+3. **Data Synchronization:**
    - Created `sharedPermissionsData.ts` for centralized data management
    - Updated all three pages to use shared data
    - Implemented save handlers that update shared data
    - Added React state in ProjectDetail to re-render on data changes
    - Fixed EditRolesPage to read latest shared data when navigating back
 
-3. **Table Alignment:**
+4. **Table Alignment:**
    - Fixed Name column header and username alignment to be left-aligned
    - Removed extra padding from first row cells to align with header
 
-4. **Role Display:**
+5. **Role Display:**
    - Updated to show multiple roles per user/group in Permissions tab
    - Each role has its own row with Date created and kebab menu
 
