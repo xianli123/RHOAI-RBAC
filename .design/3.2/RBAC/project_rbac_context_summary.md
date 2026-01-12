@@ -31,8 +31,25 @@
    - **Rule Data**: Added comprehensive rule data for all roles (actions, API groups, resources, resource names)
 
 3. **`src/app/Projects/RoleAssignmentPage.tsx`**
-   - Reused Role assignment section structure from EditRolesPage
-   - Tree table structure with PatternFly v6 styling
+   - **Complete redesign**: Reused structure and layout from EditRolesPage
+   - **Subject Section**:
+     - Subject type: Two radio buttons (User/Group), User selected by default
+     - User/Group name: TypeaheadSelect dropdown with typeahead behavior
+     - Helper text: "Only users/groups with existing roles are listed. To add someone new, enter their username/group name."
+     - Inline alert: "Please select a user or group before assigning roles." (shown when no subject selected, 8px gap from dropdown)
+     - Custom create option message: "Grant access to '[input]'" instead of "Create '[input]'"
+   - **Role Assignment Section**:
+     - Reused Option 2 ("Sorted by role name and status") from EditRolesPage
+     - Role names are clickable (Button with link variant), open modal with role rules
+     - Both Role name and Status columns are sortable
+     - Shows "Currently assigned" status for roles the subject already has
+     - Filters OpenShift custom roles when new user/group is selected (not in existing list)
+     - Hidden by default, only shown when a subject is selected
+   - **Role Rules Modal**:
+     - Opens when clicking role names
+     - Shows role name with badge in header
+     - Sortable rules table (Actions, API Groups, Resources, Resource names)
+     - Pagination with "View more" button
    - Save handler updates shared data with assigned roles
    - Creates new user/group if they don't exist
 
@@ -110,7 +127,22 @@ interface User {
      - Rules displayed in compact table format
 
 4. **Assign roles page:**
-   - Reused Role assignment section structure
+   - **Subject Section**:
+     - Subject type selection (User/Group radio buttons)
+     - TypeaheadSelect for user/group name with typeahead behavior
+     - Helper text explaining existing users/groups listing
+     - Inline alert prompting user selection
+     - Custom create option message: "Grant access to '[input]'"
+   - **Role Assignment Section**:
+     - Reused Option 2 from EditRolesPage (sorted by role name and status)
+     - Clickable role names that open rules modal
+     - Sortable Role name and Status columns
+     - Shows "Currently assigned" for roles subject already has
+     - Filters OpenShift custom roles for new users/groups
+     - Hidden until subject is selected
+   - **Role Rules Modal**:
+     - Opens when clicking role names
+     - Sortable rules table with pagination
    - Allows assigning roles to new or existing users/groups
    - Creates new user/group if they don't exist
    - Saves changes to shared data, syncs back to Permissions tab
@@ -150,6 +182,22 @@ interface User {
 - Expand arrow and checkbox in same cell (first column)
 - Expandable rows show rules in nested table format
 - CSS transform rotates arrow icon 90° when expanded
+
+**Assign Roles Page:**
+- **Subject Section**:
+  - TypeaheadSelect from `@patternfly/react-templates` with `isCreatable={true}`
+  - `createOptionMessage` prop customizes create option text
+  - Helper text and inline alert for user guidance
+- **Role Assignment Table**:
+  - Reuses Option 2 sorting logic from EditRolesPage
+  - Role names are clickable buttons that open modal
+  - Both Role name and Status columns are sortable
+  - Filters OpenShift custom roles for new subjects
+  - Tracks `originallyAssigned` to show "Currently assigned" status
+- **Role Rules Modal**:
+  - Uses Modal component with sortable rules table
+  - Pagination with "View more" button
+  - Shows role name with badge in header
 
 **Label Rendering (Permissions Tab):**
 - `renderAILabel()`: Renders AI label with sparkle icon, wrapped in Popover for Option 2
@@ -227,6 +275,25 @@ interface User {
 5. **Role Display:**
    - Updated to show multiple roles per user/group in Permissions tab
    - Each role has its own row with Date created and kebab menu
+
+6. **Assign Roles Page - Complete Redesign:**
+   - **Subject Section**:
+     - Subject type: Radio buttons (User/Group), User default
+     - User/Group name: TypeaheadSelect with typeahead behavior
+     - Helper text: "Only users/groups with existing roles are listed. To add someone new, enter their username/group name."
+     - Inline alert: "Please select a user or group before assigning roles." (8px gap from dropdown)
+     - Custom create message: "Grant access to '[input]'" instead of "Create '[input]'"
+   - **Role Assignment Section**:
+     - Reused Option 2 from EditRolesPage (sorted by role name and status)
+     - Role names are clickable, open modal with role rules
+     - Both Role name and Status columns are sortable
+     - Shows "Currently assigned" status for existing roles
+     - Filters OpenShift custom roles when new user/group is typed
+     - Hidden by default, only shown when subject is selected
+   - **Role Rules Modal**:
+     - Opens when clicking role names
+     - Sortable rules table with pagination
+     - Shows role name with badge in header
 
 ## Next Steps
 - Continue with any remaining UI refinements
