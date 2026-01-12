@@ -344,9 +344,6 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                       <Th>Description</Th>
                       <Th sort={getStatusSortParams()}>
                         Status
-                        {statusSortBy.direction === 'desc' && (
-                          <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                        )}
                       </Th>
                     </Tr>
                   </Thead>

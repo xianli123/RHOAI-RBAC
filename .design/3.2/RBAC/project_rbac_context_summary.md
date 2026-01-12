@@ -19,6 +19,16 @@
    - Save handler updates shared data with currently assigned roles
    - Reads directly from shared data (mockUsers/mockGroups) to reflect saved changes
    - Re-initializes roles when navigating to the page to get latest shared data
+   - **Design Option Toggle**: Added radio button toggle above breadcrumb with light purple background
+     - Option 1: "Sorted by the status" - Original status-based sorting (default)
+     - Option 2: "Sorted by role name and status" - Alphabetical by role name with status as secondary sort
+   - **Expandable Rules Section**: All roles have expandable rows showing rules
+     - Uses PatternFly `treeRow` prop for expand/collapse functionality
+     - Shows rules table with columns: Actions, API groups, Resource type, Resource names
+     - Arrow icon rotates 90° when expanded (using CSS transform)
+     - Checkbox remains visible alongside expand arrow in same cell
+   - **Role Descriptions**: Updated all role descriptions to be clearer and more meaningful
+   - **Rule Data**: Added comprehensive rule data for all roles (actions, API groups, resources, resource names)
 
 3. **`src/app/Projects/RoleAssignmentPage.tsx`**
    - Reused Role assignment section structure from EditRolesPage
@@ -82,6 +92,13 @@ interface User {
    - Status badges: "Currently assigned", "To be assigned", "To be removed"
    - Filters OpenShift custom roles if user doesn't have any
    - Saves changes to shared data, syncs back to Permissions tab
+   - **Design Option Comparison**: Toggle between two sorting approaches
+     - Option 1: Status-based sorting (original)
+     - Option 2: Role name alphabetical sorting with status as secondary
+   - **Expandable Rules**: Click arrow to expand/collapse rules for each role
+     - All roles are expandable (not just those with rules)
+     - Shows "No rules available" for roles without rules
+     - Rules displayed in compact table format
 
 4. **Assign roles page:**
    - Reused Role assignment section structure
@@ -115,6 +132,13 @@ interface User {
 - Actions (kebab): one per role row
 - Subsequent role rows have `paddingInlineStart` for alignment
 
+**Edit Roles Page Table:**
+- 4 columns: Expand/Checkbox, Role name, Description, Status
+- Uses PatternFly `treeRow` prop for expandable functionality
+- Expand arrow and checkbox in same cell (first column)
+- Expandable rows show rules in nested table format
+- CSS transform rotates arrow icon 90° when expanded
+
 ### Current Branch
 - Branch: `Project-RBAC`
 - GitLab Pages: https://rhoai-0024f5.pages.redhat.com
@@ -122,18 +146,35 @@ interface User {
 
 ## Recent Changes (Latest Session)
 
-1. **Data Synchronization:**
+1. **Edit Role Assignment Page Enhancements:**
+   - **Design Option Toggle**: Added comparison between two design options
+     - Toggle section with light purple background above breadcrumb
+     - Option 1: "Sorted by the status" (original behavior)
+     - Option 2: "Sorted by role name and status" (new alphabetical sorting)
+     - Both options support Status column sorting
+     - Option 2 supports Role name column sorting
+   - **Expandable Rules Section**: 
+     - All roles have expandable rows using PatternFly `treeRow` prop
+     - Expandable content shows rules table with Actions, API groups, Resource type, Resource names
+     - Arrow icon changes direction (right → down) when expanded
+     - Custom CSS added to rotate arrow icon 90° when row has `pf-m-expanded` class
+     - Checkbox and expand arrow coexist in same cell
+   - **Role Descriptions**: Updated all role descriptions to be clearer and more meaningful
+   - **Rule Data**: Added comprehensive rule data for all roles based on their permissions
+   - **Table Structure**: Fixed column alignment (4 columns: expand/checkbox, Role name, Description, Status)
+
+2. **Data Synchronization:**
    - Created `sharedPermissionsData.ts` for centralized data management
    - Updated all three pages to use shared data
    - Implemented save handlers that update shared data
    - Added React state in ProjectDetail to re-render on data changes
    - Fixed EditRolesPage to read latest shared data when navigating back
 
-2. **Table Alignment:**
+3. **Table Alignment:**
    - Fixed Name column header and username alignment to be left-aligned
    - Removed extra padding from first row cells to align with header
 
-3. **Role Display:**
+4. **Role Display:**
    - Updated to show multiple roles per user/group in Permissions tab
    - Each role has its own row with Date created and kebab menu
 

@@ -33,6 +33,7 @@ import {
   ModalBody,
   Content,
   ClipboardCopy,
+  Radio,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -182,6 +183,9 @@ const ProjectDetail: React.FunctionComponent = () => {
   const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
   const [selectedRole, setSelectedRole] = React.useState<{ name: string; roleType: 'openshift-default' | 'openshift-custom' | 'regular' } | null>(null);
   const [roleModalTabKey, setRoleModalTabKey] = React.useState<string | number>(0);
+  
+  // Variant switcher state for Roles table
+  const [rolesVariant, setRolesVariant] = React.useState<'option1' | 'option2' | 'option3'>('option1');
 
   const toggleKebabMenu = (id: string) => {
     setOpenKebabMenus((prev) => {
@@ -217,6 +221,41 @@ const ProjectDetail: React.FunctionComponent = () => {
     setRoleModalTabKey(0);
   };
 
+  const renderAILabel = () => (
+    <Label
+      variant="outline"
+      isCompact
+      style={{
+        backgroundColor: '#f5f5f5',
+        borderColor: '#d2d2d2',
+        color: '#000',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '2px 8px',
+        borderRadius: '16px',
+      }}
+    >
+      <svg
+        className="pf-v6-svg"
+        viewBox="0 0 32 32"
+        fill="currentColor"
+        aria-hidden="true"
+        role="img"
+        width="1em"
+        height="1em"
+        style={{ width: '12px', height: '12px' }}
+      >
+        <path
+          xmlns="http://www.w3.org/2000/svg"
+          className="st1"
+          d="M26.037,16.962c-5.905-.468-10.531-5.094-11-11-.042-.52-.517-.961-1.038-.961s-.997.442-1.038.962c-.468,5.905-5.094,10.531-11,11-.52.042-.961.517-.961,1.038s.442.997.962,1.038c5.905.468,10.531,5.094,11,11,.042.52.517.961,1.038.961s.997-.442,1.038-.962c.468-5.905,5.094-10.531,10.999-10.999,0,0,0,0,0,0,.52-.042.961-.517.961-1.038s-.442-.997-.962-1.038ZM14,25.764c-1.413-3.545-4.219-6.352-7.764-7.764,3.545-1.413,6.352-4.219,7.764-7.764,1.413,3.545,4.219,6.352,7.764,7.764-3.545,1.413-6.352,4.219-7.764,7.764ZM30.096,6.025c-1.55-.346-2.775-1.571-3.123-3.125-.104-.458-.504-.778-.974-.778s-.87.32-.975.781c-.346,1.55-1.571,2.775-3.125,3.123-.458.104-.778.504-.778.974s.32.87.781.975c1.55.346,2.775,1.571,3.123,3.125.104.458.504.778.974.778s.87-.32.975-.781c.346-1.55,1.571-2.775,3.122-3.122,0,0,.002,0,.003,0,.458-.104.778-.504.778-.974s-.32-.87-.781-.975ZM26,8.917c-.481-.778-1.139-1.436-1.917-1.917.778-.481,1.436-1.139,1.917-1.917.481.778,1.139,1.436,1.917,1.917-.778.481-1.436,1.139-1.917,1.917Z"
+        />
+      </svg>
+      AI
+    </Label>
+  );
+
   const renderRoleBadge = (
     role: string, 
     roleType: 'openshift-default' | 'openshift-custom' | 'regular',
@@ -234,21 +273,61 @@ const ProjectDetail: React.FunctionComponent = () => {
       </Button>
     );
 
-    if (roleType === 'openshift-default') {
-      return (
-        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
-          {roleNameElement}
-          <Label color="blue" variant="outline" isCompact>OpenShift default</Label>
-        </Flex>
-      );
-    } else if (roleType === 'openshift-custom') {
-      return (
-        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
-          {roleNameElement}
-          <Label color="purple" variant="outline" isCompact>OpenShift custom</Label>
-        </Flex>
-      );
+    // Option 3: Remove all labels
+    if (rolesVariant === 'option3') {
+      return roleNameElement;
     }
+
+    // Option 1: Original behavior (keep existing labels)
+    if (rolesVariant === 'option1') {
+      if (roleType === 'openshift-default') {
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+            {roleNameElement}
+            <Label color="blue" variant="outline" isCompact>OpenShift default</Label>
+          </Flex>
+        );
+      } else if (roleType === 'openshift-custom') {
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+            {roleNameElement}
+            <Label color="purple" variant="outline" isCompact>OpenShift custom</Label>
+          </Flex>
+        );
+      }
+      return roleNameElement;
+    }
+
+    // Option 2: With all labels (add AI label for regular roles and Admin/Contributor)
+    if (rolesVariant === 'option2') {
+      if (roleType === 'openshift-default') {
+        // For Admin and Contributor, show AI label before OpenShift default label
+        const isAdminOrContributor = role === 'Admin' || role === 'Contributor';
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+            {roleNameElement}
+            {isAdminOrContributor && renderAILabel()}
+            <Label color="blue" variant="outline" isCompact>OpenShift default</Label>
+          </Flex>
+        );
+      } else if (roleType === 'openshift-custom') {
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+            {roleNameElement}
+            <Label color="purple" variant="outline" isCompact>OpenShift custom</Label>
+          </Flex>
+        );
+      } else {
+        // Regular role - add AI label
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+            {roleNameElement}
+            {renderAILabel()}
+          </Flex>
+        );
+      }
+    }
+
     return roleNameElement;
   };
 
@@ -322,6 +401,48 @@ const ProjectDetail: React.FunctionComponent = () => {
 
   return (
     <>
+      {/* Variant Switcher */}
+      {activeTabKey === 'permissions' && (
+        <div style={{
+          backgroundColor: '#f0e6ff',
+          padding: '16px',
+          borderBottom: '1px solid var(--pf-v5-global--BorderColor--200)'
+        }}>
+          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsLg' }}>
+            <FlexItem>
+              <span style={{ fontWeight: 600, fontSize: 'var(--pf-v5-global--FontSize--md)' }}>Role table comparison</span>
+            </FlexItem>
+            <FlexItem style={{ marginLeft: '24px' }}>
+              <Radio
+                isChecked={rolesVariant === 'option1'}
+                name="roles-variant"
+                onChange={() => setRolesVariant('option1')}
+                label="Option 1 - 3.3 list view"
+                id="option1-radio"
+              />
+            </FlexItem>
+            <FlexItem style={{ marginLeft: '24px' }}>
+              <Radio
+                isChecked={rolesVariant === 'option2'}
+                name="roles-variant"
+                onChange={() => setRolesVariant('option2')}
+                label="Option 2 - Display label on every role"
+                id="option2-radio"
+              />
+            </FlexItem>
+            <FlexItem style={{ marginLeft: '24px' }}>
+              <Radio
+                isChecked={rolesVariant === 'option3'}
+                name="roles-variant"
+                onChange={() => setRolesVariant('option3')}
+                label="Option 3 - Don't show any labels in the list view"
+                id="option3-radio"
+              />
+            </FlexItem>
+          </Flex>
+        </div>
+      )}
+
       <div className="pf-v6-c-page__main-breadcrumb">
         <div style={{ padding: 'var(--pf-v5-global--spacer--lg) var(--pf-v5-global--spacer--lg)' }}>
           <Breadcrumb>
@@ -548,7 +669,12 @@ const ProjectDetail: React.FunctionComponent = () => {
                     <Thead className="pf-v6-c-table__thead pf-m-nowrap">
                       <Tr>
                         <Th sort={getUsersSortParams(0)} className="pf-v6-c-table__th pf-m-width-30">Name</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-20">Role</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-20">
+                          Role
+                          {rolesVariant === 'option2' && (
+                            <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
+                          )}
+                        </Th>
                         <Th className="pf-v6-c-table__th pf-m-width-25">Date created</Th>
                         <Th />
                       </Tr>
@@ -688,7 +814,12 @@ const ProjectDetail: React.FunctionComponent = () => {
                     <Thead className="pf-v6-c-table__thead pf-m-nowrap">
                       <Tr>
                         <Th sort={getGroupsSortParams(0)} className="pf-v6-c-table__th pf-m-width-30">Name</Th>
-                        <Th className="pf-v6-c-table__th pf-m-width-20">Role</Th>
+                        <Th className="pf-v6-c-table__th pf-m-width-20">
+                          Role
+                          {rolesVariant === 'option2' && (
+                            <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
+                          )}
+                        </Th>
                         <Th className="pf-v6-c-table__th pf-m-width-25">Date created</Th>
                         <Th />
                       </Tr>
@@ -828,20 +959,22 @@ const ProjectDetail: React.FunctionComponent = () => {
             aria-label="Role details tabs"
           >
             <Tab eventKey={0} title={<TabTitleText>Role details</TabTitleText>}>
-              <div style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}>
+              <div style={{ marginTop: '24px' }}>
                 <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
                   <div style={{ marginBottom: 'var(--pf-v5-global--spacer--xs)' }}>
-                    <Content component="p" style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                      OpenShift name
-                    </Content>
+                    <label className="pf-v6-c-form__label">
+                      <span className="pf-v6-c-form__label-text" style={{ fontWeight: 600 }}>Role name</span>
+                      <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
+                    </label>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--pf-v5-global--spacer--sm)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ClipboardCopy
                       hoverTip="Copy"
                       clickTip="Copied"
                       isReadOnly
+                      variant="inline-compact"
                     >
-                      {selectedRole?.name.toLowerCase() || ''}
+                      {selectedRole?.name || ''}
                     </ClipboardCopy>
                     {selectedRole?.roleType === 'openshift-default' && (
                       <Label color="purple" variant="outline">Cluster role</Label>
@@ -849,6 +982,11 @@ const ProjectDetail: React.FunctionComponent = () => {
                   </div>
                 </div>
 
+                <div style={{ marginBottom: 'var(--pf-v5-global--spacer--xs)', marginTop: '16px' }}>
+                  <label className="pf-v6-c-form__label">
+                    <span className="pf-v6-c-form__label-text" style={{ fontWeight: 600 }}>Rules</span>
+                  </label>
+                </div>
                 <Table variant="compact" aria-label="Role permissions table">
                   <Thead>
                     <Tr>
@@ -885,25 +1023,25 @@ const ProjectDetail: React.FunctionComponent = () => {
               </div>
             </Tab>
             <Tab eventKey={1} title={<TabTitleText>Assignees</TabTitleText>}>
-              <div style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}>
+              <div style={{ marginTop: '24px' }}>
                 <Table variant="compact" aria-label="Role assignees table">
                   <Thead>
                     <Tr>
                       <Th>
                         Subject
-                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                        <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
                       </Th>
                       <Th>
                         Subject type
-                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                        <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
                       </Th>
                       <Th>
                         Role binding
-                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                        <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
                       </Th>
                       <Th>
                         Date created
-                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                        <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
                       </Th>
                     </Tr>
                   </Thead>

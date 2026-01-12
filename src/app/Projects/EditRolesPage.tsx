@@ -26,6 +26,9 @@ import {
   MenuToggle,
   MenuToggleElement,
   Radio,
+  Modal,
+  ModalHeader,
+  ModalBody,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -373,6 +376,13 @@ const EditRolesPage: React.FunctionComponent = () => {
   const [option2ActiveSort, setOption2ActiveSort] = React.useState<'roleName' | 'status'>('roleName');
   const [searchValue, setSearchValue] = React.useState('');
   const [selectedOption, setSelectedOption] = React.useState<'option1' | 'option2'>('option1');
+  const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
+  const [selectedRoleForModal, setSelectedRoleForModal] = React.useState<Role | null>(null);
+  const [rulesSortBy, setRulesSortBy] = React.useState<ISortBy>({
+    index: 0,
+    direction: 'asc',
+  });
+  const [rulesPageSize, setRulesPageSize] = React.useState(10);
 
   const toggleRoleExpansion = (roleId: string) => {
     setExpandedRoles((prev) => {
@@ -523,6 +533,56 @@ const EditRolesPage: React.FunctionComponent = () => {
     return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>---</span>;
   };
 
+  const handleRoleNameClick = (role: Role) => {
+    setSelectedRoleForModal(role);
+    setRulesPageSize(10);
+    setIsRoleModalOpen(true);
+  };
+
+  const getSortedRules = (rules: RoleRule[]): RoleRule[] => {
+    const sorted = [...rules];
+    const columnIndex = rulesSortBy.index;
+    const direction = rulesSortBy.direction;
+
+    sorted.sort((a, b) => {
+      let comparison = 0;
+      
+      if (columnIndex === 0) {
+        // Sort by Actions
+        const aActions = a.actions.join(', ');
+        const bActions = b.actions.join(', ');
+        comparison = aActions.localeCompare(bActions);
+      } else if (columnIndex === 1) {
+        // Sort by API Groups
+        const aApiGroups = a.apiGroups.join(', ');
+        const bApiGroups = b.apiGroups.join(', ');
+        comparison = aApiGroups.localeCompare(bApiGroups);
+      } else if (columnIndex === 2) {
+        // Sort by Resources
+        const aResources = a.resources.join(', ');
+        const bResources = b.resources.join(', ');
+        comparison = aResources.localeCompare(bResources);
+      } else if (columnIndex === 3) {
+        // Sort by Resource names
+        const aResourceNames = (a.resourceNames || []).join(', ') || '-';
+        const bResourceNames = (b.resourceNames || []).join(', ') || '-';
+        comparison = aResourceNames.localeCompare(bResourceNames);
+      }
+
+      return direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  };
+
+  const getRulesSortParams = (columnIndex: number) => ({
+    sortBy: rulesSortBy,
+    onSort: (_event: any, index: number, direction: 'asc' | 'desc') => {
+      setRulesSortBy({ index, direction });
+    },
+    columnIndex,
+  });
+
   const sortedRoles = getSortedRoles();
   const hasChanges = roles.some((role) => {
     // Check if the role's currentlyAssigned state differs from its originallyAssigned state
@@ -534,6 +594,12 @@ const EditRolesPage: React.FunctionComponent = () => {
       <style>{`
         .pf-m-expanded .pf-v6-c-table__toggle-icon svg {
           transform: rotate(90deg);
+        }
+        .pf-v6-c-button.pf-m-link.pf-m-inline {
+          text-decoration: none !important;
+        }
+        .pf-v6-c-button.pf-m-link.pf-m-inline:hover {
+          text-decoration: none !important;
         }
       `}</style>
       <div style={{ 
@@ -640,19 +706,10 @@ const EditRolesPage: React.FunctionComponent = () => {
                     sort={selectedOption === 'option2' ? getRoleNameSortParams() : undefined}
                   >
                     Role name
-                    {selectedOption === 'option2' && roleNameSortBy.direction === 'desc' && (
-                      <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                    )}
                   </Th>
                   <Th>Description</Th>
                   <Th sort={selectedOption === 'option1' ? getStatusSortParams() : (selectedOption === 'option2' ? getOption2StatusSortParams() : undefined)}>
                     Status
-                    {selectedOption === 'option1' && statusSortBy.direction === 'desc' && (
-                      <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                    )}
-                    {selectedOption === 'option2' && option2ActiveSort === 'status' && option2StatusSortBy.direction === 'desc' && (
-                      <ChevronDownIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)' }} />
-                    )}
                   </Th>
                 </Tr>
               </Thead>
@@ -672,31 +729,54 @@ const EditRolesPage: React.FunctionComponent = () => {
                     return (
                       <React.Fragment key={role.id}>
                         <Tr className={isExpanded ? 'pf-m-expanded' : undefined}>
-                          <Td
-                            treeRow={{
-                              onCollapse: () => toggleRoleExpansion(role.id),
-                              rowIndex: rowIndex,
-                              props: {
-                                'aria-level': 1,
-                                'aria-setsize': sortedRoles.length,
-                                'aria-posinset': rowIndex + 1,
-                                'aria-expanded': isExpanded,
-                              },
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--pf-v5-global--spacer--sm)' }}>
+                          {selectedOption === 'option1' ? (
+                            <Td
+                              treeRow={{
+                                onCollapse: () => toggleRoleExpansion(role.id),
+                                rowIndex: rowIndex,
+                                props: {
+                                  'aria-level': 1,
+                                  'aria-setsize': sortedRoles.length,
+                                  'aria-posinset': rowIndex + 1,
+                                  'aria-expanded': isExpanded,
+                                },
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--pf-v5-global--spacer--sm)' }}>
+                                <Checkbox
+                                  id={`role-${role.id}`}
+                                  isChecked={role.currentlyAssigned}
+                                  onChange={() => handleRoleToggle(role.id)}
+                                  aria-label={`Select role ${role.name}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </Td>
+                          ) : (
+                            <Td>
                               <Checkbox
                                 id={`role-${role.id}`}
                                 isChecked={role.currentlyAssigned}
                                 onChange={() => handleRoleToggle(role.id)}
                                 aria-label={`Select role ${role.name}`}
-                                onClick={(e) => e.stopPropagation()}
                               />
-                            </div>
-                          </Td>
+                            </Td>
+                          )}
                           <Td>
                             <div>
-                              <div>{role.name}</div>
+                              {selectedOption === 'option2' ? (
+                                <Button
+                                  variant="link"
+                                  onClick={() => handleRoleNameClick(role)}
+                                  isInline
+                                  style={{ padding: 0, fontSize: 'inherit', textDecoration: 'none' }}
+                                  className="pf-v6-c-button__text"
+                                >
+                                  {role.name}
+                                </Button>
+                              ) : (
+                                <div>{role.name}</div>
+                              )}
                               {renderRoleBadge(role) && (
                                 <div style={{ marginTop: 'var(--pf-v5-global--spacer--xs)' }}>
                                   {renderRoleBadge(role)}
@@ -707,7 +787,7 @@ const EditRolesPage: React.FunctionComponent = () => {
                           <Td>{role.description}</Td>
                           <Td>{renderStatusBadge(role)}</Td>
                         </Tr>
-                        {isExpanded && (
+                        {isExpanded && selectedOption === 'option1' && (
                           <Tr isExpanded={isExpanded}>
                             <Td colSpan={4}>
                               <div style={{ padding: 'var(--pf-v5-global--spacer--md)', marginLeft: 'var(--pf-v5-global--spacer--xl)' }}>
@@ -819,6 +899,88 @@ const EditRolesPage: React.FunctionComponent = () => {
           </div>
         </div>
       </PageSection>
+
+      {/* Role Rules Modal for Option 2 */}
+      <Modal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        variant="large"
+        aria-labelledby="role-rules-modal-title"
+      >
+        <ModalHeader
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span id="role-rules-modal-title">{selectedRoleForModal?.name}</span>
+              {selectedRoleForModal?.roleType === 'openshift-default' && (
+                <Label color="blue" variant="outline">OpenShift default</Label>
+              )}
+              {selectedRoleForModal?.roleType === 'openshift-custom' && (
+                <Label color="purple" variant="outline">OpenShift custom</Label>
+              )}
+            </div>
+          }
+        />
+        <ModalBody>
+          <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+            The table below presents the rules of this role.
+          </Content>
+          {selectedRoleForModal && selectedRoleForModal.rules && selectedRoleForModal.rules.length > 0 ? (
+            <>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <Table variant="compact" aria-label="Role rules table">
+                  <Thead>
+                    <Tr>
+                      <Th sort={getRulesSortParams(0)}>
+                        Actions
+                      </Th>
+                      <Th sort={getRulesSortParams(1)}>
+                        API Groups
+                      </Th>
+                      <Th sort={getRulesSortParams(2)}>
+                        Resources
+                      </Th>
+                      <Th sort={getRulesSortParams(3)}>
+                        Resource names
+                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                      </Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {getSortedRules(selectedRoleForModal.rules)
+                      .slice(0, rulesPageSize)
+                      .map((rule, index) => (
+                        <Tr key={index}>
+                          <Td>{rule.actions.join(', ')}</Td>
+                          <Td>{rule.apiGroups.join(', ')}</Td>
+                          <Td>{rule.resources.join(', ')}</Td>
+                          <Td>{rule.resourceNames?.join(', ') || '-'}</Td>
+                        </Tr>
+                      ))}
+                  </Tbody>
+                </Table>
+              </div>
+              {selectedRoleForModal.rules.length > rulesPageSize && (
+                <div style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}>
+                  <Button
+                    variant="link"
+                    isInline
+                    onClick={() => setRulesPageSize(prev => prev + 10)}
+                  >
+                    View more
+                  </Button>
+                  <span style={{ marginLeft: 'var(--pf-v5-global--spacer--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                    Showing {Math.min(rulesPageSize, selectedRoleForModal.rules.length)}/{selectedRoleForModal.rules.length}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ color: 'var(--pf-v5-global--Color--200)', padding: 'var(--pf-v5-global--spacer--md)' }}>
+              No rules available
+            </div>
+          )}
+        </ModalBody>
+      </Modal>
     </>
   );
 };
