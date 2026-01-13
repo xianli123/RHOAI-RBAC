@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { updateUserRoles, updateGroupRoles, mockUsers, mockGroups } from './sharedPermissionsData';
 import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
 import {
@@ -268,9 +268,19 @@ const mockAvailableRoles: Role[] = [
 const RoleAssignmentPage: React.FunctionComponent = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
-  const [subjectType, setSubjectType] = React.useState<'User' | 'Group'>('User');
-  const [selectedSubject, setSelectedSubject] = React.useState<string | undefined>();
+  // Check if this is Option 2 flow (read-only subject)
+  const isOption2 = searchParams.get('option') === '2';
+  const option2SubjectType = searchParams.get('subjectType') as 'User' | 'Group' | null;
+  const option2SubjectName = searchParams.get('subjectName');
+  
+  const [subjectType, setSubjectType] = React.useState<'User' | 'Group'>(
+    isOption2 && option2SubjectType ? option2SubjectType : 'User'
+  );
+  const [selectedSubject, setSelectedSubject] = React.useState<string | undefined>(
+    isOption2 && option2SubjectName ? decodeURIComponent(option2SubjectName) : undefined
+  );
   const [roles, setRoles] = React.useState<Role[]>(mockAvailableRoles.map(role => ({ 
     ...role, 
     originallyAssigned: false, 
@@ -313,16 +323,18 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     }));
   }, [subjectType, selectedSubject]);
 
-  // Reset when subject kind changes
+  // Reset when subject kind changes (only if not Option 2)
   React.useEffect(() => {
-    setSelectedSubject(undefined);
-    setSearchValue('');
-    setRoles(mockAvailableRoles.map(role => ({ 
-      ...role, 
-      originallyAssigned: false, 
-      currentlyAssigned: false 
-    })));
-  }, [subjectType]);
+    if (!isOption2) {
+      setSelectedSubject(undefined);
+      setSearchValue('');
+      setRoles(mockAvailableRoles.map(role => ({ 
+        ...role, 
+        originallyAssigned: false, 
+        currentlyAssigned: false 
+      })));
+    }
+  }, [subjectType, isOption2]);
 
   // Initialize roles when subject is selected
   React.useEffect(() => {
@@ -575,14 +587,16 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                     name="subject-type"
                     label="User"
                     isChecked={subjectType === 'User'}
-                    onChange={() => setSubjectType('User')}
+                    onChange={() => !isOption2 && setSubjectType('User')}
+                    isDisabled={isOption2}
                   />
                   <Radio
                     id="subject-type-group"
                     name="subject-type"
                     label="Group"
                     isChecked={subjectType === 'Group'}
-                    onChange={() => setSubjectType('Group')}
+                    onChange={() => !isOption2 && setSubjectType('Group')}
+                    isDisabled={isOption2}
                   />
                 </Flex>
               </FormGroup>
@@ -591,34 +605,48 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                   label={subjectType === 'User' ? 'User name' : 'Group name'} 
                   fieldId="subject-name"
                 >
-                  <TypeaheadSelect
-                    initialOptions={typeaheadOptions}
-                    placeholder={`Select ${subjectType.toLowerCase()}`}
-                    noOptionsFoundMessage={(filter) => `No ${subjectType.toLowerCase()} was found for "${filter}"`}
-                    createOptionMessage={(newValue) => `Grant access to "${newValue}"`}
-                    onClearSelection={() => setSelectedSubject(undefined)}
-                    onSelect={(_ev, selection) => {
-                      const selectedValue = String(selection);
-                      setSelectedSubject(selectedValue);
-                      // If it's a new subject (not in the list), it will be created when saved
-                    }}
-                    isCreatable={true}
-                  />
-                  <HelperText>
-                    <HelperTextItem>
-                      {subjectType === 'User' 
-                        ? 'Only users with existing roles are listed. To add someone new, enter their username.'
-                        : 'Only groups with existing roles are listed. To add someone new, enter their group name.'}
-                    </HelperTextItem>
-                  </HelperText>
-                  {!selectedSubject && (
-                    <Alert 
-                      variant={AlertVariant.info} 
-                      isInline 
-                      isPlain
-                      title="Please select a user or group before assigning roles."
-                      style={{ marginTop: '8px' }}
-                    />
+                  {isOption2 ? (
+                    <div style={{ 
+                      padding: 'var(--pf-v5-global--spacer--sm) var(--pf-v5-global--spacer--md)',
+                      backgroundColor: 'var(--pf-v5-global--BackgroundColor--200)',
+                      border: '1px solid var(--pf-v5-global--BorderColor--300)',
+                      borderRadius: 'var(--pf-v5-global--BorderRadius--sm)',
+                      color: 'var(--pf-v5-global--Color--100)'
+                    }}>
+                      {selectedSubject || `Select ${subjectType.toLowerCase()}`}
+                    </div>
+                  ) : (
+                    <>
+                      <TypeaheadSelect
+                        initialOptions={typeaheadOptions}
+                        placeholder={`Select ${subjectType.toLowerCase()}`}
+                        noOptionsFoundMessage={(filter) => `No ${subjectType.toLowerCase()} was found for "${filter}"`}
+                        createOptionMessage={(newValue) => `Grant access to "${newValue}"`}
+                        onClearSelection={() => setSelectedSubject(undefined)}
+                        onSelect={(_ev, selection) => {
+                          const selectedValue = String(selection);
+                          setSelectedSubject(selectedValue);
+                          // If it's a new subject (not in the list), it will be created when saved
+                        }}
+                        isCreatable={true}
+                      />
+                      <HelperText>
+                        <HelperTextItem>
+                          {subjectType === 'User' 
+                            ? 'Only users with existing roles are listed. To add someone new, enter their username.'
+                            : 'Only groups with existing roles are listed. To add someone new, enter their group name.'}
+                        </HelperTextItem>
+                      </HelperText>
+                      {!selectedSubject && (
+                        <Alert 
+                          variant={AlertVariant.info} 
+                          isInline 
+                          isPlain
+                          title="Please select a user or group before assigning roles."
+                          style={{ marginTop: '8px' }}
+                        />
+                      )}
+                    </>
                   )}
               </FormGroup>
             </Form>

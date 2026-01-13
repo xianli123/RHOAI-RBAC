@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
 import {
   PageSection,
   Title,
@@ -35,6 +36,10 @@ import {
   ClipboardCopy,
   Radio,
   Popover,
+  Form,
+  FormGroup,
+  HelperText,
+  HelperTextItem,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -190,6 +195,11 @@ const ProjectDetail: React.FunctionComponent = () => {
   
   // Popover state for Option 2 labels
   const [openPopovers, setOpenPopovers] = React.useState<Set<string>>(new Set());
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = React.useState(false);
+  const [selectedAssignOption, setSelectedAssignOption] = React.useState<'option1' | 'option2' | null>(null);
+  const [isOption2ModalOpen, setIsOption2ModalOpen] = React.useState(false);
+  const [option2SubjectType, setOption2SubjectType] = React.useState<'User' | 'Group'>('User');
+  const [option2SelectedSubject, setOption2SelectedSubject] = React.useState<string | undefined>();
   
   const togglePopover = (popoverId: string) => {
     setOpenPopovers((prev) => {
@@ -579,7 +589,8 @@ const ProjectDetail: React.FunctionComponent = () => {
   };
 
   const handleAssignRoles = () => {
-    navigate(`/projects/${projectId}/permissions/assign-roles`);
+    setIsComparisonModalOpen(true);
+    setSelectedAssignOption(null);
   };
 
   const handleEditUser = (userId: string, userName: string) => {
@@ -1306,6 +1317,188 @@ const ProjectDetail: React.FunctionComponent = () => {
               </div>
             </Tab>
           </Tabs>
+        </ModalBody>
+      </Modal>
+
+      {/* Comparison Modal */}
+      <Modal
+        isOpen={isComparisonModalOpen}
+        onClose={() => setIsComparisonModalOpen(false)}
+        variant="medium"
+        aria-labelledby="comparison-modal-title"
+      >
+        <ModalHeader
+          title="Assign role"
+        />
+        <ModalBody>
+          <div style={{ backgroundColor: '#f0e6ff', padding: '16px', marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+            <Form>
+              <FormGroup fieldId="comparison-options">
+                <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                  <Radio
+                    isChecked={selectedAssignOption === 'option1'}
+                    name="assign-option"
+                    onChange={() => setSelectedAssignOption('option1')}
+                    label="Option 1: Allow changing the selected user or group on the 'Assign roles' page."
+                    id="assign-option1-radio"
+                  />
+                  <Radio
+                    isChecked={selectedAssignOption === 'option2'}
+                    name="assign-option"
+                    onChange={() => setSelectedAssignOption('option2')}
+                    label="Option 2: Prevent changing the selected user or group on the 'Assign roles' page."
+                    id="assign-option2-radio"
+                  />
+                </Flex>
+              </FormGroup>
+            </Form>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
+            <Button
+              variant="link"
+              onClick={() => {
+                setIsComparisonModalOpen(false);
+                setSelectedAssignOption(null);
+              }}
+            >
+              Terminate
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (selectedAssignOption === 'option1') {
+                  // Navigate to existing Assign roles page
+                  navigate(`/projects/${projectId}/permissions/assign-roles`);
+                  setIsComparisonModalOpen(false);
+                } else if (selectedAssignOption === 'option2') {
+                  // Show Option 2 modal
+                  setIsComparisonModalOpen(false);
+                  setIsOption2ModalOpen(true);
+                }
+              }}
+              isDisabled={!selectedAssignOption}
+            >
+              Go ahead
+            </Button>
+          </div>
+        </ModalBody>
+      </Modal>
+
+      {/* Option 2 Modal - Select Subject */}
+      <Modal
+        isOpen={isOption2ModalOpen}
+        onClose={() => {
+          setIsOption2ModalOpen(false);
+          setOption2SelectedSubject(undefined);
+          setOption2SubjectType('User');
+        }}
+        variant="medium"
+        aria-labelledby="option2-modal-title"
+      >
+        <ModalHeader
+          title="Assign role"
+        />
+        <ModalBody>
+          <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+            Select the subject first.
+          </Content>
+          <Form>
+            <FormGroup 
+              label={
+                <span>
+                  Subject kind
+                  <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
+                </span>
+              } 
+              fieldId="option2-subject-kind"
+            >
+              <Flex spaceItems={{ default: 'spaceItemsLg' }}>
+                <Radio
+                  id="option2-subject-type-user"
+                  name="option2-subject-type"
+                  label="User"
+                  isChecked={option2SubjectType === 'User'}
+                  onChange={() => {
+                    setOption2SubjectType('User');
+                    setOption2SelectedSubject(undefined);
+                  }}
+                />
+                <Radio
+                  id="option2-subject-type-group"
+                  name="option2-subject-type"
+                  label="Group"
+                  isChecked={option2SubjectType === 'Group'}
+                  onChange={() => {
+                    setOption2SubjectType('Group');
+                    setOption2SelectedSubject(undefined);
+                  }}
+                />
+              </Flex>
+            </FormGroup>
+
+            <FormGroup 
+              label={
+                <span>
+                  {option2SubjectType === 'User' ? 'User name' : 'Group name'}
+                  <span style={{ color: 'var(--pf-v5-global--danger-color--100)' }}> *</span>
+                </span>
+              } 
+              fieldId="option2-subject-name"
+            >
+              <TypeaheadSelect
+                initialOptions={
+                  (option2SubjectType === 'User' ? mockUsers : mockGroups).map((subject) => ({
+                    content: subject.name,
+                    value: subject.name,
+                    selected: subject.name === option2SelectedSubject,
+                  }))
+                }
+                placeholder={`Select a ${option2SubjectType.toLowerCase()} or type ${option2SubjectType.toLowerCase()} name`}
+                noOptionsFoundMessage={(filter) => `No ${option2SubjectType.toLowerCase()} was found for "${filter}"`}
+                createOptionMessage={(newValue) => `Grant access to "${newValue}"`}
+                onClearSelection={() => setOption2SelectedSubject(undefined)}
+                onSelect={(_ev, selection) => {
+                  const selectedValue = String(selection);
+                  setOption2SelectedSubject(selectedValue);
+                }}
+                isCreatable={true}
+              />
+              <HelperText>
+                <HelperTextItem>
+                  {option2SubjectType === 'User' 
+                    ? 'Only users that have already been assigned roles appear in the dropdown. To add a new user, type their username.'
+                    : 'Only groups that have already been assigned roles appear in the dropdown. To add a new group, type their group name.'}
+                </HelperTextItem>
+              </HelperText>
+            </FormGroup>
+          </Form>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
+            <Button
+              variant="link"
+              onClick={() => {
+                setIsOption2ModalOpen(false);
+                setOption2SelectedSubject(undefined);
+                setOption2SubjectType('User');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (option2SelectedSubject) {
+                  // Navigate to Assign roles page with read-only subject
+                  navigate(`/projects/${projectId}/permissions/assign-roles?option=2&subjectType=${option2SubjectType}&subjectName=${encodeURIComponent(option2SelectedSubject)}`);
+                  setIsOption2ModalOpen(false);
+                  setOption2SelectedSubject(undefined);
+                  setOption2SubjectType('User');
+                }
+              }}
+              isDisabled={!option2SelectedSubject}
+            >
+              Assign roles
+            </Button>
+          </div>
         </ModalBody>
       </Modal>
 
