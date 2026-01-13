@@ -40,6 +40,12 @@ import {
   FormGroup,
   HelperText,
   HelperTextItem,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardBody,
+  List,
+  ListItem,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -167,6 +173,13 @@ const ProjectDetail: React.FunctionComponent = () => {
     setMockUsers([...sharedMockUsers] as User[]);
     setMockGroups([...sharedMockGroups] as Group[]);
   }, [tabParam, searchParams]); // Re-run when URL params change (e.g., when navigating back)
+
+  // Keep Role table comparison on option1 when switching options in Role assignment flow comparison modal
+  React.useEffect(() => {
+    if (isComparisonModalOpen || selectedAssignOption) {
+      setRolesVariant('option1');
+    }
+  }, [isComparisonModalOpen, selectedAssignOption]);
   const [isActionsOpen, setIsActionsOpen] = React.useState(false);
   const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
   const [usersSortBy, setUsersSortBy] = React.useState<ISortBy>({
@@ -1328,32 +1341,102 @@ const ProjectDetail: React.FunctionComponent = () => {
         aria-labelledby="comparison-modal-title"
       >
         <ModalHeader
-          title="Assign role"
+          title="Role assignment flow comparison"
         />
         <ModalBody>
+          <Alert
+            variant={AlertVariant.info}
+            isInline
+            title="This is not an actual step of the flow. Please select the options below to walk through the designs, and share your feedback or suggestions. Any inputs are greatly appreciated."
+            style={{ marginBottom: '24px' }}
+          />
           <div style={{ backgroundColor: '#f0e6ff', padding: '16px', marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-            <Form>
-              <FormGroup fieldId="comparison-options">
-                <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <Radio
-                    isChecked={selectedAssignOption === 'option1'}
-                    name="assign-option"
-                    onChange={() => setSelectedAssignOption('option1')}
-                    label="Option 1: Allow changing the selected user or group on the 'Assign roles' page."
-                    id="assign-option1-radio"
-                  />
-                  <Radio
-                    isChecked={selectedAssignOption === 'option2'}
-                    name="assign-option"
-                    onChange={() => setSelectedAssignOption('option2')}
-                    label="Option 2: Prevent changing the selected user or group on the 'Assign roles' page."
-                    id="assign-option2-radio"
-                  />
-                </Flex>
-              </FormGroup>
-            </Form>
+            <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+              <Card
+                id="option1-card"
+                isSelectable
+                isSelected={selectedAssignOption === 'option1'}
+                onClick={() => setSelectedAssignOption('option1')}
+                style={{ cursor: 'pointer', flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <CardHeader
+                  selectableActions={{
+                    selectableActionId: 'option1-checkbox',
+                    selectableActionAriaLabel: 'Select Option 1',
+                    name: 'assign-option',
+                    isChecked: selectedAssignOption === 'option1',
+                    onChange: () => setSelectedAssignOption('option1'),
+                  }}
+                >
+                  <CardTitle>
+                    <Title headingLevel="h2" size="lg">Option 1</Title>
+                  </CardTitle>
+                </CardHeader>
+                <CardBody style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                    Both the subject and roles selectors exist on the same form.
+                  </Content>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>Pros:</Title>
+                    <List>
+                      <ListItem>Everything happens in one place, which is efficient for experienced users.</ListItem>
+                      <ListItem>Fewer steps and fewer page transitions.</ListItem>
+                      <ListItem>Users can quickly change inputs and see the effect.</ListItem>
+                    </List>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>Cons:</Title>
+                    <List>
+                      <ListItem>Changing the subject clears previously selected roles, which may surprise users.</ListItem>
+                      <ListItem>Requires managing multi-step state and navigation.</ListItem>
+                    </List>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card
+                id="option2-card"
+                isSelectable
+                isSelected={selectedAssignOption === 'option2'}
+                onClick={() => setSelectedAssignOption('option2')}
+                style={{ cursor: 'pointer', flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}
+              >
+                <CardHeader
+                  selectableActions={{
+                    selectableActionId: 'option2-checkbox',
+                    selectableActionAriaLabel: 'Select Option 2',
+                    name: 'assign-option',
+                    isChecked: selectedAssignOption === 'option2',
+                    onChange: () => setSelectedAssignOption('option2'),
+                  }}
+                >
+                  <CardTitle>
+                    <Title headingLevel="h2" size="lg">Option 2</Title>
+                  </CardTitle>
+                </CardHeader>
+                <CardBody style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                    The process is split into 2 distinct steps to select subject and roles separately.
+                  </Content>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>Pros:</Title>
+                    <List>
+                      <ListItem>Subject is locked in the role selection step, avoiding accidental loss of selected roles.</ListItem>
+                      <ListItem>The user focuses on one task at a time: first 'who', then 'what'.</ListItem>
+                      <ListItem>Adding constraints reduces the risk of assigning permissions to the wrong subject.</ListItem>
+                    </List>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>Cons:</Title>
+                    <List>
+                      <ListItem>If the wrong subject was selected, the user must exit and restart the flow.</ListItem>
+                      <ListItem>Requires managing multi-step state and navigation.</ListItem>
+                    </List>
+                  </div>
+                </CardBody>
+              </Card>
+            </Flex>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: '24px' }}>
             <Button
               variant="primary"
               onClick={() => {
@@ -1369,7 +1452,7 @@ const ProjectDetail: React.FunctionComponent = () => {
               }}
               isDisabled={!selectedAssignOption}
             >
-              Go ahead
+              Go to the real flow
             </Button>
             <Button
               variant="link"
@@ -1378,7 +1461,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                 setSelectedAssignOption(null);
               }}
             >
-              Terminate
+              Cancel
             </Button>
           </div>
         </ModalBody>
@@ -1399,17 +1482,12 @@ const ProjectDetail: React.FunctionComponent = () => {
           title="Assign role"
         />
         <ModalBody>
-          <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+          <Content style={{ marginBottom: '24px' }}>
             Select the subject first.
           </Content>
           <Form>
             <FormGroup 
-              label={
-                <span>
-                  Subject kind
-                  <OutlinedQuestionCircleIcon style={{ marginLeft: '8px', color: 'var(--pf-v5-global--Color--200)' }} />
-                </span>
-              } 
+              label="Subject kind"
               fieldId="option2-subject-kind"
             >
               <Flex spaceItems={{ default: 'spaceItemsLg' }}>
@@ -1472,7 +1550,7 @@ const ProjectDetail: React.FunctionComponent = () => {
               </HelperText>
             </FormGroup>
           </Form>
-          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 'var(--pf-v5-global--spacer--sm)', marginTop: '24px' }}>
             <Button
               variant="primary"
               onClick={() => {

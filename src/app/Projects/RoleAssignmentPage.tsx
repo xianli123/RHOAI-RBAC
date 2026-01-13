@@ -327,7 +327,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   React.useEffect(() => {
     if (!isOption2) {
       setSelectedSubject(undefined);
-      setSearchValue('');
+    setSearchValue('');
       setRoles(mockAvailableRoles.map(role => ({ 
         ...role, 
         originallyAssigned: false, 
@@ -580,41 +580,78 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
             <StackItem>
               <Title headingLevel="h2" size="lg">Subject</Title>
               <Form style={{ marginTop: '16px' }}>
-                <FormGroup label="Subject kind" fieldId="subject-type">
+                {!isOption2 && (
+                  <FormGroup label="Subject kind" fieldId="subject-type">
                 <Flex spaceItems={{ default: 'spaceItemsLg' }}>
                   <Radio
                     id="subject-type-user"
                     name="subject-type"
                     label="User"
                     isChecked={subjectType === 'User'}
-                    onChange={() => !isOption2 && setSubjectType('User')}
-                    isDisabled={isOption2}
+                    onChange={() => setSubjectType('User')}
                   />
                   <Radio
                     id="subject-type-group"
                     name="subject-type"
                     label="Group"
                     isChecked={subjectType === 'Group'}
-                    onChange={() => !isOption2 && setSubjectType('Group')}
-                    isDisabled={isOption2}
+                    onChange={() => setSubjectType('Group')}
                   />
                 </Flex>
               </FormGroup>
+                )}
 
                 <FormGroup 
-                  label={subjectType === 'User' ? 'User name' : 'Group name'} 
+                  label={subjectType === 'User' ? 'User name' : 'Group name'}
                   fieldId="subject-name"
+                  isRequired
                 >
                   {isOption2 ? (
                     <div style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
                       padding: 'var(--pf-v5-global--spacer--sm) var(--pf-v5-global--spacer--md)',
                       backgroundColor: 'var(--pf-v5-global--BackgroundColor--200)',
                       border: '1px solid var(--pf-v5-global--BorderColor--300)',
                       borderRadius: 'var(--pf-v5-global--BorderRadius--sm)',
                       color: 'var(--pf-v5-global--Color--100)'
                     }}>
-                      {selectedSubject || `Select ${subjectType.toLowerCase()}`}
-                    </div>
+                      {subjectType === 'User' ? (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '8px',
+                          background: 'var(--ai-user--BackgroundColor, #f5e6d3)',
+                          color: 'var(--ai-user--IconColor, #000)',
+                          flexShrink: 0
+                        }}>
+                          <svg className="pf-v6-svg" viewBox="0 0 36 36" fill="currentColor" aria-hidden="true" role="img" width="16px" height="16px" style={{ width: '16px', height: '16px' }}>
+                            <path d="M21.32,17.8C27.8,14.41,25.42,4.39,18,4.38s-9.8,10-3.32,13.42A13.63,13.63,0,0,0,4.38,31a.61.61,0,0,0,.62.62H31a.61.61,0,0,0,.62-.62A13.63,13.63,0,0,0,21.32,17.8Zm-9.2-6.3c.25-7.76,11.51-7.76,11.76,0C23.63,19.26,12.37,19.26,12.12,11.5ZM5.64,30.38C7,14.79,29.05,14.8,30.36,30.38Z"></path>
+                          </svg>
+                        </div>
+                      ) : (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '8px',
+                          background: 'var(--ai-group--BackgroundColor, #f5e6d3)',
+                          color: 'var(--ai-group--IconColor, #000)',
+                          flexShrink: 0
+                        }}>
+                          <svg className="pf-v6-svg" viewBox="0 0 36 36" fill="currentColor" aria-hidden="true" role="img" width="16px" height="16px" style={{ width: '16px', height: '16px' }}>
+                            <path d="m 27.87,23.29 a 3.86,3.86 0 1 0 -4.74,0 A 7.11,7.11 0 0 0 18.38,30 0.61,0.61 0 0 0 19,30.62 H 32 A 0.63,0.63 0 0 0 32.63,30 7.13,7.13 0 0 0 27.87,23.29 Z m -5,-3 a 2.62,2.62 0 0 1 5.24,0 2.62,2.62 0 0 1 -5.23,-0.04 z m -3.22,9.13 c 0.84,-6.94 10.84,-6.93 11.68,0 z M 16,19.38 a 0.62,0.62 0 0 0 0,1.24 h 4 a 0.62,0.62 0 0 0 0,-1.24 z m -2.63,-4 a 6,6 0 0 1 9.48,0.18 0.61,0.61 0 0 0 0.66,-0.07 c 1.07,-1 -2.27,-3 -3.13,-3.21 a 3.86,3.86 0 1 0 -4.76,0 c -0.86,0.25 -4.2,2.18 -3.13,3.21 a 0.62,0.62 0 0 0 0.88,-0.11 z m 2,-6.13 a 2.62,2.62 0 0 1 5.24,0 2.62,2.62 0 0 1 -5.23,0 z m -2.5,14.04 a 3.86,3.86 0 1 0 -4.74,0 A 7.11,7.11 0 0 0 3.38,30 0.61,0.61 0 0 0 4,30.62 H 17 A 0.63,0.63 0 0 0 17.63,30 7.13,7.13 0 0 0 12.87,23.29 Z m -5,-3 a 2.62,2.62 0 0 1 5.24,0 2.62,2.62 0 0 1 -5.23,-0.04 z m -3.21,9.09 c 0.84,-6.94 10.84,-6.93 11.68,0 z"></path>
+                          </svg>
+                        </div>
+                      )}
+                      <span>{selectedSubject || `Select ${subjectType.toLowerCase()}`}</span>
+                  </div>
                   ) : (
                     <>
                       <TypeaheadSelect
@@ -643,6 +680,15 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                           isInline 
                           isPlain
                           title="Please select a user or group before assigning roles."
+                          style={{ marginTop: '8px' }}
+                        />
+                      )}
+                      {!isOption2 && selectedSubject && (
+                        <Alert 
+                          variant={AlertVariant.warning} 
+                          isInline 
+                          isPlain
+                          title="Switching to a different user will discard any changes you've made in the Role assignment section."
                           style={{ marginTop: '8px' }}
                         />
                       )}

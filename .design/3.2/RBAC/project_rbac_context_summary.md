@@ -127,12 +127,49 @@ interface User {
      - Rules displayed in compact table format
 
 4. **Assign roles page:**
-   - **Subject Section**:
+   - **Entry Flow - Comparison Modal**:
+     - Opens when clicking "Assign roles" button in Permissions tab
+     - Title: "Role assignment flow comparison"
+     - Alert message: "This is not an actual step of the flow. Please select the options below to walk through the designs, and share your feedback or suggestions. Any inputs are greatly appreciated."
+     - Two selectable cards side-by-side (Option 1 and Option 2)
+     - Each card shows title, description, pros list, and cons list
+     - Cards have equal height using flexbox
+     - 8px gap between pros and cons sections within each card
+     - Radio buttons in card headers for selection (shared name="assign-option")
+     - Cards use `selectableActions` prop for checkbox functionality
+     - Buttons: "Go to the real flow" (primary) and "Cancel" (link), aligned to left
+     - 24px gap between button section and modal body
+     - Light purple background (#f0e6ff) for visual distinction
+   - **Option 1 Flow**:
+     - Navigates directly to existing "Assign roles" page
+     - Subject section is editable (User/Group selection available)
+     - Warning alert shown when user/group is selected: "Switching to a different user will discard any changes you've made in the Role assignment section."
+   - **Option 2 Flow**:
+     - **Subject Selection Modal**:
+       - Opens after selecting Option 2 and clicking "Go to the real flow"
+       - Title: "Assign role"
+       - Introductory text: "Select the subject first."
+       - 24px gap between intro text and "Subject kind" field
+       - Subject kind: Radio buttons (User/Group), no question mark icon
+       - User/Group name: TypeaheadSelect with helper text
+       - Buttons: "Assign role" (primary) and "Cancel" (link), aligned to left
+       - 24px gap between button section and modal body
+     - **Assign Roles Page (Option 2)**:
+       - Subject section is read-only (disabled)
+       - Subject kind field is hidden
+       - User/Group name displayed with icon:
+         - User icon: 16px × 16px, circular background (light peach/beige #f5e6d3)
+         - Group icon: 16px × 16px, circular background (light peach/beige #f5e6d3)
+         - 4px gap between icon and name
+         - Icons use CSS variables: `--ai-user--BackgroundColor`, `--ai-user--IconColor`, `--ai-group--BackgroundColor`, `--ai-group--IconColor`
+   - **Subject Section (Option 1)**:
      - Subject type selection (User/Group radio buttons)
      - TypeaheadSelect for user/group name with typeahead behavior
-     - Helper text explaining existing users/groups listing
-     - Inline alert prompting user selection
+     - Helper text: "Only users/groups with existing roles are listed. To add someone new, enter their username/group name."
+     - Inline alert: "Please select a user or group before assigning roles." (shown when no subject selected, 8px gap from dropdown)
+     - Warning alert: "Switching to a different user will discard any changes you've made in the Role assignment section." (shown when subject is selected in Option 1)
      - Custom create option message: "Grant access to '[input]'"
+     - User name field is required (red asterisk via `isRequired` prop)
    - **Role Assignment Section**:
      - Reused Option 2 from EditRolesPage (sorted by role name and status)
      - Clickable role names that open rules modal
@@ -146,6 +183,7 @@ interface User {
    - Allows assigning roles to new or existing users/groups
    - Creates new user/group if they don't exist
    - Saves changes to shared data, syncs back to Permissions tab
+   - URL parameters used for Option 2 flow: `?option=2&subjectType=User|Group&subjectName=...`
 
 5. **Data synchronization:**
    - All three pages use shared data from `sharedPermissionsData.ts`
@@ -184,10 +222,27 @@ interface User {
 - CSS transform rotates arrow icon 90° when expanded
 
 **Assign Roles Page:**
+- **Comparison Modal**:
+  - Opens when clicking "Assign roles" button
+  - Uses Card components with `selectableActions` prop for checkbox functionality
+  - Cards display pros/cons lists with 8px gap between sections
+  - Radio buttons in card headers (shared name="assign-option")
+  - Buttons aligned to left with 24px gap from modal body
+  - Light purple background (#f0e6ff)
+- **Option 2 Subject Selection Modal**:
+  - Form with Subject kind radio buttons and User/Group name TypeaheadSelect
+  - 24px gap between intro text and form fields
+  - Buttons aligned to left with 24px gap from modal body
+  - Navigates with URL parameters: `?option=2&subjectType=...&subjectName=...`
 - **Subject Section**:
   - TypeaheadSelect from `@patternfly/react-templates` with `isCreatable={true}`
   - `createOptionMessage` prop customizes create option text
   - Helper text and inline alert for user guidance
+  - Warning alert in Option 1 when subject selected
+  - User name field is required (`isRequired` prop)
+  - Option 2: Subject kind hidden, read-only display with icon
+  - User/Group icons: 16px × 16px, circular background, 4px gap from name
+  - Icons use SVG paths with CSS variables for colors
 - **Role Assignment Table**:
   - Reuses Option 2 sorting logic from EditRolesPage
   - Role names are clickable buttons that open modal
@@ -216,6 +271,48 @@ interface User {
 - CI/CD: Auto-deploys from Project-RBAC branch
 
 ## Recent Changes (Latest Session)
+
+1. **Assign Roles Flow - Comparison Modal:**
+   - Added comparison modal when clicking "Assign roles" button
+   - Modal presents two design options (Option 1 and Option 2) as side-by-side cards
+   - Each card shows title, description, pros list, and cons list
+   - Cards have equal height using flexbox layout
+   - 8px gap between pros and cons sections within each card
+   - Radio buttons in card headers using `selectableActions` prop
+   - Buttons ("Go to the real flow" and "Cancel") aligned to left
+   - 24px gap between button section and modal body
+   - Light purple background (#f0e6ff) for visual distinction
+   - Alert message explaining this is for design comparison
+
+2. **Option 2 Flow - Subject Selection:**
+   - New modal for selecting subject before navigating to Assign roles page
+   - Modal title: "Assign role"
+   - Introductory text: "Select the subject first."
+   - 24px gap between intro text and "Subject kind" field
+   - Subject kind field has no question mark icon
+   - Buttons aligned to left with 24px gap from modal body
+   - Navigates to Assign roles page with URL parameters: `?option=2&subjectType=...&subjectName=...`
+
+3. **Assign Roles Page - Option 2 Updates:**
+   - Subject section is read-only when accessed via Option 2 flow
+   - Subject kind field is hidden in Option 2
+   - User/Group name displayed with icon instead of input field
+   - User icon: 16px × 16px, circular background (light peach/beige #f5e6d3)
+   - Group icon: 16px × 16px, circular background (light peach/beige #f5e6d3)
+   - Icons use CSS variables: `--ai-user--BackgroundColor`, `--ai-user--IconColor`, `--ai-group--BackgroundColor`, `--ai-group--IconColor`
+   - 4px gap between icon and name text
+   - Icons conditionally rendered based on `subjectType` (User or Group)
+
+4. **Assign Roles Page - Option 1 Updates:**
+   - Warning alert added when user/group is selected: "Switching to a different user will discard any changes you've made in the Role assignment section."
+   - Alert uses `AlertVariant.warning` and appears below helper text
+   - User name field is now required (red asterisk via `isRequired` prop on FormGroup)
+
+5. **Modal Button Alignment:**
+   - All modals now have action buttons aligned to the left
+   - 24px gap between button section and modal body in all modals
+
+## Previous Changes (Earlier Sessions)
 
 1. **Permissions Tab - Role Table Variants:**
    - **Variant Switcher**: Added "Role table comparison" section above breadcrumb with light purple background (#f0e6ff)
@@ -277,12 +374,29 @@ interface User {
    - Each role has its own row with Date created and kebab menu
 
 6. **Assign Roles Page - Complete Redesign:**
+   - **Entry Flow - Comparison Modal**:
+     - Opens when clicking "Assign roles" button
+     - Shows two design options as selectable cards
+     - Cards display pros/cons for each option
+     - Radio buttons in card headers for selection
+     - Buttons aligned to left with 24px gap from modal body
+   - **Option 1 Flow**:
+     - Direct navigation to Assign roles page
+     - Subject section fully editable
+     - Warning alert when subject selected
+   - **Option 2 Flow**:
+     - Subject selection modal first
+     - Then navigates to read-only subject section
+     - Subject kind hidden, icon displayed instead
    - **Subject Section**:
      - Subject type: Radio buttons (User/Group), User default
      - User/Group name: TypeaheadSelect with typeahead behavior
      - Helper text: "Only users/groups with existing roles are listed. To add someone new, enter their username/group name."
      - Inline alert: "Please select a user or group before assigning roles." (8px gap from dropdown)
+     - Warning alert (Option 1 only): "Switching to a different user will discard any changes you've made in the Role assignment section."
      - Custom create message: "Grant access to '[input]'" instead of "Create '[input]'"
+     - User name field is required (red asterisk)
+     - Option 2: Subject kind hidden, user/group icon displayed (16px × 16px, 4px gap from name)
    - **Role Assignment Section**:
      - Reused Option 2 from EditRolesPage (sorted by role name and status)
      - Role names are clickable, open modal with role rules
