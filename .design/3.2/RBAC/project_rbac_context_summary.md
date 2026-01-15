@@ -504,12 +504,46 @@ interface User {
    - Added AI labels to all roles in Option 2 (except OpenShift custom roles)
    - AI label appears before OpenShift default label when both present
    - Changed AI label color to green using PatternFly's `color="green"` prop
+   - **Option 3 Added**: New "[UX recommended] Option 3 - Show role labels in a separate column"
+     - Option 3 reuses Option 2's design initially
+     - Added "Role type" column after Description column
+     - Role type column shows labels (AI, OpenShift default, OpenShift custom) for each role
+     - Role type column header has question mark popover (same content as Role column)
+     - Labels removed from role name in Option 3 (only shown in Role type column)
+     - Status badge shows only "To be unassigned" when unselecting (removed "Currently assigned" label)
+     - Changed "To be removed" to "To be unassigned" across all options
+     - Design Option section changed from radio buttons to dropdown
+     - Option 3 is selected by default in dropdown
+     - Changed Option 3 text from "[UX recommended] Option 3 - Only show the labels and explanation when selecting roles" to "[UX recommended] Option 3 - Show role labels in a separate column"
+   - **Role Assignment Table Reused**: Option 3 table design reused in all design options of Assign roles page
 
 3. **Kebab Menu Updates:**
    - Changed "Edit" to "Manage roles" in kebab menu
    - Changed "Delete" to "Unassign" in kebab menu
-   - Navigation from Option 2/3 leads to Edit role assignment page with Option 2 selected
+   - **Navigation Update**: Clicking "Manage roles" always leads to Option 3 in Manage roles page, regardless of Role table comparison selection
 
 4. **AI Label Color:**
    - Changed all AI labels to green using PatternFly's built-in `color="green"` prop
    - Applied in both Permissions tab (Option 2) and Edit role assignment page (Option 2)
+
+5. **TypeaheadSelect Component Updates (RoleAssignmentPage & ProjectDetail):**
+   - **Create Option Message**: Changed from "Grant access to '[input]'" to "Assign role to '[input]'"
+   - **Group Header**: Added "Users with existing assignment" / "Groups with existing assignment" group header
+   - **Conditional Group Header**: Group header only shows when there are matching existing users/groups based on input
+   - **Option Ordering**: When typing, "Assign role to '[input]'" appears at the top, above group header
+   - **Selection Handling**: When selecting create option, extracts just the input value (removes "Assign role to" prefix)
+   - **Input State Management**: Added `typeaheadInputValue` state to track user input
+   - **Input Change Handler**: Added `onInputChange` to update input state
+   - **Creatable Option**: Set `isCreatable={false}` and manually handle create option in options array
+   - **Display Fix**: Added `key` prop to TypeaheadSelect to force re-render when selection changes, ensuring dropdown reflects changes immediately
+   - **Options Array**: Dynamically constructs options with create option, group header (if applicable), and filtered existing subjects
+   - **Selected Value Display**: When a new subject is selected, it's added to options array so it displays correctly
+
+6. **OpenShift Icon Color:**
+   - Changed OpenShift icon color in all "OpenShift default" and "OpenShift custom" labels to black (#1F1F1F)
+   - Applied in both Permissions tab and Manage roles page
+
+7. **Role Table Comparison (Permissions Tab):**
+   - Changed from radio buttons to dropdown (matching Manage roles page)
+   - Option 3 is selected by default
+   - Changed Option 3 text from "Option 3 - Don't show any labels in the list view" to "[UX recommended] Option 3 - Only show the labels and explanation when selecting roles"

@@ -26,6 +26,7 @@ import {
   Modal,
   ModalHeader,
   ModalBody,
+  Popover,
 } from '@patternfly/react-core';
 import {
   OutlinedQuestionCircleIcon,
@@ -291,7 +292,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     direction: 'asc',
   });
   const [option2StatusSortBy, setOption2StatusSortBy] = React.useState<ISortBy>({
-    index: 3,
+    index: 4,
     direction: 'asc',
   });
   const [option2ActiveSort, setOption2ActiveSort] = React.useState<'roleName' | 'status'>('roleName');
@@ -303,6 +304,8 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     direction: 'asc',
   });
   const [rulesPageSize, setRulesPageSize] = React.useState(10);
+  const [openPopovers, setOpenPopovers] = React.useState<Set<string>>(new Set());
+  const [typeaheadInputValue, setTypeaheadInputValue] = React.useState<string>('');
 
   // Get available subjects based on type
   const getAvailableSubjects = (): string[] => {
@@ -316,12 +319,56 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   // Create typeahead options
   const typeaheadOptions = React.useMemo<TypeaheadSelectOption[]>(() => {
     const subjects = getAvailableSubjects();
-    return subjects.map((subject) => ({
-      content: subject,
-      value: subject,
-      selected: subject === selectedSubject,
-    }));
-  }, [subjectType, selectedSubject]);
+    const groupHeader = subjectType === 'User' ? 'Users with existing assignment' : 'Groups with existing assignment';
+    const options: TypeaheadSelectOption[] = [];
+    
+    // Filter subjects based on input value
+    const filteredSubjects = typeaheadInputValue && typeaheadInputValue.trim()
+      ? subjects.filter(subject => 
+          subject.toLowerCase().includes(typeaheadInputValue.toLowerCase())
+        )
+      : subjects;
+    
+    // If there's input, add create option first
+    if (typeaheadInputValue && typeaheadInputValue.trim()) {
+      options.push({
+        content: `Assign role to "${typeaheadInputValue}"`,
+        value: `Assign role to "${typeaheadInputValue}"`,
+      });
+    }
+    
+    // Only add group header if there are filtered subjects
+    if (filteredSubjects.length > 0) {
+      options.push({
+        content: groupHeader,
+        value: `__group_header_${groupHeader}`,
+        isDisabled: true,
+        isAriaDisabled: true,
+      } as TypeaheadSelectOption);
+      
+      // Add filtered existing subjects
+      options.push(...filteredSubjects.map((subject) => ({
+        content: subject,
+        value: subject,
+        selected: subject === selectedSubject,
+      })));
+    }
+    
+    // If selectedSubject is set and not in the existing subjects, add it to options so it displays correctly
+    if (selectedSubject && !subjects.includes(selectedSubject)) {
+      // Check if it's not already in options
+      const alreadyInOptions = options.some(opt => opt.value === selectedSubject);
+      if (!alreadyInOptions) {
+        options.push({
+          content: selectedSubject,
+          value: selectedSubject,
+          selected: true,
+        });
+      }
+    }
+    
+    return options;
+  }, [subjectType, selectedSubject, typeaheadInputValue]);
 
   // Reset when subject kind changes (only if not Option 2)
   React.useEffect(() => {
@@ -394,7 +441,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     } else if (role.currentlyAssigned && !role.originallyAssigned) {
       return 'To be assigned';
     } else if (!role.currentlyAssigned && role.originallyAssigned) {
-      return 'To be removed';
+      return 'To be unassigned';
     }
     return '---';
   };
@@ -402,7 +449,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   const getStatusPriority = (status: string): number => {
     if (status === 'Currently assigned') return 1;
     if (status === 'To be assigned') return 2;
-    if (status === 'To be removed') return 3;
+    if (status === 'To be unassigned') return 3;
     return 4; // '---'
   };
 
@@ -417,18 +464,30 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     const filtered = getFilteredRoles();
     return filtered.sort((a, b) => {
       if (option2ActiveSort === 'status') {
-      const statusA = getRoleStatus(a);
-      const statusB = getRoleStatus(b);
-      const priorityA = getStatusPriority(statusA);
-      const priorityB = getStatusPriority(statusB);
+        const statusA = getRoleStatus(a);
+        const statusB = getRoleStatus(b);
+        
+        // Special handling: "To be unassigned" roles maintain their alphabetical order
+        // Treat them as priority 1 (same as "Currently assigned") but keep their relative order
+        const isUnassignedA = statusA === 'To be unassigned';
+        const isUnassignedB = statusB === 'To be unassigned';
+        
+        // If both are "To be unassigned", maintain alphabetical order
+        if (isUnassignedA && isUnassignedB) {
+          return a.name.localeCompare(b.name);
+        }
+        
+        // If one is "To be unassigned", treat it as priority 1 (same as "Currently assigned")
+        const priorityA = isUnassignedA ? 1 : getStatusPriority(statusA);
+        const priorityB = isUnassignedB ? 1 : getStatusPriority(statusB);
 
-      if (priorityA !== priorityB) {
+        if (priorityA !== priorityB) {
           return option2StatusSortBy.direction === 'asc'
-          ? priorityA - priorityB
-          : priorityB - priorityA;
-      }
+            ? priorityA - priorityB
+            : priorityB - priorityA;
+        }
         // If status priority is the same, sort by role name as secondary
-      return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name);
       } else {
         // Sort by role name
         const comparison = a.name.localeCompare(b.name);
@@ -446,35 +505,298 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     columnIndex: 1,
   });
 
-  const getOption2StatusSortParams = () => ({
-    sortBy: option2StatusSortBy,
-    onSort: (_event: any, index: number, direction: 'asc' | 'desc') => {
-      setOption2StatusSortBy({ index, direction });
-      setOption2ActiveSort('status');
-    },
-    columnIndex: 3,
-  });
+  const getOption2StatusSortParams = () => {
+    // Status column index: 4 (because Role type column is always present)
+    return {
+      sortBy: option2StatusSortBy,
+      onSort: (_event: any, index: number, direction: 'asc' | 'desc') => {
+        setOption2StatusSortBy({ index, direction });
+        setOption2ActiveSort('status');
+      },
+      columnIndex: 4,
+    };
+  };
 
-  const renderRoleBadge = (role: Role) => {
-    if (role.roleType === 'openshift-default') {
-      return <Label color="blue" variant="outline" isCompact>OpenShift default</Label>;
-    } else if (role.roleType === 'openshift-custom') {
-      return <Label color="purple" variant="outline" isCompact>OpenShift custom</Label>;
+  const getLabelPopoverContent = (labelType: 'ai' | 'openshift-default' | 'openshift-custom', roleName?: string) => {
+    switch (labelType) {
+      case 'ai':
+        return {
+          title: 'AI Role',
+          body: 'This role is an AI-generated role that provides intelligent access control based on usage patterns and requirements. AI roles are automatically created and optimized to match your project\'s specific needs.',
+        };
+      case 'openshift-default':
+        return {
+          title: 'OpenShift Default Role',
+          body: 'OpenShift default roles are predefined roles provided by the OpenShift platform. These roles have standard permissions that cannot be modified. They are maintained by the platform and provide consistent access control across all projects.',
+          roleName: roleName,
+        };
+      case 'openshift-custom':
+        return {
+          title: 'OpenShift Custom Role',
+          body: 'OpenShift custom roles are user-defined roles created within the OpenShift platform. These roles can be customized to meet specific project requirements and provide fine-grained access control tailored to your organization\'s needs.',
+          roleName: roleName,
+        };
+      default:
+        return { title: '', body: '' };
     }
-    return null;
+  };
+
+  const renderAILabel = (popoverId: string) => {
+    const isOpen = openPopovers.has(popoverId);
+    const content = getLabelPopoverContent('ai');
+    const label = (
+      <Label
+        color="green"
+        variant="filled"
+        isCompact
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '2px 8px',
+          borderRadius: '16px',
+          cursor: 'pointer',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isOpen) {
+            setOpenPopovers((prev) => {
+              const newSet = new Set(prev);
+              newSet.add(popoverId);
+              return newSet;
+            });
+          }
+        }}
+      >
+        <svg
+          className="pf-v6-svg"
+          viewBox="0 0 32 32"
+          fill="currentColor"
+          aria-hidden="true"
+          role="img"
+          width="1em"
+          height="1em"
+          style={{ width: '12px', height: '12px' }}
+        >
+          <path
+            xmlns="http://www.w3.org/2000/svg"
+            className="st1"
+            d="M26.037,16.962c-5.905-.468-10.531-5.094-11-11-.042-.52-.517-.961-1.038-.961s-.997.442-1.038.962c-.468,5.905-5.094,10.531-11,11-.52.042-.961.517-.961,1.038s.442.997.962,1.038c5.905.468,10.531,5.094,11,11,.042.52.517.961,1.038.961s.997-.442,1.038-.962c.468-5.905,5.094-10.531,10.999-10.999,0,0,0,0,0,0,.52-.042.961-.517.961-1.038s-.442-.997-.962-1.038ZM14,25.764c-1.413-3.545-4.219-6.352-7.764-7.764,3.545-1.413,6.352-4.219,7.764-7.764,1.413,3.545,4.219,6.352,7.764,7.764-3.545,1.413-6.352,4.219-7.764,7.764ZM30.096,6.025c-1.55-.346-2.775-1.571-3.123-3.125-.104-.458-.504-.778-.974-.778s-.87.32-.975.781c-.346,1.55-1.571,2.775-3.125,3.123-.458.104-.778.504-.778.974s.32.87.781.975c1.55.346,2.775,1.571,3.123,3.125.104.458.504.778.974.778s.87-.32.975-.781c.346-1.55,1.571-2.775,3.122-3.122,0,0,.002,0,.003,0,.458-.104.778-.504.778-.974s-.32-.87-.781-.975ZM26,8.917c-.481-.778-1.139-1.436-1.917-1.917.778-.481,1.436-1.139,1.917-1.917.481.778,1.139,1.436,1.917,1.917-.778.481-1.436,1.139-1.917,1.917Z"
+          />
+        </svg>
+        AI
+      </Label>
+    );
+    
+    return (
+      <Popover
+        headerContent={
+          <div style={{ fontWeight: 600 }}>{content.title}</div>
+        }
+        bodyContent="This is a placeholder. Not real data."
+        showClose
+        isVisible={isOpen}
+        shouldOpen={() => {
+          setOpenPopovers((prev) => {
+            const newSet = new Set(prev);
+            if (!newSet.has(popoverId)) {
+              newSet.add(popoverId);
+            }
+            return newSet;
+          });
+          return true;
+        }}
+        shouldClose={() => {
+          setOpenPopovers((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(popoverId);
+            return newSet;
+          });
+          return true;
+        }}
+      >
+        {label}
+      </Popover>
+    );
+  };
+
+  const renderRoleTypeLabels = (role: Role) => {
+    if (role.roleType === 'openshift-default') {
+      // For OpenShift default roles, show AI label and OpenShift default label
+      const aiPopoverId = `ai-assign-${role.id}`;
+      const openshiftPopoverId = `openshift-default-assign-${role.id}`;
+      const openshiftContent = getLabelPopoverContent('openshift-default', role.name);
+      const openshiftLabel = (
+        <Label 
+          color="blue" 
+          variant="filled" 
+          isCompact
+          style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const isCurrentlyOpen = openPopovers.has(openshiftPopoverId);
+            if (!isCurrentlyOpen) {
+              setOpenPopovers((prev) => {
+                const newSet = new Set(prev);
+                newSet.add(openshiftPopoverId);
+                return newSet;
+              });
+            }
+          }}
+        >
+          <svg
+            className="pf-v6-svg"
+            viewBox="0 0 100 100"
+            fill="currentColor"
+            aria-hidden="true"
+            role="img"
+            width="1em"
+            height="1em"
+            style={{ width: '12px', height: '12px' }}
+          >
+            <path fill="#1F1F1F" d="M29,45.3L13,51.1c0.2,2.6,0.6,5.1,1.3,7.6l15.3-5.6C29,50.6,28.8,47.9,29,45.3"/>
+            <path fill="#1F1F1F" d="M100,27.5c-1.1-2.3-2.4-4.5-3.9-6.7L80,26.7c1.9,1.9,3.4,4.1,4.7,6.4L100,27.5z"/>
+            <path fill="#1F1F1F" d="M64.7,23c3.3,1.6,6.2,3.7,8.7,6.2l16.1-5.8C85,17.1,78.9,11.8,71.5,8.4c-22.9-10.7-50.3-0.7-61,22.2 C7,38,5.7,45.9,6.3,53.5l16.1-5.8c0.3-3.5,1.1-7,2.7-10.3C32,22.5,49.8,16,64.7,23"/>
+            <path fill="#1F1F1F" d="M15.3,58.4L0,63.9c1.4,5.6,3.8,10.8,7.2,15.5l16-5.8C19.1,69.4,16.3,64.1,15.3,58.4"/>
+            <path fill="#1F1F1F" d="M81.8,52.3c-0.3,3.5-1.1,7-2.7,10.3C72.1,77.5,54.4,84,39.5,77c-3.3-1.6-6.3-3.7-8.7-6.2l-16,5.8 c4.4,6.2,10.5,11.5,17.9,14.9c22.9,10.7,50.3,0.7,61-22.2c3.5-7.4,4.7-15.3,4.1-22.9L81.8,52.3z"/>
+            <path fill="#1F1F1F" d="M85.7,32.7l-15.3,5.6c2.8,5.1,4.2,10.9,3.7,16.8l16-5.8C89.8,43.5,88.3,37.9,85.7,32.7"/>
+            <path fill="#1F1F1F" d="M29,48.5c0-1.1,0-2.1,0.1-3.2L13,51.1c0.1,1,0.2,2.1,0.4,3.1L29,48.5z"/>
+            <path fill="#1F1F1F" d="M97.7,23.3c-0.5-0.8-1-1.6-1.6-2.4L80,26.7c0.7,0.7,1.4,1.5,2,2.3L97.7,23.3z"/>
+            <path fill="#1F1F1F" d="M14.7,76.7c1.2,1.7,2.6,3.4,4.1,5l17.4-6.4c-2-1.3-3.9-2.8-5.5-4.4L14.7,76.7z M97.8,46.5l-16,5.8 c-0.2,2.3-0.6,4.6-1.4,6.9l17.4-6.4C98,50.7,98,48.6,97.8,46.5"/>
+          </svg>
+          <span style={{ marginLeft: '4px' }}>OpenShift default</span>
+        </Label>
+      );
+      
+      const openshiftLabelWithPopover = (
+        <Popover
+          headerContent={
+            <div style={{ fontWeight: 600 }}>{openshiftContent.title}</div>
+          }
+          bodyContent="This is a placeholder. Not real data."
+          showClose
+          isVisible={openPopovers.has(openshiftPopoverId)}
+          shouldOpen={() => {
+            setOpenPopovers((prev) => {
+              const newSet = new Set(prev);
+              if (!newSet.has(openshiftPopoverId)) {
+                newSet.add(openshiftPopoverId);
+              }
+              return newSet;
+            });
+            return true;
+          }}
+          shouldClose={() => {
+            setOpenPopovers((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(openshiftPopoverId);
+              return newSet;
+            });
+            return true;
+          }}
+        >
+          {openshiftLabel}
+        </Popover>
+      );
+      
+      return (
+        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+          {renderAILabel(aiPopoverId)}
+          <div style={{ width: '4px' }} />
+          {openshiftLabelWithPopover}
+        </Flex>
+      );
+    } else if (role.roleType === 'openshift-custom') {
+      // OpenShift custom roles don't get AI label
+      const openshiftPopoverId = `openshift-custom-assign-${role.id}`;
+      const openshiftContent = getLabelPopoverContent('openshift-custom', role.name);
+      const openshiftLabel = (
+        <Label 
+          color="purple" 
+          variant="filled" 
+          isCompact
+          style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const isCurrentlyOpen = openPopovers.has(openshiftPopoverId);
+            if (!isCurrentlyOpen) {
+              setOpenPopovers((prev) => {
+                const newSet = new Set(prev);
+                newSet.add(openshiftPopoverId);
+                return newSet;
+              });
+            }
+          }}
+        >
+          <svg
+            className="pf-v6-svg"
+            viewBox="0 0 100 100"
+            fill="currentColor"
+            aria-hidden="true"
+            role="img"
+            width="1em"
+            height="1em"
+            style={{ width: '12px', height: '12px' }}
+          >
+            <path fill="#1F1F1F" d="M29,45.3L13,51.1c0.2,2.6,0.6,5.1,1.3,7.6l15.3-5.6C29,50.6,28.8,47.9,29,45.3"/>
+            <path fill="#1F1F1F" d="M100,27.5c-1.1-2.3-2.4-4.5-3.9-6.7L80,26.7c1.9,1.9,3.4,4.1,4.7,6.4L100,27.5z"/>
+            <path fill="#1F1F1F" d="M64.7,23c3.3,1.6,6.2,3.7,8.7,6.2l16.1-5.8C85,17.1,78.9,11.8,71.5,8.4c-22.9-10.7-50.3-0.7-61,22.2 C7,38,5.7,45.9,6.3,53.5l16.1-5.8c0.3-3.5,1.1-7,2.7-10.3C32,22.5,49.8,16,64.7,23"/>
+            <path fill="#1F1F1F" d="M15.3,58.4L0,63.9c1.4,5.6,3.8,10.8,7.2,15.5l16-5.8C19.1,69.4,16.3,64.1,15.3,58.4"/>
+            <path fill="#1F1F1F" d="M81.8,52.3c-0.3,3.5-1.1,7-2.7,10.3C72.1,77.5,54.4,84,39.5,77c-3.3-1.6-6.3-3.7-8.7-6.2l-16,5.8 c4.4,6.2,10.5,11.5,17.9,14.9c22.9,10.7,50.3,0.7,61-22.2c3.5-7.4,4.7-15.3,4.1-22.9L81.8,52.3z"/>
+            <path fill="#1F1F1F" d="M85.7,32.7l-15.3,5.6c2.8,5.1,4.2,10.9,3.7,16.8l16-5.8C89.8,43.5,88.3,37.9,85.7,32.7"/>
+            <path fill="#1F1F1F" d="M29,48.5c0-1.1,0-2.1,0.1-3.2L13,51.1c0.1,1,0.2,2.1,0.4,3.1L29,48.5z"/>
+            <path fill="#1F1F1F" d="M97.7,23.3c-0.5-0.8-1-1.6-1.6-2.4L80,26.7c0.7,0.7,1.4,1.5,2,2.3L97.7,23.3z"/>
+            <path fill="#1F1F1F" d="M14.7,76.7c1.2,1.7,2.6,3.4,4.1,5l17.4-6.4c-2-1.3-3.9-2.8-5.5-4.4L14.7,76.7z M97.8,46.5l-16,5.8 c-0.2,2.3-0.6,4.6-1.4,6.9l17.4-6.4C98,50.7,98,48.6,97.8,46.5"/>
+          </svg>
+          <span style={{ marginLeft: '4px' }}>OpenShift custom</span>
+        </Label>
+      );
+      
+      const openshiftLabelWithPopover = (
+        <Popover
+          headerContent={
+            <div style={{ fontWeight: 600 }}>{openshiftContent.title}</div>
+          }
+          bodyContent="This is a placeholder. Not real data."
+          showClose
+          isVisible={openPopovers.has(openshiftPopoverId)}
+          shouldOpen={() => {
+            setOpenPopovers((prev) => {
+              const newSet = new Set(prev);
+              if (!newSet.has(openshiftPopoverId)) {
+                newSet.add(openshiftPopoverId);
+              }
+              return newSet;
+            });
+            return true;
+          }}
+          shouldClose={() => {
+            setOpenPopovers((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(openshiftPopoverId);
+              return newSet;
+            });
+            return true;
+          }}
+        >
+          {openshiftLabel}
+        </Popover>
+      );
+      
+      return openshiftLabelWithPopover;
+    } else {
+      // Regular role - add AI label
+      const aiPopoverId = `ai-assign-${role.id}`;
+      return renderAILabel(aiPopoverId);
+    }
   };
 
   const renderStatusBadge = (role: Role) => {
     const status = getRoleStatus(role);
     
-    // If role was originally assigned but is now deselected, show both labels
+    // If role was originally assigned but is now deselected, only show "To be unassigned" label
     if (role.originallyAssigned && !role.currentlyAssigned) {
-      return (
-        <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
-          <Label color="green" variant="outline" isCompact>Currently assigned</Label>
-          <Label color="orange" variant="outline" isCompact>To be removed</Label>
-        </Flex>
-      );
+      return <Label color="orange" variant="outline" isCompact>To be unassigned</Label>;
     }
     
     // Otherwise show single status label
@@ -482,7 +804,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
       return <Label color="green" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'To be assigned') {
       return <Label color="blue" variant="outline" isCompact>{status}</Label>;
-    } else if (status === 'To be removed') {
+    } else if (status === 'To be unassigned') {
       return <Label color="orange" variant="outline" isCompact>{status}</Label>;
     }
     return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>---</span>;
@@ -655,17 +977,34 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                   ) : (
                     <>
                       <TypeaheadSelect
+                        key={`${subjectType}-${selectedSubject || 'none'}`}
                         initialOptions={typeaheadOptions}
                         placeholder={`Select ${subjectType.toLowerCase()}`}
                         noOptionsFoundMessage={(filter) => `No ${subjectType.toLowerCase()} was found for "${filter}"`}
-                        createOptionMessage={(newValue) => `Grant access to "${newValue}"`}
-                        onClearSelection={() => setSelectedSubject(undefined)}
+                        createOptionMessage={(newValue) => `Assign role to "${newValue}"`}
+                        onInputChange={(value) => {
+                          setTypeaheadInputValue(value || '');
+                        }}
+                        onClearSelection={() => {
+                          setSelectedSubject(undefined);
+                          setTypeaheadInputValue('');
+                        }}
                         onSelect={(_ev, selection) => {
-                          const selectedValue = String(selection);
+                          let selectedValue = String(selection);
+                          // Skip group header selections
+                          if (selectedValue.startsWith('__group_header_')) {
+                            return;
+                          }
+                          // If the selection is a create option (starts with "Assign role to"), extract just the value
+                          if (selectedValue.startsWith('Assign role to "') && selectedValue.endsWith('"')) {
+                            selectedValue = selectedValue.slice('Assign role to "'.length, -1);
+                          }
+                          // Clear the input value so the dropdown shows the selected value, not the input
+                          setTypeaheadInputValue('');
                           setSelectedSubject(selectedValue);
                           // If it's a new subject (not in the list), it will be created when saved
                         }}
-                        isCreatable={true}
+                        isCreatable={false}
                       />
                       <HelperText>
                         <HelperTextItem>
@@ -719,10 +1058,72 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                   <Thead>
                     <Tr>
                       <Th />
-                      <Th sort={getRoleNameSortParams()}>
-                        Role name
+                      <Th 
+                        sort={getRoleNameSortParams()}
+                        info={{
+                          popover: (
+                            <Content>
+                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)', marginBottom: '8px', display: 'block' }}>
+                                Roles with different labels come from different sources. The meanings of each label are defined as follows:
+                              </Content>
+                              <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px' }}>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>AI:</strong> Description
+                                  </Content>
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>OpenShift default:</strong> Description
+                                  </Content>
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>OpenShift custom:</strong> Description
+                                  </Content>
+                                </Content>
+                              </Content>
+                            </Content>
+                          ),
+                          ariaLabel: 'Role labels help',
+                          popoverProps: { headerContent: 'Role Labels' }
+                        }}
+                      >
+                        Role
                       </Th>
                       <Th>Description</Th>
+                      <Th 
+                        info={{
+                          popover: (
+                            <Content>
+                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)', marginBottom: '8px', display: 'block' }}>
+                                Roles with different labels come from different sources. The meanings of each label are defined as follows:
+                              </Content>
+                              <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px' }}>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>AI:</strong> Description
+                                  </Content>
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>OpenShift default:</strong> Description
+                                  </Content>
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                    <strong>OpenShift custom:</strong> Description
+                                  </Content>
+                                </Content>
+                              </Content>
+                            </Content>
+                          ),
+                          ariaLabel: 'Role type labels help',
+                          popoverProps: { headerContent: 'Role Labels' }
+                        }}
+                      >
+                        Role type
+                      </Th>
                       <Th sort={getOption2StatusSortParams()}>
                         Status
                       </Th>
@@ -731,7 +1132,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                   <Tbody>
                     {sortedRoles.length === 0 ? (
                       <Tr>
-                        <Td colSpan={4} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--xl)' }}>
+                        <Td colSpan={5} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--xl)' }}>
                           No roles available
                         </Td>
                       </Tr>
@@ -747,7 +1148,6 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                                 />
                             </Td>
                             <Td>
-                              <div>
                               <Button
                                 variant="link"
                                 onClick={() => handleRoleNameClick(role)}
@@ -757,14 +1157,11 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                               >
                                 {role.name}
                               </Button>
-                                {renderRoleBadge(role) && (
-                                  <div style={{ marginTop: 'var(--pf-v5-global--spacer--xs)' }}>
-                                    {renderRoleBadge(role)}
-                                  </div>
-                                )}
-                              </div>
                             </Td>
                             <Td>{role.description}</Td>
+                            <Td>
+                              {renderRoleTypeLabels(role)}
+                            </Td>
                             <Td>{renderStatusBadge(role)}</Td>
                           </Tr>
                       ))
