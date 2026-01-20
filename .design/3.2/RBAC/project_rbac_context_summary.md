@@ -663,3 +663,33 @@ interface User {
     - Input is cleared when modal is closed or cancelled
     - Applied in both Assign roles page and Manage roles page
     - Ensures user intent before removing OpenShift custom roles that cannot be re-added
+
+20. **New Custom Role - k8s-custom-role:**
+    - Added new OpenShift custom role 'k8s-custom-role' to user 'Deena'
+    - Role description: "Custom OpenShift role with advanced Kubernetes permissions"
+    - Permissions: create, delete, get, list, patch, update, watch for deployments and replicasets in 'apps' API group
+    - Added to sharedPermissionsData.ts, RoleAssignmentPage.tsx, and EditRolesPage.tsx
+    - Appears in Permissions tab, Assign roles page, and Manage roles page
+
+21. **Assignment Status Column - Empty Status Indicator:**
+    - Changed empty status indicator from '---' to '--'
+    - Applied in both Assign roles page and Manage roles page
+    - Displayed when a role has no assignment status (not currently assigned, not assigning, not unassigning)
+    - Provides cleaner visual appearance
+
+22. **Unassigning Status Label - Color Update:**
+    - Changed 'Unassigning' status label frame color from orange to red
+    - Applied in both Assign roles page and Manage roles page
+    - Includes all instances: standalone label, label with warning icon, and combined labels
+    - Makes the warning more visually prominent and consistent with danger indicators
+
+23. **Save Confirmation Modal - Additional Admin Contact Instruction:**
+    - Added sentence: "You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them."
+    - Applied to both single role and multiple roles removal cases
+    - Appears in both Assign roles page and Manage roles page
+    - Provides clearer guidance for users about post-removal actions
+
+24. **Assign Roles Page - Subject Description Update:**
+    - Changed description under 'Subject' title from "Select a subject with existing roles or enter a new user" to "Select a subject with existing roles or enter a new subject"
+    - Uses more consistent terminology (subject encompasses both users and groups)
+    - Improves UI accuracy and clarity

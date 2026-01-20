@@ -50,6 +50,7 @@ export let mockUsers: User[] = [
       { role: 'Workbench maintainer', roleType: 'regular' },
       { role: 'Deployment reader', roleType: 'regular' },
       { role: 'custom-pipeline-super-user', roleType: 'openshift-custom' },
+      { role: 'k8s-custom-role', roleType: 'openshift-custom' },
       { role: 'Workbench reader', roleType: 'regular' },
     ],
     dateCreated: '30 Oct 2024',
@@ -106,7 +107,7 @@ export let mockGroups: Group[] = [
 const getRoleType = (roleName: string): 'openshift-default' | 'openshift-custom' | 'regular' => {
   // This should match the role types from mockRoles in EditRolesPage
   const openshiftDefaultRoles = ['Admin', 'Contributor'];
-  const openshiftCustomRoles = ['custom-pipeline-super-user', 'k8sreal-name-is-here'];
+  const openshiftCustomRoles = ['custom-pipeline-super-user', 'k8sreal-name-is-here', 'k8s-custom-role'];
   
   if (openshiftDefaultRoles.includes(roleName)) {
     return 'openshift-default';

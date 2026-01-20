@@ -283,6 +283,22 @@ const mockAvailableRoles: Role[] = [
   },
   {
     id: '14',
+    name: 'k8s-custom-role',
+    description: 'Custom OpenShift role with advanced Kubernetes permissions.',
+    roleType: 'openshift-custom',
+    originallyAssigned: false,
+    currentlyAssigned: false,
+    rules: [
+      {
+        actions: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+        apiGroups: ['apps'],
+        resources: ['deployments', 'replicasets'],
+        resourceNames: undefined,
+      },
+    ],
+  },
+  {
+    id: '15',
     name: 'Deployments access',
     description: 'User can access and interact with deployments.',
     roleType: 'regular',
@@ -550,14 +566,14 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     } else if (!role.currentlyAssigned && role.originallyAssigned) {
       return 'Unassigning';
     }
-    return '---';
+    return '--';
   };
 
   const getStatusPriority = (status: string): number => {
     if (status === 'Currently assigned') return 1;
     if (status === 'Assigning') return 2;
     if (status === 'Unassigning') return 3;
-    return 4; // '---'
+    return 4; // '--'
   };
 
   const getFilteredRoles = (): Role[] => {
@@ -911,7 +927,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
         
         return (
           <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
-            <Label color="orange" variant="outline" isCompact>Unassigning</Label>
+            <Label color="red" variant="outline" isCompact>Unassigning</Label>
             <Popover
               headerContent={<div style={{ fontWeight: 600 }}>Warning</div>}
               bodyContent="Once this OpenShift custom role is unassigned, it cannot be added back through the RHOAI UI."
@@ -968,7 +984,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
         );
       }
       
-      return <Label color="orange" variant="outline" isCompact>Unassigning</Label>;
+      return <Label color="red" variant="outline" isCompact>Unassigning</Label>;
     }
     
     // Otherwise show single status label
@@ -977,9 +993,9 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     } else if (status === 'Assigning') {
       return <Label color="blue" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Unassigning') {
-      return <Label color="orange" variant="outline" isCompact>{status}</Label>;
+      return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
-    return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>---</span>;
+    return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>--</span>;
   };
 
   const handleRoleNameClick = (role: Role) => {
@@ -1077,7 +1093,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
             <StackItem>
               <Title headingLevel="h2" size="lg">Subject</Title>
               <Content style={{ marginTop: '8px' }}>
-                Select a subject with existing roles or enter a new user.
+                Select a subject with existing roles or enter a new subject.
               </Content>
               <Form style={{ marginTop: '16px' }}>
                 {!isOption2 && (
@@ -1616,13 +1632,13 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                     return (
                       <>
                         The <span style={{ fontWeight: 600 }}>'{removedRoles[0].name}'</span> role was assigned to{' '}
-                        <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift. It cannot be reassigned from OpenShift AI.
+                        <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift. It cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
                       </>
                     );
                   } else {
                     return (
                       <>
-                        The following roles were assigned to <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift and cannot be reassigned from OpenShift AI:
+                        The following roles were assigned to <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift and cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
                         <ul style={{ marginTop: '8px', marginBottom: '0' }}>
                           {removedRoles.map((role, index) => (
                             <li key={index}>

@@ -289,6 +289,22 @@ const mockRoles: Role[] = [
   },
   {
     id: '14',
+    name: 'k8s-custom-role',
+    description: 'Custom OpenShift role with advanced Kubernetes permissions.',
+    roleType: 'openshift-custom',
+    originallyAssigned: false,
+    currentlyAssigned: false,
+    rules: [
+      {
+        actions: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+        apiGroups: ['apps'],
+        resources: ['deployments', 'replicasets'],
+        resourceNames: undefined,
+      },
+    ],
+  },
+  {
+    id: '15',
     name: 'Deployments access',
     description: 'User can access and interact with deployments.',
     roleType: 'regular',
@@ -578,14 +594,14 @@ const EditRolesPage: React.FunctionComponent = () => {
     } else if (!role.currentlyAssigned && role.originallyAssigned) {
       return 'Unassigning';
     }
-    return '---';
+    return '--';
   };
 
   const getStatusPriority = (status: string): number => {
     if (status === 'Currently assigned') return 1;
     if (status === 'Assigning') return 2;
     if (status === 'Unassigning') return 3;
-    return 4; // '---'
+    return 4; // '--'
   };
 
   const getFilteredRoles = (): Role[] => {
@@ -1112,7 +1128,7 @@ const EditRolesPage: React.FunctionComponent = () => {
       if (selectedOption === 'option3') {
         return (
           <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
-            <Label color="orange" variant="outline" isCompact>Unassigning</Label>
+            <Label color="red" variant="outline" isCompact>Unassigning</Label>
             {warningIcon}
           </Flex>
         );
@@ -1121,7 +1137,7 @@ const EditRolesPage: React.FunctionComponent = () => {
       return (
         <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
           <Label color="green" variant="outline" isCompact>Currently assigned</Label>
-          <Label color="orange" variant="outline" isCompact>Unassigning</Label>
+          <Label color="red" variant="outline" isCompact>Unassigning</Label>
           {warningIcon}
         </Flex>
       );
@@ -1133,9 +1149,9 @@ const EditRolesPage: React.FunctionComponent = () => {
     } else if (status === 'Assigning') {
       return <Label color="blue" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Unassigning') {
-      return <Label color="orange" variant="outline" isCompact>{status}</Label>;
+      return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
-    return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>---</span>;
+    return <span style={{ color: 'var(--pf-v5-global--Color--200)' }}>--</span>;
   };
 
   const handleRoleNameClick = (role: Role) => {
@@ -1790,13 +1806,13 @@ const EditRolesPage: React.FunctionComponent = () => {
                     return (
                       <>
                         The <span style={{ fontWeight: 600 }}>'{removedRoles[0].name}'</span> role was assigned to{' '}
-                        <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift. It cannot be reassigned from OpenShift AI.
+                        <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift. It cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
                       </>
                     );
                   } else {
                     return (
                       <>
-                        The following roles were assigned to <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift and cannot be reassigned from OpenShift AI:
+                        The following roles were assigned to <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift and cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
                         <ul style={{ marginTop: '8px', marginBottom: '0' }}>
                           {removedRoles.map((role, index) => (
                             <li key={index}>
