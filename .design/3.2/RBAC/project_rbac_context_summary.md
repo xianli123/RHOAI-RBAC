@@ -727,3 +727,81 @@ interface User {
     - Clicking "Assign roles" button now bypasses the comparison modal and goes directly to the Assign roles page
     - Option 2 code remains in place (not deleted), just hidden for potential future use
     - Simplified user flow by removing intermediate modal step
+
+30. **Role Type Labels - Changed to Outlined Gray:**
+    - Changed all role type labels from filled colored labels to outlined gray labels
+    - Applied to "AI role", "OpenShift default role", and "OpenShift custom role" labels
+    - Previous colors: AI (green filled), OpenShift default (blue filled), OpenShift custom (purple filled)
+    - New style: All use `color="grey"` and `variant="outline"`
+    - Consistent styling across all pages: Assign roles, Manage roles, and Permissions tab (role details modal)
+    - Labels maintain their click-to-popover functionality unchanged
+
+31. **Unassigning OpenShift Custom Roles - Red Help Text with Popover:**
+    - Replaced red exclamation icon with red help text in Assignment status column
+    - Help text: "Role cannot be re-assigned in OpenShift AI"
+    - Styled with dashed underline, red color (`var(--pf-t--global--text--color--status--danger--default)`)
+    - Click help text to open popover with:
+      - Title removed (no header in popover)
+      - Body content: "Role cannot be re-assigned in OpenShift AI" (8px margin bottom) + "OpenShift custom roles cannot be assigned in OpenShift AI. You'll need to use OpenShift to assign it again."
+    - Popover positioned below the text (`position="bottom"`)
+    - Applied in both Assign roles page and Manage roles page Role assignment tables
+    - Only appears when deselecting currently assigned OpenShift custom roles
+
+32. **Save Confirmation Modal - Complete Redesign with TreeView:**
+    - **Modal Trigger**: Changed from OpenShift-custom-only to all changes
+      - Now triggers for ANY role changes (assigning OR unassigning)
+      - Previously only triggered when OpenShift custom roles were being removed
+      - Function `hasAnyChanges()` checks if any roles are being assigned or unassigned
+    - **Modal Title**: "Confirm role assignment changes?" (warning icon)
+    - **Modal Content**:
+      - Description: "The roles of [Subject Name] will be changed as listed below."
+      - "Collapse all" / "Expand all" toggle button (link variant, inline)
+      - TreeView component with visual guides showing all changes
+    - **TreeView Structure** (PatternFly TreeView component):
+      ```
+      ├─ Assigning roles [count]
+      │  ├─ Role name 1
+      │  ├─ Role name 2
+      │  └─ Role name 3
+      ├─ Unassigning roles [count]
+      │  ├─ AI roles [count]
+      │  │  ├─ Regular role 1
+      │  │  ├─ OpenShift default role
+      │  │  └─ Regular role 2
+      │  └─ OpenShift custom roles [count]
+      │     ├─ Custom role 1
+      │     └─ Custom role 2
+      ```
+    - **Role Categorization Logic**:
+      - Assigning roles: `!role.originallyAssigned && role.currentlyAssigned`
+      - Unassigning AI roles: `role.originallyAssigned && !role.currentlyAssigned && role.roleType !== 'openshift-custom'`
+        - Includes both regular roles and OpenShift default roles (both get "AI role" label in UI)
+      - Unassigning OpenShift custom roles: `role.roleType === 'openshift-custom' && role.originallyAssigned && !role.currentlyAssigned`
+    - **Visual Features**:
+      - Bold category names ("Assigning roles", "Unassigning roles", "AI roles", "OpenShift custom roles")
+      - Count badges showing number of roles in each category
+      - TreeView with `hasGuides` prop showing connecting lines
+      - All nodes expanded by default (`defaultExpanded: true`)
+    - **Conditional Alert**:
+      - Shows danger alert ONLY if OpenShift custom roles are being unassigned
+      - Alert text: "The OpenShift custom roles were assigned from OpenShift. You need to contact your admin to reassign them outside the OpenShift AI once you unassign them."
+      - Hidden if only regular/AI roles are being changed
+    - **Modal Actions**:
+      - "Confirm" button (primary, not danger) - executes save
+      - "Cancel" button (link) - closes modal without saving
+      - Removed type-to-confirm requirement
+      - Changed from "Remove" button to "Confirm" button
+    - **Applied in**: Both Assign roles page and Manage roles page
+    - **Imported Components**: Added `TreeView` and `TreeViewDataItem` from `@patternfly/react-core`
+
+33. **Collapse/Expand All Functionality in Confirmation Modal:**
+    - Added state: `allTreeItemsExpanded` (initially `true`)
+    - Button text toggles: "Collapse all" ↔ "Expand all"
+    - Click button: `setAllTreeItemsExpanded(!allTreeItemsExpanded)`
+    - TreeView prop: `allExpanded={allTreeItemsExpanded}`
+    - Behavior:
+      - Initial: All expanded, shows "Collapse all"
+      - Click "Collapse all": All nodes collapse, button becomes "Expand all"
+      - Click "Expand all": All nodes expand, button becomes "Collapse all"
+      - Modal close: Resets to `true` (expanded) for next open
+    - Applied in both Assign roles page and Manage roles page modals

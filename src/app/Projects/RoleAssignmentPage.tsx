@@ -29,6 +29,8 @@ import {
   Popover,
   TextInput,
   Tooltip,
+  TreeView,
+  TreeViewDataItem,
 } from '@patternfly/react-core';
 import {
   OutlinedQuestionCircleIcon,
@@ -362,7 +364,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   const [shouldPreserveRoles, setShouldPreserveRoles] = React.useState(false);
   const [typeaheadKey, setTypeaheadKey] = React.useState(0);
   const [isSaveConfirmModalOpen, setIsSaveConfirmModalOpen] = React.useState(false);
-  const [confirmInputValue, setConfirmInputValue] = React.useState('');
+  const [allTreeItemsExpanded, setAllTreeItemsExpanded] = React.useState(true);
 
   // Get available subjects based on type
   const getAvailableSubjects = (): string[] => {
@@ -391,19 +393,18 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     }
   };
 
-  // Check if any OpenShift custom roles are being removed
-  const hasOpenShiftCustomRolesBeingRemoved = (): boolean => {
+  // Check if there are any changes (assigning or unassigning)
+  const hasAnyChanges = (): boolean => {
     return roles.some(role => 
-      role.roleType === 'openshift-custom' && 
-      role.originallyAssigned && 
-      !role.currentlyAssigned
+      (role.originallyAssigned && !role.currentlyAssigned) || // Being unassigned
+      (!role.originallyAssigned && role.currentlyAssigned)     // Being assigned
     );
   };
 
   // Handle save action
   const handleSave = () => {
-    // Check if any OpenShift custom roles are being removed
-    if (hasOpenShiftCustomRolesBeingRemoved()) {
+    // Always show confirmation modal if there are any changes
+    if (hasAnyChanges()) {
       setIsSaveConfirmModalOpen(true);
     } else {
       performSave();
@@ -670,8 +671,8 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     const content = getLabelPopoverContent('ai');
     const label = (
       <Label
-        color="green"
-        variant="filled"
+        color="grey"
+        variant="outline"
         isCompact
         style={{
           display: 'inline-flex',
@@ -752,8 +753,8 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
       const openshiftContent = getLabelPopoverContent('openshift-default', role.name);
       const openshiftLabel = (
         <Label 
-          color="blue" 
-          variant="filled" 
+          color="grey" 
+          variant="outline" 
           isCompact
           style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           onClick={(e) => {
@@ -836,8 +837,8 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
       const openshiftContent = getLabelPopoverContent('openshift-custom', role.name);
       const openshiftLabel = (
         <Label 
-          color="purple" 
-          variant="filled" 
+          color="grey" 
+          variant="outline" 
           isCompact
           style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           onClick={(e) => {
@@ -923,29 +924,55 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
       const isOpenShiftCustom = role.roleType === 'openshift-custom';
       
       if (isOpenShiftCustom) {
+        const helpTextPopoverId = `help-text-popover-${role.id}`;
+        const helpTextElement = (
+          <span
+            style={{ 
+              textDecoration: 'underline dashed',
+              color: 'var(--pf-t--global--text--color--status--danger--default)',
+              textUnderlineOffset: 'var(--pf-t--global--spacer--xs)',
+              cursor: 'pointer',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenPopovers((prev) => {
+                const newSet = new Set(prev);
+                if (newSet.has(helpTextPopoverId)) {
+                  newSet.delete(helpTextPopoverId);
+                } else {
+                  newSet.add(helpTextPopoverId);
+                }
+                return newSet;
+              });
+            }}
+          >
+            Role cannot be re-assigned in OpenShift AI
+          </span>
+        );
+
         return (
-          <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
             <Label color="red" variant="outline" isCompact>Unassigning</Label>
-            <Tooltip
-              content="Once this OpenShift custom role is unassigned, it cannot be added back through the RHOAI UI."
+            <Popover
+              position="bottom"
+              bodyContent={
+                <div>
+                  <div style={{ marginBottom: '8px' }}>Role cannot be re-assigned in OpenShift AI</div>
+                  <div>OpenShift custom roles cannot be assigned in OpenShift AI. You'll need to use OpenShift to assign it again.</div>
+                </div>
+              }
+              showClose
+              isVisible={openPopovers.has(helpTextPopoverId)}
+              onHide={() => {
+                setOpenPopovers((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(helpTextPopoverId);
+                  return newSet;
+                });
+              }}
             >
-              <span
-                style={{ display: 'inline-flex', alignItems: 'center' }}
-              >
-                <svg
-                  className="pf-v6-svg"
-                  viewBox="0 0 512 512"
-                  fill="#C9190B"
-                  aria-hidden="true"
-                  role="img"
-                  width="1em"
-                  height="1em"
-                  style={{ color: '#C9190B' }}
-                >
-                  <path d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z" />
-                </svg>
-              </span>
-            </Tooltip>
+              {helpTextElement}
+            </Popover>
           </Flex>
         );
       }
@@ -1567,73 +1594,142 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
         </div>
       </Modal>
 
-      {/* Save Confirmation Modal for OpenShift Custom Roles */}
+      {/* Save Confirmation Modal */}
       <Modal
         isOpen={isSaveConfirmModalOpen}
         onClose={() => {
           setIsSaveConfirmModalOpen(false);
-          setConfirmInputValue('');
+          setAllTreeItemsExpanded(true);
         }}
         variant="small"
         aria-labelledby="save-confirm-modal-title"
       >
         <ModalHeader
-          title="Confirm role removal"
+          title="Confirm role assignment changes?"
           titleIconVariant="warning"
         />
-        <ModalBody style={{ marginBottom: '0' }}>
+        <ModalBody>
           <Stack hasGutter>
             <StackItem>
               <Content>
-                {(() => {
-                  const removedRoles = roles.filter(role => 
-                    role.roleType === 'openshift-custom' && 
-                    role.originallyAssigned && 
-                    !role.currentlyAssigned
-                  );
-                  const subjectName = selectedSubject || '';
-                  
-                  if (removedRoles.length === 1) {
-                    return (
-                      <>
-                        The <span style={{ fontWeight: 600 }}>'{removedRoles[0].name}'</span> role was assigned to{' '}
-                        <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift. It cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
-                      </>
-                    );
-                  } else {
-                    return (
-                      <>
-                        The following roles were assigned to <span style={{ fontWeight: 600 }}>'{subjectName}'</span> from OpenShift and cannot be reassigned from OpenShift AI. You need to contact your admin to reassign them back outside the OpenShift AI once you unassign them.
-                        <ul style={{ marginTop: '8px', marginBottom: '0' }}>
-                          {removedRoles.map((role, index) => (
-                            <li key={index}>
-                              <span style={{ fontWeight: 600 }}>'{role.name}'</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    );
-                  }
-                })()}
+                The roles of <span style={{ fontWeight: 600 }}>{selectedSubject}</span> will be changed as listed below.
               </Content>
             </StackItem>
             <StackItem>
-              <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                <FlexItem>
-                  <div>Type <strong>'{selectedSubject || ''}'</strong> to confirm removal:</div>
-                </FlexItem>
-                <FlexItem>
-                  <TextInput
-                    id="remove-confirm-input"
-                    data-testid="remove-confirm-input"
-                    aria-label="Remove confirmation input"
-                    type="text"
-                    value={confirmInputValue}
-                    onChange={(_event, value) => setConfirmInputValue(value)}
-                  />
-                </FlexItem>
-              </Flex>
+              <Button
+                variant="link"
+                isInline
+                style={{ padding: 0, fontSize: 'inherit' }}
+                onClick={() => setAllTreeItemsExpanded(!allTreeItemsExpanded)}
+              >
+                {allTreeItemsExpanded ? 'Collapse all' : 'Expand all'}
+              </Button>
             </StackItem>
+            <StackItem>
+              {(() => {
+                const assigningRoles = roles.filter(role => !role.originallyAssigned && role.currentlyAssigned);
+                const unassigningRoles = roles.filter(role => role.originallyAssigned && !role.currentlyAssigned);
+                const unassigningAIRoles = unassigningRoles.filter(role => role.roleType !== 'openshift-custom');
+                const unassigningOpenShiftCustomRoles = unassigningRoles.filter(role => role.roleType === 'openshift-custom');
+                
+                const treeData: TreeViewDataItem[] = [];
+                
+                // Add "Assigning roles" section if there are any
+                if (assigningRoles.length > 0) {
+                  treeData.push({
+                    name: (
+                      <span>
+                        <span style={{ fontWeight: 600 }}>Assigning roles</span>
+                        <Label isCompact style={{ marginLeft: '8px' }}>{assigningRoles.length}</Label>
+                      </span>
+                    ),
+                    id: 'assigning-roles',
+                    children: assigningRoles.map((role, index) => ({
+                      name: role.name,
+                      id: `assigning-${role.id}-${index}`,
+                    })),
+                    defaultExpanded: true,
+                  });
+                }
+                
+                // Add "Unassigning roles" section if there are any
+                if (unassigningRoles.length > 0) {
+                  const unassigningChildren: TreeViewDataItem[] = [];
+                  
+                  // Add AI roles subcategory
+                  if (unassigningAIRoles.length > 0) {
+                    unassigningChildren.push({
+                      name: (
+                        <span>
+                          <span style={{ fontWeight: 600 }}>AI roles</span>
+                          <Label isCompact style={{ marginLeft: '8px' }}>{unassigningAIRoles.length}</Label>
+                        </span>
+                      ),
+                      id: 'unassigning-ai-roles',
+                      children: unassigningAIRoles.map((role, index) => ({
+                        name: role.name,
+                        id: `unassigning-ai-${role.id}-${index}`,
+                      })),
+                      defaultExpanded: true,
+                    });
+                  }
+                  
+                  // Add OpenShift custom roles subcategory
+                  if (unassigningOpenShiftCustomRoles.length > 0) {
+                    unassigningChildren.push({
+                      name: (
+                        <span>
+                          <span style={{ fontWeight: 600 }}>OpenShift custom roles</span>
+                          <Label isCompact style={{ marginLeft: '8px' }}>{unassigningOpenShiftCustomRoles.length}</Label>
+                        </span>
+                      ),
+                      id: 'unassigning-openshift-custom-roles',
+                      children: unassigningOpenShiftCustomRoles.map((role, index) => ({
+                        name: role.name,
+                        id: `unassigning-openshift-custom-${role.id}-${index}`,
+                      })),
+                      defaultExpanded: true,
+                    });
+                  }
+                  
+                  treeData.push({
+                    name: (
+                      <span>
+                        <span style={{ fontWeight: 600 }}>Unassigning roles</span>
+                        <Label isCompact style={{ marginLeft: '8px' }}>{unassigningRoles.length}</Label>
+                      </span>
+                    ),
+                    id: 'unassigning-roles',
+                    children: unassigningChildren,
+                    defaultExpanded: true,
+                  });
+                }
+                
+                return <TreeView hasGuides aria-label="Role assignment changes" data={treeData} allExpanded={allTreeItemsExpanded} />;
+              })()}
+            </StackItem>
+            
+            {/* Conditional Alert for OpenShift Custom Roles */}
+            {(() => {
+              const unassigningOpenShiftCustomRoles = roles.filter(role => 
+                role.roleType === 'openshift-custom' && 
+                role.originallyAssigned && 
+                !role.currentlyAssigned
+              );
+              
+              if (unassigningOpenShiftCustomRoles.length > 0) {
+                return (
+                  <StackItem>
+                    <Alert
+                      variant="danger"
+                      isInline
+                      title="The OpenShift custom roles were assigned from OpenShift. You need to contact your admin to reassign them outside the OpenShift AI once you unassign them."
+                    />
+                  </StackItem>
+                );
+              }
+              return null;
+            })()}
           </Stack>
         </ModalBody>
         <div style={{ padding: '24px' }}>
@@ -1641,15 +1737,12 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
             <div className="pf-v6-c-action-list__item">
               <Button
                 variant="primary"
-                isDanger
-                isDisabled={confirmInputValue !== selectedSubject}
                 onClick={() => {
                   setIsSaveConfirmModalOpen(false);
-                  setConfirmInputValue('');
                   performSave();
                 }}
               >
-                Remove
+                Confirm
               </Button>
             </div>
             <div className="pf-v6-c-action-list__item">
@@ -1657,7 +1750,6 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                 variant="link"
                 onClick={() => {
                   setIsSaveConfirmModalOpen(false);
-                  setConfirmInputValue('');
                 }}
               >
                 Cancel

@@ -430,8 +430,8 @@ const ProjectDetail: React.FunctionComponent = () => {
           }}
         >
           <Label
-            color="green"
-            variant="filled"
+            color="grey"
+            variant="outline"
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -489,8 +489,8 @@ const ProjectDetail: React.FunctionComponent = () => {
           }}
         >
           <Label 
-            color="blue" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -560,8 +560,8 @@ const ProjectDetail: React.FunctionComponent = () => {
           }}
         >
           <Label 
-            color="purple" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -626,8 +626,8 @@ const ProjectDetail: React.FunctionComponent = () => {
           }}
         >
           <Label
-            color="green"
-            variant="filled"
+            color="grey"
+            variant="outline"
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -698,8 +698,8 @@ const ProjectDetail: React.FunctionComponent = () => {
         const openshiftContent = getLabelPopoverContent('openshift-default', role);
         const openshiftLabel = (
           <Label 
-            color="blue" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -780,8 +780,8 @@ const ProjectDetail: React.FunctionComponent = () => {
         const openshiftContent = getLabelPopoverContent('openshift-custom', role);
         const openshiftLabel = (
           <Label 
-            color="purple" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -871,8 +871,8 @@ const ProjectDetail: React.FunctionComponent = () => {
         const openshiftContent = getLabelPopoverContent('openshift-default', role);
         const openshiftLabel = (
           <Label 
-            color="blue" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
@@ -959,8 +959,8 @@ const ProjectDetail: React.FunctionComponent = () => {
         const openshiftContent = getLabelPopoverContent('openshift-custom', role);
         const openshiftLabel = (
           <Label 
-            color="purple" 
-            variant="filled" 
+            color="grey" 
+            variant="outline" 
             isCompact
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             onClick={(e) => {
