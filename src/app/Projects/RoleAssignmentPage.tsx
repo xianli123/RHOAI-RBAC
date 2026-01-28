@@ -1705,7 +1705,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                   });
                 }
                 
-                return <TreeView hasGuides aria-label="Role assignment changes" data={treeData} allExpanded={allTreeItemsExpanded} />;
+                return <TreeView hasAnimations hasGuides aria-label="Role assignment changes" data={treeData} allExpanded={allTreeItemsExpanded} />;
               })()}
             </StackItem>
             

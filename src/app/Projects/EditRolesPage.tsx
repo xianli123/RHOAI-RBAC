@@ -1096,7 +1096,7 @@ const EditRolesPage: React.FunctionComponent = () => {
           </span>
         );
 
-        return (
+      return (
           <Popover
             position="bottom"
             bodyContent={
@@ -1883,7 +1883,7 @@ const EditRolesPage: React.FunctionComponent = () => {
                   });
                 }
                 
-                return <TreeView hasGuides aria-label="Role assignment changes" data={treeData} allExpanded={allTreeItemsExpanded} />;
+                return <TreeView hasAnimations hasGuides aria-label="Role assignment changes" data={treeData} allExpanded={allTreeItemsExpanded} />;
               })()}
             </StackItem>
             
