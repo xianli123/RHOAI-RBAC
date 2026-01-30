@@ -1122,6 +1122,46 @@ const EditRolesPage: React.FunctionComponent = () => {
       
       // For Option 3, only show "Unassigning" label
       if (selectedOption === 'option3') {
+        // For OpenShift custom roles, make the label clickable with popover
+        if (isOpenShiftCustom) {
+          const unassigningPopoverId = `unassigning-popover-${role.id}`;
+          return (
+            <Popover
+              position="bottom"
+              bodyContent="OpenShift custom roles cannot be assigned in OpenShift AI. You'll need to use OpenShift to assign it again."
+              showClose
+              isVisible={openPopovers.has(unassigningPopoverId)}
+              onHide={() => {
+                setOpenPopovers((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(unassigningPopoverId);
+                  return newSet;
+                });
+              }}
+            >
+              <Label 
+                color="red" 
+                variant="filled" 
+                isCompact 
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenPopovers((prev) => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(unassigningPopoverId)) {
+                      newSet.delete(unassigningPopoverId);
+                    } else {
+                      newSet.add(unassigningPopoverId);
+                    }
+                    return newSet;
+                  });
+                }}
+              >
+                Unassigning
+              </Label>
+            </Popover>
+          );
+        }
         return (
           <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
             <Label color="red" variant="outline" isCompact>Unassigning</Label>
@@ -1130,6 +1170,50 @@ const EditRolesPage: React.FunctionComponent = () => {
         );
       }
       // For other options, show both labels
+      // For OpenShift custom roles, make the Unassigning label clickable with popover
+      if (isOpenShiftCustom) {
+        const unassigningPopoverId = `unassigning-popover-${role.id}`;
+        return (
+          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+            <Label color="green" variant="outline" isCompact>Currently assigned</Label>
+            <Popover
+              position="bottom"
+              bodyContent="OpenShift custom roles cannot be assigned in OpenShift AI. You'll need to use OpenShift to assign it again."
+              showClose
+              isVisible={openPopovers.has(unassigningPopoverId)}
+              onHide={() => {
+                setOpenPopovers((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(unassigningPopoverId);
+                  return newSet;
+                });
+              }}
+            >
+              <Label 
+                color="red" 
+                variant="filled" 
+                isCompact 
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenPopovers((prev) => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(unassigningPopoverId)) {
+                      newSet.delete(unassigningPopoverId);
+                    } else {
+                      newSet.add(unassigningPopoverId);
+                    }
+                    return newSet;
+                  });
+                }}
+              >
+                Unassigning
+              </Label>
+            </Popover>
+            {helpTextElement}
+          </Flex>
+        );
+      }
       return (
         <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
           <Label color="green" variant="outline" isCompact>Currently assigned</Label>
@@ -1143,7 +1227,7 @@ const EditRolesPage: React.FunctionComponent = () => {
     if (status === 'Currently assigned') {
       return <Label color="green" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Assigning') {
-      return <Label color="blue" variant="outline" isCompact>{status}</Label>;
+      return <Label color="gold" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Unassigning') {
       return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
@@ -1418,34 +1502,6 @@ const EditRolesPage: React.FunctionComponent = () => {
                   <Th />
                   <Th 
                     sort={(selectedOption === 'option2' || selectedOption === 'option3') ? getRoleNameSortParams() : undefined}
-                    info={(selectedOption === 'option2' || selectedOption === 'option3') ? {
-                      popover: (
-                        <Content>
-                          <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)', marginBottom: '8px', display: 'block' }}>
-                            Roles with different labels come from different sources. The meanings of each label are defined as follows:
-                          </Content>
-                          <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px' }}>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
-                                <strong>AI:</strong> Description
-                              </Content>
-                            </Content>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
-                                <strong>OpenShift default:</strong> Description
-                              </Content>
-                            </Content>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
-                                <strong>OpenShift custom:</strong> Description
-                              </Content>
-                            </Content>
-                          </Content>
-                        </Content>
-                      ),
-                      ariaLabel: 'Role labels help',
-                      popoverProps: { headerContent: 'Role Labels' }
-                    } : undefined}
                   >
                     {(selectedOption === 'option2' || selectedOption === 'option3') ? 'Role' : 'Role name'}
                   </Th>
@@ -1484,7 +1540,35 @@ const EditRolesPage: React.FunctionComponent = () => {
                       Role type
                     </Th>
                   )}
-                  <Th sort={selectedOption === 'option1' ? getStatusSortParams() : ((selectedOption === 'option2' || selectedOption === 'option3') ? getOption2StatusSortParams() : undefined)} modifier="nowrap">
+                  <Th 
+                    sort={selectedOption === 'option1' ? getStatusSortParams() : ((selectedOption === 'option2' || selectedOption === 'option3') ? getOption2StatusSortParams() : undefined)} 
+                    modifier="nowrap"
+                    info={{
+                      popover: (
+                        <Content>
+                          <Content component="div" style={{ marginBottom: '8px' }}>
+                            Assignment status indicates the current or pending state of the role assignment:
+                          </Content>
+                          <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px', paddingLeft: '20px' }}>
+                            <Content component="li" className="pf-v6-c-content--li">
+                              <strong>Currently assigned:</strong> The user or group has this role.
+                            </Content>
+                            <Content component="li" className="pf-v6-c-content--li">
+                              <strong>Assigning:</strong> The role will be added when you save changes.
+                            </Content>
+                            <Content component="li" className="pf-v6-c-content--li">
+                              <strong>Unassigning:</strong> The role will be removed when you save changes.
+                            </Content>
+                            <Content component="li" className="pf-v6-c-content--li">
+                              <strong>No status (-):</strong> The role is not assigned.
+                            </Content>
+                          </Content>
+                        </Content>
+                      ),
+                      ariaLabel: 'Assignment status help',
+                      popoverProps: { headerContent: 'Assignment Status' }
+                    }}
+                  >
                     Assignment status
                   </Th>
                 </Tr>
