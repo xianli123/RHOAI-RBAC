@@ -1018,7 +1018,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
     if (status === 'Currently assigned') {
       return <Label color="green" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Assigning') {
-      return <Label color="gold" variant="outline" isCompact>{status}</Label>;
+      return <Label color="orange" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Unassigning') {
       return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
@@ -1354,7 +1354,7 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
                         info={{
                           popover: (
                             <Content>
-                              <Content component="div" style={{ marginBottom: '8px' }}>
+                              <Content component="p" style={{ marginBottom: '8px' }}>
                                 Assignment status indicates the current or pending state of the role assignment:
                               </Content>
                               <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px', paddingLeft: '20px' }}>

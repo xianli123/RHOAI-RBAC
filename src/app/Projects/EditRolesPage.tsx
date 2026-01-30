@@ -1227,7 +1227,7 @@ const EditRolesPage: React.FunctionComponent = () => {
     if (status === 'Currently assigned') {
       return <Label color="green" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Assigning') {
-      return <Label color="gold" variant="outline" isCompact>{status}</Label>;
+      return <Label color="orange" variant="outline" isCompact>{status}</Label>;
     } else if (status === 'Unassigning') {
       return <Label color="red" variant="outline" isCompact>{status}</Label>;
     }
@@ -1543,31 +1543,31 @@ const EditRolesPage: React.FunctionComponent = () => {
                   <Th 
                     sort={selectedOption === 'option1' ? getStatusSortParams() : ((selectedOption === 'option2' || selectedOption === 'option3') ? getOption2StatusSortParams() : undefined)} 
                     modifier="nowrap"
-                    info={{
-                      popover: (
-                        <Content>
-                          <Content component="div" style={{ marginBottom: '8px' }}>
-                            Assignment status indicates the current or pending state of the role assignment:
-                          </Content>
-                          <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px', paddingLeft: '20px' }}>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <strong>Currently assigned:</strong> The user or group has this role.
+                        info={{
+                          popover: (
+                            <Content>
+                              <Content component="p" style={{ marginBottom: '8px' }}>
+                                Assignment status indicates the current or pending state of the role assignment:
+                              </Content>
+                              <Content component="ul" className="pf-v6-c-content--ul" style={{ margin: '0px', paddingLeft: '20px' }}>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <strong>Currently assigned:</strong> The user or group has this role.
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <strong>Assigning:</strong> The role will be added when you save changes.
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <strong>Unassigning:</strong> The role will be removed when you save changes.
+                                </Content>
+                                <Content component="li" className="pf-v6-c-content--li">
+                                  <strong>No status (-):</strong> The role is not assigned.
+                                </Content>
+                              </Content>
                             </Content>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <strong>Assigning:</strong> The role will be added when you save changes.
-                            </Content>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <strong>Unassigning:</strong> The role will be removed when you save changes.
-                            </Content>
-                            <Content component="li" className="pf-v6-c-content--li">
-                              <strong>No status (-):</strong> The role is not assigned.
-                            </Content>
-                          </Content>
-                        </Content>
-                      ),
-                      ariaLabel: 'Assignment status help',
-                      popoverProps: { headerContent: 'Assignment Status' }
-                    }}
+                          ),
+                          ariaLabel: 'Assignment status help',
+                          popoverProps: { headerContent: 'Assignment Status' }
+                        }}
                   >
                     Assignment status
                   </Th>
