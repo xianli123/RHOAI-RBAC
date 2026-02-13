@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
 import {
   PageSection,
   Title,
@@ -31,6 +32,8 @@ import {
   ModalFooter,
   ModalVariant,
   SearchInput,
+  HelperText,
+  HelperTextItem,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -48,7 +51,7 @@ const CreateRole: React.FunctionComponent = () => {
   const [roleName, setRoleName] = React.useState('my-custom-role');
   const [description, setDescription] = React.useState('');
   const [category, setCategory] = React.useState('');
-  const [isCategoryOpen, setIsCategoryOpen] = React.useState(false);
+  const [categoryInputValue, setCategoryInputValue] = React.useState('');
   const [isRuleExpanded, setIsRuleExpanded] = React.useState(true);
   const [apiGroups, setApiGroups] = React.useState('');
   const [resources, setResources] = React.useState('');
@@ -75,12 +78,56 @@ const CreateRole: React.FunctionComponent = () => {
 
   useDocumentTitle('Create Role');
 
-  const categories = [
+  const existingCategories = [
     'Project Management',
     'Deployment Management',
     'Pipeline Management',
     'Workbench Management',
   ];
+
+  // Create typeahead options for category
+  const categoryTypeaheadOptions = React.useMemo<TypeaheadSelectOption[]>(() => {
+    const options: TypeaheadSelectOption[] = [];
+    
+    // Filter categories based on input value
+    const filteredCategories = categoryInputValue && categoryInputValue.trim()
+      ? existingCategories.filter(cat => 
+          cat.toLowerCase().includes(categoryInputValue.toLowerCase())
+        )
+      : existingCategories;
+    
+    // If there's input, add create option first
+    if (categoryInputValue && categoryInputValue.trim()) {
+      options.push({
+        content: `Create "${categoryInputValue}"`,
+        value: `Create "${categoryInputValue}"`,
+      });
+    }
+    
+    // Add filtered existing categories
+    if (filteredCategories.length > 0) {
+      options.push(...filteredCategories.map((cat) => ({
+        content: cat,
+        value: cat,
+        selected: cat === category,
+      })));
+    }
+    
+    // If category is set and not in the existing categories, add it to options so it displays correctly
+    if (category && !existingCategories.includes(category)) {
+      // Check if it's not already in options
+      const alreadyInOptions = options.some(opt => opt.value === category);
+      if (!alreadyInOptions) {
+        options.push({
+          content: category,
+          value: category,
+          selected: true,
+        });
+      }
+    }
+    
+    return options;
+  }, [category, categoryInputValue]);
 
   const roleTemplates = [
     {
@@ -307,37 +354,36 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                     <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)', marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
                       Assign this role to a category to help organize and filter roles.
                     </Content>
-                    <Split hasGutter>
-                      <SplitItem isFilled>
-                        <Select
-                          isOpen={isCategoryOpen}
-                          selected={category || 'Select a category'}
-                          onSelect={(_event, value) => {
-                            setCategory(value as string);
-                            setIsCategoryOpen(false);
-                          }}
-                          onOpenChange={(isOpen) => setIsCategoryOpen(isOpen)}
-                          toggle={(toggleRef) => (
-                            <MenuToggle
-                              ref={toggleRef}
-                              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                              isExpanded={isCategoryOpen}
-                              isFullWidth
-                            >
-                              {category || 'Select a category'}
-                            </MenuToggle>
-                          )}
-                        >
-                          <SelectList>
-                            {categories.map((cat) => (
-                              <SelectOption key={cat} value={cat}>
-                                {cat}
-                              </SelectOption>
-                            ))}
-                          </SelectList>
-                        </Select>
-                      </SplitItem>
-                    </Split>
+                    <TypeaheadSelect
+                      key={`category-${category || 'none'}`}
+                      initialOptions={categoryTypeaheadOptions}
+                      placeholder="Select a category"
+                      noOptionsFoundMessage={(filter) => `No category was found for "${filter}"`}
+                      createOptionMessage={(newValue) => `Create "${newValue}"`}
+                      onInputChange={(value) => {
+                        setCategoryInputValue(value || '');
+                      }}
+                      onClearSelection={() => {
+                        setCategory('');
+                        setCategoryInputValue('');
+                      }}
+                      onSelect={(_ev, selection) => {
+                        let selectedValue = String(selection);
+                        // If the selection is a create option (starts with "Create"), extract just the value
+                        if (selectedValue.startsWith('Create "') && selectedValue.endsWith('"')) {
+                          selectedValue = selectedValue.slice('Create "'.length, -1);
+                        }
+                        // Clear the input value so the dropdown shows the selected value, not the input
+                        setCategoryInputValue('');
+                        setCategory(selectedValue);
+                      }}
+                      isCreatable={true}
+                    />
+                    <HelperText>
+                      <HelperTextItem>
+                        Select an existing category or type a new one to create it.
+                      </HelperTextItem>
+                    </HelperText>
                   </FormGroup>
 
                   <Divider style={{ margin: 'var(--pf-v5-global--spacer--lg) 0' }} />
