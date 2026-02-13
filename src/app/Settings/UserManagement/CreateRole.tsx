@@ -102,6 +102,15 @@ const CreateRole: React.FunctionComponent = () => {
         content: `Create "${categoryInputValue}"`,
         value: `Create "${categoryInputValue}"`,
       });
+      // Add divider after create option if there are existing categories
+      if (filteredCategories.length > 0) {
+        options.push({
+          content: '──────────',
+          value: '__divider__',
+          isDisabled: true,
+          isAriaDisabled: true,
+        } as TypeaheadSelectOption);
+      }
     }
     
     // Add filtered existing categories
@@ -369,6 +378,10 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                       }}
                       onSelect={(_ev, selection) => {
                         let selectedValue = String(selection);
+                        // Skip divider selections
+                        if (selectedValue === '__divider__') {
+                          return;
+                        }
                         // If the selection is a create option (starts with "Create"), extract just the value
                         if (selectedValue.startsWith('Create "') && selectedValue.endsWith('"')) {
                           selectedValue = selectedValue.slice('Create "'.length, -1);
@@ -377,7 +390,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                         setCategoryInputValue('');
                         setCategory(selectedValue);
                       }}
-                      isCreatable={true}
+                      isCreatable={false}
                     />
                     <HelperText>
                       <HelperTextItem>
