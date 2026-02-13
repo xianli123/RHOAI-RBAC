@@ -10,10 +10,13 @@ import {
   ToolbarContent,
   ToolbarItem,
   SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
   Dropdown,
-  MenuToggle,
   DropdownList,
   DropdownItem,
+  MenuToggle,
   Label,
   Flex,
   Pagination,
@@ -334,11 +337,17 @@ const Roles: React.FunctionComponent = () => {
         Manage roles and their permissions.
       </Content>
 
-      <Toolbar>
+      <Toolbar id="roles-toolbar">
         <ToolbarContent>
           <ToolbarItem>
-            <Dropdown
+            <Select
+              id="category-filter-select"
               isOpen={isCategoryDropdownOpen}
+              selected={categoryFilter}
+              onSelect={(_event, value) => {
+                setCategoryFilter(value as string);
+                setIsCategoryDropdownOpen(false);
+              }}
               onOpenChange={(isOpen) => setIsCategoryDropdownOpen(isOpen)}
               toggle={(toggleRef) => (
                 <MenuToggle
@@ -350,20 +359,14 @@ const Roles: React.FunctionComponent = () => {
                 </MenuToggle>
               )}
             >
-              <DropdownList>
+              <SelectList>
                 {categories.map((category) => (
-                  <DropdownItem
-                    key={category}
-                    onClick={() => {
-                      setCategoryFilter(category);
-                      setIsCategoryDropdownOpen(false);
-                    }}
-                  >
+                  <SelectOption key={category} value={category}>
                     {category}
-                  </DropdownItem>
+                  </SelectOption>
                 ))}
-              </DropdownList>
-            </Dropdown>
+              </SelectList>
+            </Select>
           </ToolbarItem>
           <ToolbarItem>
             <SearchInput
