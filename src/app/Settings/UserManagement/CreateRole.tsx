@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
 import {
@@ -693,9 +694,15 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                 </DrawerPanelContent>
               }
             >
-              <DrawerContentBody>
-                {breadcrumb}
-                <PageSection>
+              <DrawerContentBody style={{ display: 'none' }}>
+                {/* Empty - content is in parent */}
+              </DrawerContentBody>
+            </DrawerContent>
+          </Drawer>,
+          document.body
+          )}
+          {breadcrumb}
+          <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
