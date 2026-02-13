@@ -139,14 +139,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     <>
       {breadcrumb}
       <PageSection>
-        <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-          <SplitItem isFilled>
-            <Title headingLevel="h1" size="2xl">Create custom role</Title>
-          </SplitItem>
-          <SplitItem>
-            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-          </SplitItem>
-        </Split>
+        <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
         </Content>
@@ -752,8 +745,6 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
 
             <div style={{ marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
               <Button variant="primary" onClick={handleSubmit}>Create Role</Button>
-              {' '}
-              <Button variant="link" onClick={handleCancel}>Cancel</Button>
             </div>
           </GridItem>
 
