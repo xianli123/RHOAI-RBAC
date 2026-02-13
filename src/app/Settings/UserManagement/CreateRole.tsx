@@ -652,16 +652,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                             >
                               <div style={{ flex: '1 1 0%' }}>
                                 <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
-                                  {group.name || '""'}{' '}
-                                  <span style={{ 
-                                    fontWeight: 'normal', 
-                                    fontStyle: 'italic', 
-                                    fontSize: '0.875rem', 
-                                    color: 'var(--pf-v5-global--Color--200)',
-                                    marginLeft: '4px'
-                                  }}>
-                                    (empty string)
-                                  </span>
+                                  {group.name}
                                 </div>
                                 <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
                                   {group.description}
