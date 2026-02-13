@@ -9,7 +9,6 @@ import {
   Toolbar,
   ToolbarContent,
   ToolbarItem,
-  ToolbarGroup,
   SearchInput,
   Dropdown,
   MenuToggle,
@@ -337,69 +336,63 @@ const Roles: React.FunctionComponent = () => {
 
       <Toolbar>
         <ToolbarContent>
-          <ToolbarGroup>
-            <ToolbarItem>
-              <Dropdown
-                isOpen={isCategoryDropdownOpen}
-                onOpenChange={(isOpen) => setIsCategoryDropdownOpen(isOpen)}
-                toggle={(toggleRef) => (
-                  <MenuToggle
-                    ref={toggleRef}
-                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    isExpanded={isCategoryDropdownOpen}
+          <ToolbarItem>
+            <Dropdown
+              isOpen={isCategoryDropdownOpen}
+              onOpenChange={(isOpen) => setIsCategoryDropdownOpen(isOpen)}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  isExpanded={isCategoryDropdownOpen}
+                >
+                  {categoryFilter}
+                </MenuToggle>
+              )}
+            >
+              <DropdownList>
+                {categories.map((category) => (
+                  <DropdownItem
+                    key={category}
+                    onClick={() => {
+                      setCategoryFilter(category);
+                      setIsCategoryDropdownOpen(false);
+                    }}
                   >
-                    {categoryFilter}
-                  </MenuToggle>
-                )}
-              >
-                <DropdownList>
-                  {categories.map((category) => (
-                    <DropdownItem
-                      key={category}
-                      onClick={() => {
-                        setCategoryFilter(category);
-                        setIsCategoryDropdownOpen(false);
-                      }}
-                    >
-                      {category}
-                    </DropdownItem>
-                  ))}
-                </DropdownList>
-              </Dropdown>
-            </ToolbarItem>
-            <ToolbarItem>
-              <SearchInput
-                placeholder="Search roles"
-                value={searchValue}
-                onChange={(_event, value) => setSearchValue(value)}
-                onClear={() => setSearchValue('')}
-                aria-label="Search roles"
-              />
-            </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup>
-            <ToolbarItem>
-              <Button variant="primary">Create role</Button>
-            </ToolbarItem>
-            <ToolbarItem>
-              <Button variant="secondary" isDisabled>
-                Delete role
-              </Button>
-            </ToolbarItem>
-            <ToolbarItem align={{ default: 'alignEnd' }}>
-              <Pagination
-                itemCount={sortedRoles.length}
-                page={page}
-                perPage={perPage}
-                onSetPage={(_event, newPage) => setPage(newPage)}
-                onPerPageSelect={(_event, newPerPage) => {
-                  setPerPage(newPerPage);
-                  setPage(1);
-                }}
-                variant="top"
-              />
-            </ToolbarItem>
-          </ToolbarGroup>
+                    {category}
+                  </DropdownItem>
+                ))}
+              </DropdownList>
+            </Dropdown>
+          </ToolbarItem>
+          <ToolbarItem>
+            <SearchInput
+              placeholder="Search roles"
+              value={searchValue}
+              onChange={(_event, value) => setSearchValue(value)}
+              onClear={() => setSearchValue('')}
+              aria-label="Search roles"
+            />
+          </ToolbarItem>
+          <ToolbarItem>
+            <Button variant="primary" id="create-role-button">
+              Create role
+            </Button>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Pagination
+              itemCount={filteredRoles.length}
+              page={page}
+              perPage={perPage}
+              onSetPage={(_event, newPage) => setPage(newPage)}
+              onPerPageSelect={(_event, newPerPage) => {
+                setPerPage(newPerPage);
+                setPage(1);
+              }}
+              id="table-pagination-top"
+              isCompact
+            />
+          </ToolbarItem>
         </ToolbarContent>
       </Toolbar>
 
