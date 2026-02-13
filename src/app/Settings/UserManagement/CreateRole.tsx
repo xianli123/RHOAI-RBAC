@@ -408,7 +408,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Button>
                             </FormGroup>
 
-                            <Divider style={{ margin: 'var(--pf-v5-global--spacer--lg) 0' }} />
+                            <Divider style={{ margin: '16px 0' }} />
 
                             <FormGroup
                               label="Resources"
@@ -428,7 +428,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Button>
                             </FormGroup>
 
-                            <Divider style={{ margin: 'var(--pf-v5-global--spacer--lg) 0' }} />
+                            <Divider style={{ margin: '16px 0' }} />
 
                             <FormGroup
                               label="Verbs (Permissions)"
