@@ -71,6 +71,9 @@ const CreateRole: React.FunctionComponent = () => {
   const [resources, setResources] = React.useState('');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = React.useState(false);
   const [templateSearchValue, setTemplateSearchValue] = React.useState('');
+  const [isApiGroupsDrawerOpen, setIsApiGroupsDrawerOpen] = React.useState(false);
+  const [apiGroupsSearchValue, setApiGroupsSearchValue] = React.useState('');
+  const [apiGroupsCategoryFilter, setApiGroupsCategoryFilter] = React.useState('All');
   const [isResourcesDrawerOpen, setIsResourcesDrawerOpen] = React.useState(false);
   const [resourcesSearchValue, setResourcesSearchValue] = React.useState('');
   const [resourcesCategoryFilter, setResourcesCategoryFilter] = React.useState('All');
@@ -296,6 +299,66 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
 
   const handleCancel = () => {
     navigate('/settings/user-management/roles');
+  };
+
+  // API Groups data
+  interface ApiGroup {
+    name: string;
+    description: string;
+    category: 'Core' | 'KubeVirt' | 'Networking' | 'Storage';
+  }
+
+  const apiGroupsData: ApiGroup[] = [
+    { name: '', description: 'Core Kubernetes APIs (pods, services, etc.)', category: 'Core' },
+    { name: 'apps', description: 'Deployments, StatefulSets, DaemonSets', category: 'Core' },
+    { name: 'batch', description: 'Jobs and CronJobs', category: 'Core' },
+    { name: 'rbac.authorization.k8s.io', description: 'Roles and role bindings', category: 'Core' },
+    { name: 'kubevirt.io', description: 'KubeVirt virtualization APIs', category: 'KubeVirt' },
+    { name: 'cdi.kubevirt.io', description: 'Containerized Data Importer', category: 'KubeVirt' },
+    { name: 'instancetype.kubevirt.io', description: 'VM instance types', category: 'KubeVirt' },
+    { name: 'networking.k8s.io', description: 'Network policies and ingress', category: 'Networking' },
+    { name: 'k8s.cni.cncf.io', description: 'Network attachment definitions', category: 'Networking' },
+    { name: 'storage.k8s.io', description: 'Storage classes and volume attachments', category: 'Storage' },
+    { name: 'snapshot.storage.k8s.io', description: 'Volume snapshots', category: 'Storage' },
+  ];
+
+  const filteredApiGroups = React.useMemo(() => {
+    let filtered = apiGroupsData;
+    
+    // Filter by category
+    if (apiGroupsCategoryFilter !== 'All') {
+      filtered = filtered.filter(group => group.category === apiGroupsCategoryFilter);
+    }
+    
+    // Filter by search
+    if (apiGroupsSearchValue.trim()) {
+      const searchLower = apiGroupsSearchValue.toLowerCase();
+      filtered = filtered.filter(group => 
+        group.name.toLowerCase().includes(searchLower) ||
+        group.description.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }, [apiGroupsSearchValue, apiGroupsCategoryFilter]);
+
+  const groupedApiGroups = React.useMemo(() => {
+    const groups: Record<string, ApiGroup[]> = {};
+    filteredApiGroups.forEach(group => {
+      if (!groups[group.category]) {
+        groups[group.category] = [];
+      }
+      groups[group.category].push(group);
+    });
+    return groups;
+  }, [filteredApiGroups]);
+
+  const handleAddApiGroup = (groupName: string) => {
+    const currentGroups = apiGroups.split(',').map(g => g.trim()).filter(g => g);
+    if (!currentGroups.includes(groupName)) {
+      const newGroups = [...currentGroups, groupName].join(', ');
+      setApiGroups(newGroups);
+    }
   };
 
   // Resources data
@@ -644,6 +707,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                                 variant="link" 
                                 isInline 
                                 style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
+                                onClick={() => setIsApiGroupsDrawerOpen(true)}
                               >
                                 Browse and select API groups
                               </Button>
@@ -1089,6 +1153,9 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
           </Button>
         </ModalFooter>
       </Modal>
+              </DrawerContentBody>
+            </DrawerContent>
+          </Drawer>
         </DrawerContentBody>
       </DrawerContent>
     </Drawer>
