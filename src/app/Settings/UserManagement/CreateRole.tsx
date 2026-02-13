@@ -105,7 +105,7 @@ const CreateRole: React.FunctionComponent = () => {
       // Add divider after create option if there are existing categories
       if (filteredCategories.length > 0) {
         options.push({
-          content: '──────────',
+          content: '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
           value: '__divider__',
           isDisabled: true,
           isAriaDisabled: true,
