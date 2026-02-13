@@ -465,6 +465,7 @@ const Roles: React.FunctionComponent = () => {
                   >
                     <DropdownList>
                       <DropdownItem key="edit">Edit</DropdownItem>
+                      <DropdownItem key="duplicate">Duplicate role</DropdownItem>
                       <DropdownItem key="delete">Delete</DropdownItem>
                     </DropdownList>
                   </Dropdown>
