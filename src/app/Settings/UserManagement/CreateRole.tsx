@@ -1294,9 +1294,6 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
           </Button>
         </ModalFooter>
       </Modal>
-              </DrawerContentBody>
-            </DrawerContent>
-          </Drawer>
         </DrawerContentBody>
       </DrawerContent>
     </Drawer>
