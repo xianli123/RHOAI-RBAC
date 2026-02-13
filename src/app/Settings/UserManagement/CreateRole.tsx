@@ -448,290 +448,298 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Split>
 
                               {/* Read Operations */}
-                              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)', padding: 'var(--pf-v5-global--spacer--md)', border: '1px solid var(--pf-v5-global--BorderColor--100)', borderRadius: 'var(--pf-v5-global--BorderRadius--sm)', backgroundColor: 'var(--pf-v5-global--BackgroundColor--100)' }}>
-                                <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                  <SplitItem isFilled>
-                                    <Content style={{ fontWeight: 600, margin: 0 }}>Read Operations</Content>
-                                    <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                      View and monitor resources
-                                    </Content>
-                                  </SplitItem>
-                                  <SplitItem>
-                                    <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('read')}>
-                                      Select all
-                                    </Button>
-                                  </SplitItem>
-                                </Split>
-                                <Grid hasGutter>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-get"
-                                      label={
-                                        <>
-                                          <strong>Get</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Read individual resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.get}
-                                      onChange={(_event, checked) => handleVerbChange('get', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-list"
-                                      label={
-                                        <>
-                                          <strong>List</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            List multiple resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.list}
-                                      onChange={(_event, checked) => handleVerbChange('list', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-watch"
-                                      label={
-                                        <>
-                                          <strong>Watch</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Watch for resource changes
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.watch}
-                                      onChange={(_event, checked) => handleVerbChange('watch', checked)}
-                                    />
-                                  </GridItem>
-                                </Grid>
-                              </div>
+                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                                <CardBody>
+                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                    <SplitItem isFilled>
+                                      <Content style={{ fontWeight: 600, margin: 0 }}>Read Operations</Content>
+                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                        View and monitor resources
+                                      </Content>
+                                    </SplitItem>
+                                    <SplitItem>
+                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('read')}>
+                                        Select all
+                                      </Button>
+                                    </SplitItem>
+                                  </Split>
+                                  <Grid hasGutter>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-get"
+                                        label={
+                                          <>
+                                            <strong>Get</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Read individual resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.get}
+                                        onChange={(_event, checked) => handleVerbChange('get', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-list"
+                                        label={
+                                          <>
+                                            <strong>List</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              List multiple resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.list}
+                                        onChange={(_event, checked) => handleVerbChange('list', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-watch"
+                                        label={
+                                          <>
+                                            <strong>Watch</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Watch for resource changes
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.watch}
+                                        onChange={(_event, checked) => handleVerbChange('watch', checked)}
+                                      />
+                                    </GridItem>
+                                  </Grid>
+                                </CardBody>
+                              </Card>
 
                               {/* Write Operations */}
-                              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)', padding: 'var(--pf-v5-global--spacer--md)', border: '1px solid var(--pf-v5-global--BorderColor--100)', borderRadius: 'var(--pf-v5-global--BorderRadius--sm)', backgroundColor: 'var(--pf-v5-global--BackgroundColor--100)' }}>
-                                <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                  <SplitItem isFilled>
-                                    <Content style={{ fontWeight: 600, margin: 0 }}>Write Operations</Content>
-                                    <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                      Create and modify resources
-                                    </Content>
-                                  </SplitItem>
-                                  <SplitItem>
-                                    <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('write')}>
-                                      Select all
-                                    </Button>
-                                  </SplitItem>
-                                </Split>
-                                <Grid hasGutter>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-create"
-                                      label={
-                                        <>
-                                          <strong>Create</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Create new resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.create}
-                                      onChange={(_event, checked) => handleVerbChange('create', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-update"
-                                      label={
-                                        <>
-                                          <strong>Update</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Update existing resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.update}
-                                      onChange={(_event, checked) => handleVerbChange('update', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-patch"
-                                      label={
-                                        <>
-                                          <strong>Patch</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Partially update resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.patch}
-                                      onChange={(_event, checked) => handleVerbChange('patch', checked)}
-                                    />
-                                  </GridItem>
-                                </Grid>
-                              </div>
+                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                                <CardBody>
+                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                    <SplitItem isFilled>
+                                      <Content style={{ fontWeight: 600, margin: 0 }}>Write Operations</Content>
+                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                        Create and modify resources
+                                      </Content>
+                                    </SplitItem>
+                                    <SplitItem>
+                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('write')}>
+                                        Select all
+                                      </Button>
+                                    </SplitItem>
+                                  </Split>
+                                  <Grid hasGutter>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-create"
+                                        label={
+                                          <>
+                                            <strong>Create</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Create new resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.create}
+                                        onChange={(_event, checked) => handleVerbChange('create', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-update"
+                                        label={
+                                          <>
+                                            <strong>Update</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Update existing resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.update}
+                                        onChange={(_event, checked) => handleVerbChange('update', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-patch"
+                                        label={
+                                          <>
+                                            <strong>Patch</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Partially update resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.patch}
+                                        onChange={(_event, checked) => handleVerbChange('patch', checked)}
+                                      />
+                                    </GridItem>
+                                  </Grid>
+                                </CardBody>
+                              </Card>
 
                               {/* Delete Operations */}
-                              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)', padding: 'var(--pf-v5-global--spacer--md)', border: '1px solid var(--pf-v5-global--BorderColor--100)', borderRadius: 'var(--pf-v5-global--BorderRadius--sm)', backgroundColor: 'var(--pf-v5-global--BackgroundColor--100)' }}>
-                                <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                  <SplitItem isFilled>
-                                    <Content style={{ fontWeight: 600, margin: 0 }}>Delete Operations</Content>
-                                    <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                      Remove resources
-                                    </Content>
-                                  </SplitItem>
-                                  <SplitItem>
-                                    <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('delete')}>
-                                      Select all
-                                    </Button>
-                                  </SplitItem>
-                                </Split>
-                                <Grid hasGutter>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-delete"
-                                      label={
-                                        <>
-                                          <strong>Delete</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Delete individual resources
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.delete}
-                                      onChange={(_event, checked) => handleVerbChange('delete', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-deletecollection"
-                                      label={
-                                        <>
-                                          <strong>Delete Collection</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Delete multiple resources at once
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.deletecollection}
-                                      onChange={(_event, checked) => handleVerbChange('deletecollection', checked)}
-                                    />
-                                  </GridItem>
-                                </Grid>
-                              </div>
+                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                                <CardBody>
+                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                    <SplitItem isFilled>
+                                      <Content style={{ fontWeight: 600, margin: 0 }}>Delete Operations</Content>
+                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                        Remove resources
+                                      </Content>
+                                    </SplitItem>
+                                    <SplitItem>
+                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('delete')}>
+                                        Select all
+                                      </Button>
+                                    </SplitItem>
+                                  </Split>
+                                  <Grid hasGutter>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-delete"
+                                        label={
+                                          <>
+                                            <strong>Delete</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Delete individual resources
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.delete}
+                                        onChange={(_event, checked) => handleVerbChange('delete', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-deletecollection"
+                                        label={
+                                          <>
+                                            <strong>Delete Collection</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Delete multiple resources at once
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.deletecollection}
+                                        onChange={(_event, checked) => handleVerbChange('deletecollection', checked)}
+                                      />
+                                    </GridItem>
+                                  </Grid>
+                                </CardBody>
+                              </Card>
 
                               {/* Advanced Operations */}
-                              <div style={{ marginBottom: 0, padding: 'var(--pf-v5-global--spacer--md)', border: '1px solid var(--pf-v5-global--BorderColor--100)', borderRadius: 'var(--pf-v5-global--BorderRadius--sm)', backgroundColor: 'var(--pf-v5-global--BackgroundColor--100)' }}>
-                                <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                  <SplitItem isFilled>
-                                    <Content style={{ fontWeight: 600, margin: 0 }}>Advanced Operations</Content>
-                                    <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                      Special permissions (use with caution)
-                                    </Content>
-                                  </SplitItem>
-                                  <SplitItem>
-                                    <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('advanced')}>
-                                      Select all
-                                    </Button>
-                                  </SplitItem>
-                                </Split>
-                                <Grid hasGutter>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-bind"
-                                      label={
-                                        <>
-                                          <strong>Bind</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Bind roles to users or groups
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.bind}
-                                      onChange={(_event, checked) => handleVerbChange('bind', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-escalate"
-                                      label={
-                                        <>
-                                          <strong>Escalate</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Grant permissions above current role
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.escalate}
-                                      onChange={(_event, checked) => handleVerbChange('escalate', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-impersonate"
-                                      label={
-                                        <>
-                                          <strong>Impersonate</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Impersonate another user
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.impersonate}
-                                      onChange={(_event, checked) => handleVerbChange('impersonate', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-use"
-                                      label={
-                                        <>
-                                          <strong>Use</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Use named resources (e.g., SecurityContextConstraints)
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.use}
-                                      onChange={(_event, checked) => handleVerbChange('use', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-approve"
-                                      label={
-                                        <>
-                                          <strong>Approve</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            Approve certificate signing requests
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.approve}
-                                      onChange={(_event, checked) => handleVerbChange('approve', checked)}
-                                    />
-                                  </GridItem>
-                                  <GridItem span={4}>
-                                    <Checkbox
-                                      id="verb-1-all"
-                                      label={
-                                        <>
-                                          <strong>All (*)</strong><br />
-                                          <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                            All operations (admin level)
-                                          </span>
-                                        </>
-                                      }
-                                      isChecked={verbs.all}
-                                      onChange={(_event, checked) => handleVerbChange('all', checked)}
-                                    />
-                                  </GridItem>
-                                </Grid>
-                              </div>
+                              <Card>
+                                <CardBody>
+                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                    <SplitItem isFilled>
+                                      <Content style={{ fontWeight: 600, margin: 0 }}>Advanced Operations</Content>
+                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                        Special permissions (use with caution)
+                                      </Content>
+                                    </SplitItem>
+                                    <SplitItem>
+                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('advanced')}>
+                                        Select all
+                                      </Button>
+                                    </SplitItem>
+                                  </Split>
+                                  <Grid hasGutter>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-bind"
+                                        label={
+                                          <>
+                                            <strong>Bind</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Bind roles to users or groups
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.bind}
+                                        onChange={(_event, checked) => handleVerbChange('bind', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-escalate"
+                                        label={
+                                          <>
+                                            <strong>Escalate</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Grant permissions above current role
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.escalate}
+                                        onChange={(_event, checked) => handleVerbChange('escalate', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-impersonate"
+                                        label={
+                                          <>
+                                            <strong>Impersonate</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Impersonate another user
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.impersonate}
+                                        onChange={(_event, checked) => handleVerbChange('impersonate', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-use"
+                                        label={
+                                          <>
+                                            <strong>Use</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Use named resources (e.g., SecurityContextConstraints)
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.use}
+                                        onChange={(_event, checked) => handleVerbChange('use', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-approve"
+                                        label={
+                                          <>
+                                            <strong>Approve</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              Approve certificate signing requests
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.approve}
+                                        onChange={(_event, checked) => handleVerbChange('approve', checked)}
+                                      />
+                                    </GridItem>
+                                    <GridItem span={4}>
+                                      <Checkbox
+                                        id="verb-1-all"
+                                        label={
+                                          <>
+                                            <strong>All (*)</strong><br />
+                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                                              All operations (admin level)
+                                            </span>
+                                          </>
+                                        }
+                                        isChecked={verbs.all}
+                                        onChange={(_event, checked) => handleVerbChange('all', checked)}
+                                      />
+                                    </GridItem>
+                                  </Grid>
+                                </CardBody>
+                              </Card>
                             </FormGroup>
                           </ExpandableSection>
                         </div>
