@@ -31,6 +31,9 @@ import {
   Tooltip,
   TreeView,
   TreeViewDataItem,
+  Tabs,
+  Tab,
+  TabTitleText,
 } from '@patternfly/react-core';
 import {
   AngleDownIcon,
@@ -63,6 +66,13 @@ interface RoleRule {
   apiGroups: string[];
   resources: string[];
   resourceNames?: string[];
+}
+
+interface RoleAssignee {
+  subject: string;
+  subjectType: 'User' | 'Group';
+  roleBinding: string;
+  dateCreated: string;
 }
 
 // All available roles (same as EditRolesPage)
@@ -321,6 +331,29 @@ const mockAvailableRoles: Role[] = [
   },
 ];
 
+const getRoleAssignees = (roleName: string): RoleAssignee[] => {
+  // Mock data - in real app, this would come from API
+  if (roleName === 'Workbench maintainer') {
+    return [
+      { subject: 'Deena', subjectType: 'User', roleBinding: 'rb-wb-updater', dateCreated: '30 Oct 2024' },
+      { subject: 'Diana', subjectType: 'User', roleBinding: 'rb-wb-updater', dateCreated: '30 Oct 2024' },
+      { subject: 'Jeff', subjectType: 'User', roleBinding: 'rb-wb-updater', dateCreated: '30 Oct 2024' },
+      { subject: 'workbench team', subjectType: 'Group', roleBinding: 'rb-wb-updater', dateCreated: '30 Oct 2024' },
+      { subject: 'youth team', subjectType: 'Group', roleBinding: 'rb-wb-updater-in-cli', dateCreated: '30 Oct 2024' },
+    ];
+  }
+  // Default assignees for other roles - use shared data directly
+  const userAssignees: RoleAssignee[] = mockUsers
+    .filter(u => u.roles.some(r => r.role === roleName))
+    .map(u => ({ subject: u.name, subjectType: 'User' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: u.dateCreated }));
+  
+  const groupAssignees: RoleAssignee[] = mockGroups
+    .filter(g => g.roles.some(r => r.role === roleName))
+    .map(g => ({ subject: g.name, subjectType: 'Group' as const, roleBinding: `rb-${roleName.toLowerCase().replace(/\s+/g, '-')}`, dateCreated: g.dateCreated }));
+  
+  return [...userAssignees, ...groupAssignees];
+};
+
 const RoleAssignmentPage: React.FunctionComponent = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -354,11 +387,16 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   const [searchValue, setSearchValue] = React.useState('');
   const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
   const [selectedRoleForModal, setSelectedRoleForModal] = React.useState<Role | null>(null);
+  const [roleModalTabKey, setRoleModalTabKey] = React.useState<string | number>(0);
   const [rulesSortBy, setRulesSortBy] = React.useState<ISortBy>({
     index: 0,
     direction: 'asc',
   });
   const [rulesPageSize, setRulesPageSize] = React.useState(10);
+  const [assigneesSortBy, setAssigneesSortBy] = React.useState<ISortBy>({
+    index: 0,
+    direction: 'asc',
+  });
   const [openPopovers, setOpenPopovers] = React.useState<Set<string>>(new Set());
   const [typeaheadInputValue, setTypeaheadInputValue] = React.useState<string>('');
   const [isDiscardModalOpen, setIsDiscardModalOpen] = React.useState(false);
@@ -898,7 +936,44 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
   const handleRoleNameClick = (role: Role) => {
     setSelectedRoleForModal(role);
     setRulesPageSize(10);
+    setRoleModalTabKey(0);
     setIsRoleModalOpen(true);
+  };
+
+  const getAssigneesSortParams = (columnIndex: number) => ({
+    sortBy: assigneesSortBy,
+    onSort: (_event: any, index: number, direction: 'asc' | 'desc') => {
+      setAssigneesSortBy({ index, direction });
+    },
+    columnIndex,
+  });
+
+  const getSortedAssignees = (assignees: RoleAssignee[]): RoleAssignee[] => {
+    const sorted = [...assignees];
+    const columnIndex = assigneesSortBy.index;
+    const direction = assigneesSortBy.direction;
+
+    sorted.sort((a, b) => {
+      let comparison = 0;
+      
+      if (columnIndex === 0) {
+        // Sort by Subject
+        comparison = a.subject.localeCompare(b.subject);
+      } else if (columnIndex === 1) {
+        // Sort by Subject kind
+        comparison = a.subjectType.localeCompare(b.subjectType);
+      } else if (columnIndex === 2) {
+        // Sort by Role binding
+        comparison = a.roleBinding.localeCompare(b.roleBinding);
+      } else if (columnIndex === 3) {
+        // Sort by Date created
+        comparison = a.dateCreated.localeCompare(b.dateCreated);
+      }
+
+      return direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
   };
 
   const getSortedRules = (rules: RoleRule[]): RoleRule[] => {
@@ -1359,64 +1434,119 @@ const RoleAssignmentPage: React.FunctionComponent = () => {
           }
         />
         <ModalBody>
-          <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-            The table below presents the rules of this role.
-          </Content>
-          {selectedRoleForModal && selectedRoleForModal.rules && selectedRoleForModal.rules.length > 0 ? (
-            <>
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                <Table variant="compact" aria-label="Role rules table">
+          <Tabs
+            activeKey={roleModalTabKey}
+            onSelect={(_event, tabIndex) => setRoleModalTabKey(tabIndex)}
+            aria-label="Role details tabs"
+          >
+            <Tab eventKey={0} title={<TabTitleText>Role details</TabTitleText>}>
+              <div style={{ marginTop: '24px' }}>
+                <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                  The table below presents the rules of this role.
+                </Content>
+                {selectedRoleForModal && selectedRoleForModal.rules && selectedRoleForModal.rules.length > 0 ? (
+                  <>
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      <Table variant="compact" aria-label="Role rules table">
+                        <Thead>
+                          <Tr>
+                            <Th sort={getRulesSortParams(0)}>
+                              Actions
+                            </Th>
+                            <Th sort={getRulesSortParams(1)}>
+                              API Groups
+                            </Th>
+                            <Th sort={getRulesSortParams(2)}>
+                              Resources
+                            </Th>
+                            <Th sort={getRulesSortParams(3)}>
+                              Resource names
+                              <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                            </Th>
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {getSortedRules(selectedRoleForModal.rules)
+                            .slice(0, rulesPageSize)
+                            .map((rule, index) => (
+                              <Tr key={index}>
+                                <Td>{rule.actions.join(', ')}</Td>
+                                <Td>{rule.apiGroups.join(', ')}</Td>
+                                <Td>{rule.resources.join(', ')}</Td>
+                                <Td>{rule.resourceNames?.join(', ') || '-'}</Td>
+                              </Tr>
+                            ))}
+                        </Tbody>
+                      </Table>
+                    </div>
+                    {selectedRoleForModal.rules.length > rulesPageSize && (
+                      <div style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}>
+                        <Button
+                          variant="link"
+                          isInline
+                          onClick={() => setRulesPageSize(prev => prev + 10)}
+                        >
+                          View more
+                        </Button>
+                        <span style={{ marginLeft: 'var(--pf-v5-global--spacer--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+                          Showing {Math.min(rulesPageSize, selectedRoleForModal.rules.length)}/{selectedRoleForModal.rules.length}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ color: 'var(--pf-v5-global--Color--200)', padding: 'var(--pf-v5-global--spacer--md)' }}>
+                    No rules available
+                  </div>
+                )}
+              </div>
+            </Tab>
+            <Tab eventKey={1} title={<TabTitleText>Assignees</TabTitleText>}>
+              <div style={{ marginTop: '24px' }}>
+                <Table variant="compact" aria-label="Role assignees table">
                   <Thead>
                     <Tr>
-                      <Th sort={getRulesSortParams(0)}>
-                        Actions
+                      <Th sort={getAssigneesSortParams(0)}>
+                        Subject
                       </Th>
-                      <Th sort={getRulesSortParams(1)}>
-                        API Groups
+                      <Th sort={getAssigneesSortParams(1)}>
+                        Subject kind
                       </Th>
-                      <Th sort={getRulesSortParams(2)}>
-                        Resources
+                      <Th sort={getAssigneesSortParams(2)}>
+                        Role binding
                       </Th>
-                      <Th sort={getRulesSortParams(3)}>
-                        Resource names
-                        <OutlinedQuestionCircleIcon style={{ marginLeft: 'var(--pf-v5-global--spacer--xs)', color: 'var(--pf-v5-global--Color--200)' }} />
+                      <Th 
+                        sort={getAssigneesSortParams(3)}
+                        info={{
+                          popover: (
+                            <Content>
+                              <Content component="small" className="pf-v6-c-content--small" style={{ color: 'var(--pf-t--global--text--color--regular)' }}>
+                                Date when the role assignment was created.
+                              </Content>
+                            </Content>
+                          ),
+                          ariaLabel: 'Date created help',
+                          popoverProps: { headerContent: 'Date created' }
+                        }}
+                      >
+                        Date created
                       </Th>
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {getSortedRules(selectedRoleForModal.rules)
-                      .slice(0, rulesPageSize)
-                      .map((rule, index) => (
-                        <Tr key={index}>
-                          <Td>{rule.actions.join(', ')}</Td>
-                          <Td>{rule.apiGroups.join(', ')}</Td>
-                          <Td>{rule.resources.join(', ')}</Td>
-                          <Td>{rule.resourceNames?.join(', ') || '-'}</Td>
-                        </Tr>
-                      ))}
+                    {selectedRoleForModal && getSortedAssignees(getRoleAssignees(selectedRoleForModal.name)).map((assignee, index) => (
+                      <Tr key={index}>
+                        <Td>{assignee.subject}</Td>
+                        <Td>{assignee.subjectType}</Td>
+                        <Td>{assignee.roleBinding}</Td>
+                        <Td>{assignee.dateCreated}</Td>
+                      </Tr>
+                    ))}
                   </Tbody>
                 </Table>
               </div>
-              {selectedRoleForModal.rules.length > rulesPageSize && (
-                <div style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}>
-                  <Button
-                    variant="link"
-                    isInline
-                    onClick={() => setRulesPageSize(prev => prev + 10)}
-                  >
-                    View more
-                  </Button>
-                  <span style={{ marginLeft: 'var(--pf-v5-global--spacer--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                    Showing {Math.min(rulesPageSize, selectedRoleForModal.rules.length)}/{selectedRoleForModal.rules.length}
-                  </span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={{ color: 'var(--pf-v5-global--Color--200)', padding: 'var(--pf-v5-global--spacer--md)' }}>
-              No rules available
-            </div>
-          )}
+            </Tab>
+          </Tabs>
         </ModalBody>
       </Modal>
 

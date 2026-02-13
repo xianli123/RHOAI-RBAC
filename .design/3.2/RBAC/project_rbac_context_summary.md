@@ -888,3 +888,56 @@ interface User {
     - **Imports Added**:
       - `ExclamationCircleIcon` from `@patternfly/react-icons`
     - Applied in both Assign roles page and Manage roles page confirmation modals
+
+38. **List View - Button and Menu Text Updates:**
+    - Changed "Assign roles" button to "Manage permissions" in the list view (ProjectDetail.tsx)
+    - Changed "Manage roles" kebab menu action to "Manage permissions" in both Users and Groups sections
+    - Applied in ProjectDetail.tsx toolbar and kebab menus
+    - Improves consistency with the "Manage permissions" terminology used throughout the application
+
+39. **Role Assignment Page - Assignees Tab Added:**
+    - Added "Assignees" tab to role details modal in Role assignment table
+    - Modal now has two tabs: "Role details" and "Assignees"
+    - Assignees tab shows table with columns: Subject, Subject kind, Role binding, Date created
+    - All columns are sortable
+    - Date created column has question mark icon with popover explaining "Date when the role assignment was created."
+    - Uses `getRoleAssignees()` function to fetch assignees for each role
+    - Includes sorting functionality with `getAssigneesSortParams()` and `getSortedAssignees()` functions
+    - Tab state managed with `roleModalTabKey` (defaults to 0 - Role details tab)
+    - Applied in RoleAssignmentPage.tsx
+    - Matches the implementation in ProjectDetail.tsx role details modal
+
+40. **Settings - User Management Expandable Section:**
+    - Made "User management" expandable in Settings navigation (similar to "Cluster settings")
+    - Now includes two sub-items:
+      - "User management" → `/settings/user-management`
+      - "Roles" → `/settings/user-management/roles`
+    - Created new Roles component at `src/app/Settings/UserManagement/Roles.tsx`
+    - Updated routes.tsx to convert User management from single route to expandable group
+    - Navigation structure matches Cluster settings pattern
+
+41. **Settings - Roles Tab - Role List Table:**
+    - Added comprehensive role list table in Roles tab (Settings -> User management -> Roles)
+    - **Toolbar Features**:
+      - Category filter dropdown (All categories, Project Management, Deployment Management, etc.)
+      - Search input for filtering roles by name or description
+      - Type filter buttons (All, Default, Custom)
+      - "Create role" button (primary)
+      - "Delete role" button (secondary, disabled)
+      - Pagination controls
+    - **Table Columns**:
+      - Role: Role name (clickable link) with OpenShift name below in smaller gray text
+      - Description: Role description text
+      - Category: Role category (e.g., "Project Management", "Deployment Management")
+      - Type: Badge showing "Default" or "Custom"
+      - Actions: Kebab menu with Edit and Delete options
+    - **Features**:
+      - All columns are sortable (Role, Description, Category, Type)
+      - Filtering by category, type, and search text
+      - Pagination (10 items per page by default)
+      - Mock data with 10 roles matching common role patterns
+    - **Removed Features**:
+      - Checkbox column removed (no selection mechanism)
+      - Select all checkbox removed from toolbar
+      - Delete role button always disabled (no selection state)
+    - Applied in Roles.tsx component

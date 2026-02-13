@@ -1423,7 +1423,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                   </ToolbarGroup>
                   <ToolbarItem>
                     <Button variant="primary" id="assign-roles-button" onClick={handleAssignRoles}>
-                      Assign roles
+                      Manage permissions
                     </Button>
                   </ToolbarItem>
                 </ToolbarContent>
@@ -1605,7 +1605,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                                       toggleKebabMenu(`user-${user.id}-${roleIndex}`);
                                     }}
                                   >
-                                    Manage roles
+                                    Manage permissions
                                   </DropdownItem>
                                   <DropdownItem key="remove">Unassign</DropdownItem>
                                 </DropdownList>
@@ -1795,7 +1795,7 @@ const ProjectDetail: React.FunctionComponent = () => {
                                       toggleKebabMenu(`group-${group.id}-${roleIndex}`);
                                     }}
                                   >
-                                    Manage roles
+                                    Manage permissions
                                   </DropdownItem>
                                   <DropdownItem key="remove">Unassign</DropdownItem>
                                 </DropdownList>
