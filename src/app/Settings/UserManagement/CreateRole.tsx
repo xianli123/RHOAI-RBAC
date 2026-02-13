@@ -41,6 +41,7 @@ import {
   DrawerActions,
   DrawerCloseButton,
   DrawerPanelBody,
+  DrawerContentBody,
   ToggleGroup,
   ToggleGroupItem,
   TextInputGroup,
@@ -367,9 +368,128 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
   );
 
   return (
-    <>
-      {breadcrumb}
-      <PageSection>
+    <Drawer isExpanded={isApiGroupsDrawerOpen}>
+      <DrawerContent
+        panelContent={
+          <DrawerPanelContent defaultSize="500px" minSize="500px">
+            <DrawerHead>
+              <Title headingLevel="h2" size="xl">Browse API Groups</Title>
+              <DrawerActions>
+                <DrawerCloseButton onClick={() => setIsApiGroupsDrawerOpen(false)} />
+              </DrawerActions>
+            </DrawerHead>
+            <DrawerPanelBody style={{ padding: 'var(--pf-v5-global--spacer--md)' }}>
+              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                <TextInputGroup>
+                  <TextInputGroupMain
+                    icon={<SearchIcon />}
+                    value={apiGroupsSearchValue}
+                    onChange={(_event, value) => setApiGroupsSearchValue(value)}
+                    placeholder="Search API groups..."
+                    aria-label="Search API groups"
+                  />
+                </TextInputGroup>
+              </div>
+
+              <Content component="p" style={{ 
+                fontSize: 'var(--pf-v5-global--FontSize--sm)', 
+                color: 'var(--pf-v5-global--Color--200)',
+                marginBottom: 'var(--pf-v5-global--spacer--sm)'
+              }}>
+                Filter by category
+              </Content>
+
+              <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                <ToggleGroup aria-label="Resource category filter">
+                  <ToggleGroupItem
+                    text="All"
+                    buttonId="filter-all"
+                    isSelected={apiGroupsCategoryFilter === 'All'}
+                    onChange={() => setApiGroupsCategoryFilter('All')}
+                  />
+                  <ToggleGroupItem
+                    text="Core"
+                    buttonId="filter-core"
+                    isSelected={apiGroupsCategoryFilter === 'Core'}
+                    onChange={() => setApiGroupsCategoryFilter('Core')}
+                  />
+                  <ToggleGroupItem
+                    text="KubeVirt"
+                    buttonId="filter-kubevirt"
+                    isSelected={apiGroupsCategoryFilter === 'KubeVirt'}
+                    onChange={() => setApiGroupsCategoryFilter('KubeVirt')}
+                  />
+                  <ToggleGroupItem
+                    text="Networking"
+                    buttonId="filter-networking"
+                    isSelected={apiGroupsCategoryFilter === 'Networking'}
+                    onChange={() => setApiGroupsCategoryFilter('Networking')}
+                  />
+                  <ToggleGroupItem
+                    text="Storage"
+                    buttonId="filter-storage"
+                    isSelected={apiGroupsCategoryFilter === 'Storage'}
+                    onChange={() => setApiGroupsCategoryFilter('Storage')}
+                  />
+                </ToggleGroup>
+              </div>
+
+              {['Core', 'KubeVirt', 'Networking', 'Storage'].map((category) => {
+                const groups = groupedApiGroups[category] || [];
+                if (groups.length === 0) return null;
+
+                return (
+                  <div key={category} style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}>
+                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                      {category}
+                    </Title>
+                    {groups.map((group, index) => (
+                      <div 
+                        key={index}
+                        style={{ 
+                          marginBottom: 'var(--pf-v5-global--spacer--md)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start'
+                        }}
+                      >
+                        <div style={{ flex: '1 1 0%' }}>
+                          <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
+                            {group.name || '""'}{' '}
+                            {group.name === '' && (
+                              <span style={{ 
+                                fontWeight: 'normal', 
+                                fontStyle: 'italic', 
+                                fontSize: '0.875rem', 
+                                color: 'var(--pf-v5-global--Color--200)' 
+                              }}>
+                                (empty string)
+                              </span>
+                            )}
+                          </div>
+                          <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
+                            {group.description}
+                          </Content>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleAddApiGroup(group.name)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </DrawerPanelBody>
+          </DrawerPanelContent>
+        }
+      >
+        <DrawerContentBody>
+          {breadcrumb}
+          <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
@@ -951,130 +1071,9 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
           </Button>
         </ModalFooter>
       </Modal>
-
-      {/* API Groups Drawer */}
-      <Drawer isExpanded={isApiGroupsDrawerOpen}>
-        <DrawerContent
-          panelContent={
-            <DrawerPanelContent defaultSize="500px" minSize="500px">
-              <DrawerHead>
-                <Title headingLevel="h2" size="xl">Browse API Groups</Title>
-                <DrawerActions>
-                  <DrawerCloseButton onClick={() => setIsApiGroupsDrawerOpen(false)} />
-                </DrawerActions>
-              </DrawerHead>
-              <DrawerPanelBody style={{ padding: 'var(--pf-v5-global--spacer--md)' }}>
-                <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                  <TextInputGroup>
-                    <TextInputGroupMain
-                      icon={<SearchIcon />}
-                      value={apiGroupsSearchValue}
-                      onChange={(_event, value) => setApiGroupsSearchValue(value)}
-                      placeholder="Search API groups..."
-                      aria-label="Search API groups"
-                    />
-                  </TextInputGroup>
-                </div>
-
-                <Content component="p" style={{ 
-                  fontSize: 'var(--pf-v5-global--FontSize--sm)', 
-                  color: 'var(--pf-v5-global--Color--200)',
-                  marginBottom: 'var(--pf-v5-global--spacer--sm)'
-                }}>
-                  Filter by category
-                </Content>
-
-                <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                  <ToggleGroup aria-label="Resource category filter">
-                    <ToggleGroupItem
-                      text="All"
-                      buttonId="filter-all"
-                      isSelected={apiGroupsCategoryFilter === 'All'}
-                      onChange={() => setApiGroupsCategoryFilter('All')}
-                    />
-                    <ToggleGroupItem
-                      text="Core"
-                      buttonId="filter-core"
-                      isSelected={apiGroupsCategoryFilter === 'Core'}
-                      onChange={() => setApiGroupsCategoryFilter('Core')}
-                    />
-                    <ToggleGroupItem
-                      text="KubeVirt"
-                      buttonId="filter-kubevirt"
-                      isSelected={apiGroupsCategoryFilter === 'KubeVirt'}
-                      onChange={() => setApiGroupsCategoryFilter('KubeVirt')}
-                    />
-                    <ToggleGroupItem
-                      text="Networking"
-                      buttonId="filter-networking"
-                      isSelected={apiGroupsCategoryFilter === 'Networking'}
-                      onChange={() => setApiGroupsCategoryFilter('Networking')}
-                    />
-                    <ToggleGroupItem
-                      text="Storage"
-                      buttonId="filter-storage"
-                      isSelected={apiGroupsCategoryFilter === 'Storage'}
-                      onChange={() => setApiGroupsCategoryFilter('Storage')}
-                    />
-                  </ToggleGroup>
-                </div>
-
-                {['Core', 'KubeVirt', 'Networking', 'Storage'].map((category) => {
-                  const groups = groupedApiGroups[category] || [];
-                  if (groups.length === 0) return null;
-
-                  return (
-                    <div key={category} style={{ marginBottom: 'var(--pf-v5-global--spacer--lg)' }}>
-                      <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                        {category}
-                      </Title>
-                      {groups.map((group, index) => (
-                        <div 
-                          key={index}
-                          style={{ 
-                            marginBottom: 'var(--pf-v5-global--spacer--md)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start'
-                          }}
-                        >
-                          <div style={{ flex: '1 1 0%' }}>
-                            <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
-                              {group.name || '""'}{' '}
-                              {group.name === '' && (
-                                <span style={{ 
-                                  fontWeight: 'normal', 
-                                  fontStyle: 'italic', 
-                                  fontSize: '0.875rem', 
-                                  color: 'var(--pf-v5-global--Color--200)' 
-                                }}>
-                                  (empty string)
-                                </span>
-                              )}
-                            </div>
-                            <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
-                              {group.description}
-                            </Content>
-                          </div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleAddApiGroup(group.name)}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </DrawerPanelBody>
-            </DrawerPanelContent>
-          }
-        >
-        </DrawerContent>
-      </Drawer>
-    </>
+        </DrawerContentBody>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
