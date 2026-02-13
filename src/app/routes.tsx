@@ -77,6 +77,7 @@ import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistr
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
 import { Roles } from '@app/Settings/UserManagement/Roles';
 import { CreateRole } from '@app/Settings/UserManagement/CreateRole';
+import { RoleDetails } from '@app/Settings/UserManagement/RoleDetails';
 import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
 import { APIKeyDetails } from '@app/Settings/APIKeys/APIKeyDetails';
 import { Policies } from '@app/Settings/Policies/Policies';
@@ -512,6 +513,12 @@ const routes: AppRouteConfig[] = [
             exact: true,
             path: '/settings/user-management/roles/create',
             title: 'RHOAI 3.1 Console | Settings - Create Role',
+          },
+          {
+            element: <RoleDetails />,
+            exact: true,
+            path: '/settings/user-management/roles/:roleId',
+            title: 'RHOAI 3.1 Console | Settings - Role Details',
           },
         ],
       },

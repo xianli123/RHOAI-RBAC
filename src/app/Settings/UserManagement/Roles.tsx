@@ -417,9 +417,7 @@ const Roles: React.FunctionComponent = () => {
                       variant="link"
                       isInline
                       style={{ padding: 0, fontSize: 'inherit', textAlign: 'left' }}
-                      onClick={() => {
-                        // Handle role click - could navigate to role details
-                      }}
+                      onClick={() => navigate(`/settings/user-management/roles/${role.id}`)}
                     >
                       {role.name}
                     </Button>
