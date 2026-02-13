@@ -337,7 +337,7 @@ const Roles: React.FunctionComponent = () => {
         Manage roles and their permissions.
       </Content>
 
-      <Toolbar id="roles-toolbar">
+      <Toolbar id="roles-toolbar" style={{ marginTop: '24px' }}>
         <ToolbarContent>
           <ToolbarItem>
             <Select
