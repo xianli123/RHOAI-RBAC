@@ -30,6 +30,7 @@ import {
   ModalBody,
   ModalFooter,
   ModalVariant,
+  SearchInput,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -52,6 +53,7 @@ const CreateRole: React.FunctionComponent = () => {
   const [apiGroups, setApiGroups] = React.useState('');
   const [resources, setResources] = React.useState('');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = React.useState(false);
+  const [templateSearchValue, setTemplateSearchValue] = React.useState('');
   
   // Verbs state
   const [verbs, setVerbs] = React.useState({
@@ -155,7 +157,22 @@ const CreateRole: React.FunctionComponent = () => {
     setDescription(template.description);
     setCategory(template.category);
     setIsTemplateModalOpen(false);
+    setTemplateSearchValue(''); // Clear search when template is used
   };
+
+  // Filter templates based on search value
+  const filteredTemplates = React.useMemo(() => {
+    if (!templateSearchValue.trim()) {
+      return roleTemplates;
+    }
+    const searchLower = templateSearchValue.toLowerCase();
+    return roleTemplates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(searchLower) ||
+        template.category.toLowerCase().includes(searchLower) ||
+        template.description.toLowerCase().includes(searchLower)
+    );
+  }, [templateSearchValue]);
 
   const handleVerbChange = (verb: string, checked: boolean) => {
     setVerbs(prev => ({ ...prev, [verb]: checked }));
@@ -747,6 +764,15 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
       >
         <ModalHeader title="Select template" />
         <ModalBody>
+          <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+            <SearchInput
+              placeholder="Search templates"
+              value={templateSearchValue}
+              onChange={(_event, value) => setTemplateSearchValue(value)}
+              onClear={() => setTemplateSearchValue('')}
+              aria-label="Search templates"
+            />
+          </div>
           <Table variant="compact" aria-label="Role templates table">
             <Thead>
               <Tr>
@@ -757,23 +783,34 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
               </Tr>
             </Thead>
             <Tbody>
-              {roleTemplates.map((template) => (
-                <Tr key={template.id}>
-                  <Td dataLabel="Name">{template.name}</Td>
-                  <Td dataLabel="Category">{template.category}</Td>
-                  <Td dataLabel="Description">{template.description}</Td>
-                  <Td dataLabel="Actions">
-                    <Button variant="secondary" onClick={() => handleUseTemplate(template)}>
-                      Use template
-                    </Button>
+              {filteredTemplates.length > 0 ? (
+                filteredTemplates.map((template) => (
+                  <Tr key={template.id}>
+                    <Td dataLabel="Name">{template.name}</Td>
+                    <Td dataLabel="Category">{template.category}</Td>
+                    <Td dataLabel="Description">{template.description}</Td>
+                    <Td dataLabel="Actions">
+                      <Button variant="secondary" onClick={() => handleUseTemplate(template)}>
+                        Use template
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))
+              ) : (
+                <Tr>
+                  <Td colSpan={4} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--lg)' }}>
+                    No templates found matching your search.
                   </Td>
                 </Tr>
-              ))}
+              )}
             </Tbody>
           </Table>
         </ModalBody>
         <ModalFooter>
-          <Button variant="link" onClick={() => setIsTemplateModalOpen(false)}>
+          <Button variant="link" onClick={() => {
+            setIsTemplateModalOpen(false);
+            setTemplateSearchValue(''); // Clear search when modal closes
+          }}>
             Cancel
           </Button>
         </ModalFooter>
