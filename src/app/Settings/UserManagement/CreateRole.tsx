@@ -74,8 +74,6 @@ const CreateRole: React.FunctionComponent = () => {
     'Workbench Management',
   ];
 
-  const accessOptions = ['Full access', 'No access', 'Custom'];
-
   const handleVerbChange = (verb: string, checked: boolean) => {
     setVerbs(prev => ({ ...prev, [verb]: checked }));
   };
@@ -239,125 +237,6 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                         </Select>
                       </SplitItem>
                     </Split>
-                  </FormGroup>
-
-                  <Divider style={{ margin: 'var(--pf-v5-global--spacer--lg) 0' }} />
-
-                  <FormGroup
-                    label="Navigation Access"
-                    fieldId="navigation-access"
-                  >
-                    <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)', marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                      Control which perspectives and pages are visible to users with this role. You can grant access to entire perspectives or select specific pages within each perspective.
-                    </Content>
-                    <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                      <Split hasGutter style={{ alignItems: 'center', marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                        <SplitItem>
-                          <Content style={{ fontWeight: 600, margin: 0 }}>Fleet Management</Content>
-                        </SplitItem>
-                        <SplitItem>
-                          <Select
-                            isOpen={isFleetManagementOpen}
-                            selected={fleetManagementAccess}
-                            onSelect={(_event, value) => {
-                              setFleetManagementAccess(value as string);
-                              setIsFleetManagementOpen(false);
-                            }}
-                            onOpenChange={(isOpen) => setIsFleetManagementOpen(isOpen)}
-                            toggle={(toggleRef) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                onClick={() => setIsFleetManagementOpen(!isFleetManagementOpen)}
-                                isExpanded={isFleetManagementOpen}
-                                style={{ minWidth: '160px' }}
-                              >
-                                {fleetManagementAccess}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              {accessOptions.map((option) => (
-                                <SelectOption key={option} value={option}>
-                                  {option}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                        </SplitItem>
-                      </Split>
-                    </div>
-                    <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                      <Split hasGutter style={{ alignItems: 'center', marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                        <SplitItem>
-                          <Content style={{ fontWeight: 600, margin: 0 }}>Fleet Virtualization</Content>
-                        </SplitItem>
-                        <SplitItem>
-                          <Select
-                            isOpen={isFleetVirtualizationOpen}
-                            selected={fleetVirtualizationAccess}
-                            onSelect={(_event, value) => {
-                              setFleetVirtualizationAccess(value as string);
-                              setIsFleetVirtualizationOpen(false);
-                            }}
-                            onOpenChange={(isOpen) => setIsFleetVirtualizationOpen(isOpen)}
-                            toggle={(toggleRef) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                onClick={() => setIsFleetVirtualizationOpen(!isFleetVirtualizationOpen)}
-                                isExpanded={isFleetVirtualizationOpen}
-                                style={{ minWidth: '160px' }}
-                              >
-                                {fleetVirtualizationAccess}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              {accessOptions.map((option) => (
-                                <SelectOption key={option} value={option}>
-                                  {option}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                        </SplitItem>
-                      </Split>
-                    </div>
-                    <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-                      <Split hasGutter style={{ alignItems: 'center', marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                        <SplitItem>
-                          <Content style={{ fontWeight: 600, margin: 0 }}>Core Platforms</Content>
-                        </SplitItem>
-                        <SplitItem>
-                          <Select
-                            isOpen={isCorePlatformsOpen}
-                            selected={corePlatformsAccess}
-                            onSelect={(_event, value) => {
-                              setCorePlatformsAccess(value as string);
-                              setIsCorePlatformsOpen(false);
-                            }}
-                            onOpenChange={(isOpen) => setIsCorePlatformsOpen(isOpen)}
-                            toggle={(toggleRef) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                onClick={() => setIsCorePlatformsOpen(!isCorePlatformsOpen)}
-                                isExpanded={isCorePlatformsOpen}
-                                style={{ minWidth: '160px' }}
-                              >
-                                {corePlatformsAccess}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              {accessOptions.map((option) => (
-                                <SelectOption key={option} value={option}>
-                                  {option}
-                                </SelectOption>
-                              ))}
-                            </SelectList>
-                          </Select>
-                        </SplitItem>
-                      </Split>
-                    </div>
                   </FormGroup>
 
                   <Divider style={{ margin: 'var(--pf-v5-global--spacer--lg) 0' }} />
