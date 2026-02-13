@@ -448,7 +448,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Split>
 
                               {/* Read Operations */}
-                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                              <Card style={{ marginBottom: '16px' }}>
                                 <CardBody>
                                   <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
                                     <SplitItem isFilled>
@@ -514,7 +514,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Card>
 
                               {/* Write Operations */}
-                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                              <Card style={{ marginBottom: '16px' }}>
                                 <CardBody>
                                   <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
                                     <SplitItem isFilled>
@@ -580,7 +580,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                               </Card>
 
                               {/* Delete Operations */}
-                              <Card style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+                              <Card style={{ marginBottom: '16px' }}>
                                 <CardBody>
                                   <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
                                     <SplitItem isFilled>
