@@ -74,6 +74,9 @@ const CreateRole: React.FunctionComponent = () => {
   const [isApiGroupsDrawerOpen, setIsApiGroupsDrawerOpen] = React.useState(false);
   const [apiGroupsSearchValue, setApiGroupsSearchValue] = React.useState('');
   const [apiGroupsCategoryFilter, setApiGroupsCategoryFilter] = React.useState('All');
+  const [isResourcesDrawerOpen, setIsResourcesDrawerOpen] = React.useState(false);
+  const [resourcesSearchValue, setResourcesSearchValue] = React.useState('');
+  const [resourcesCategoryFilter, setResourcesCategoryFilter] = React.useState('All');
   
   // Verbs state
   const [verbs, setVerbs] = React.useState({
@@ -358,6 +361,74 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     }
   };
 
+  // Resources data
+  interface Resource {
+    name: string;
+    description: string;
+    category: 'Core' | 'Apps' | 'Storage' | 'Networking' | 'RBAC';
+  }
+
+  const resourcesData: Resource[] = [
+    { name: 'pods', description: 'Pod resources', category: 'Core' },
+    { name: 'services', description: 'Service resources', category: 'Core' },
+    { name: 'configmaps', description: 'ConfigMap resources', category: 'Core' },
+    { name: 'secrets', description: 'Secret resources', category: 'Core' },
+    { name: 'namespaces', description: 'Namespace resources', category: 'Core' },
+    { name: 'deployments', description: 'Deployment resources', category: 'Apps' },
+    { name: 'statefulsets', description: 'StatefulSet resources', category: 'Apps' },
+    { name: 'daemonsets', description: 'DaemonSet resources', category: 'Apps' },
+    { name: 'jobs', description: 'Job resources', category: 'Apps' },
+    { name: 'cronjobs', description: 'CronJob resources', category: 'Apps' },
+    { name: 'persistentvolumes', description: 'PersistentVolume resources', category: 'Storage' },
+    { name: 'persistentvolumeclaims', description: 'PersistentVolumeClaim resources', category: 'Storage' },
+    { name: 'storageclasses', description: 'StorageClass resources', category: 'Storage' },
+    { name: 'networkpolicies', description: 'NetworkPolicy resources', category: 'Networking' },
+    { name: 'ingresses', description: 'Ingress resources', category: 'Networking' },
+    { name: 'roles', description: 'Role resources', category: 'RBAC' },
+    { name: 'rolebindings', description: 'RoleBinding resources', category: 'RBAC' },
+    { name: 'clusterroles', description: 'ClusterRole resources', category: 'RBAC' },
+    { name: 'clusterrolebindings', description: 'ClusterRoleBinding resources', category: 'RBAC' },
+  ];
+
+  const filteredResources = React.useMemo(() => {
+    let filtered = resourcesData;
+    
+    // Filter by category
+    if (resourcesCategoryFilter !== 'All') {
+      filtered = filtered.filter(resource => resource.category === resourcesCategoryFilter);
+    }
+    
+    // Filter by search
+    if (resourcesSearchValue.trim()) {
+      const searchLower = resourcesSearchValue.toLowerCase();
+      filtered = filtered.filter(resource => 
+        resource.name.toLowerCase().includes(searchLower) ||
+        resource.description.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }, [resourcesSearchValue, resourcesCategoryFilter]);
+
+  const groupedResources = React.useMemo(() => {
+    const groups: Record<string, Resource[]> = {};
+    filteredResources.forEach(resource => {
+      if (!groups[resource.category]) {
+        groups[resource.category] = [];
+      }
+      groups[resource.category].push(resource);
+    });
+    return groups;
+  }, [filteredResources]);
+
+  const handleAddResource = (resourceName: string) => {
+    const currentResources = resources.split(',').map(r => r.trim()).filter(r => r);
+    if (!currentResources.includes(resourceName)) {
+      const newResources = [...currentResources, resourceName].join(', ');
+      setResources(newResources);
+    }
+  };
+
   const breadcrumb = (
     <PageBreadcrumb>
       <Breadcrumb>
@@ -368,14 +439,14 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
   );
 
   return (
-    <Drawer isExpanded={isApiGroupsDrawerOpen}>
+    <Drawer isExpanded={isResourcesDrawerOpen}>
       <DrawerContent
         panelContent={
           <DrawerPanelContent defaultSize="500px" minSize="500px">
             <DrawerHead>
-              <Title headingLevel="h2" size="xl">Browse API Groups</Title>
+              <Title headingLevel="h2" size="xl">Browse Resources</Title>
               <DrawerActions>
-                <DrawerCloseButton onClick={() => setIsApiGroupsDrawerOpen(false)} />
+                <DrawerCloseButton onClick={() => setIsResourcesDrawerOpen(false)} />
               </DrawerActions>
             </DrawerHead>
             <DrawerPanelBody style={{ padding: 'var(--pf-t--global--spacer--md)' }}>
@@ -383,10 +454,10 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                 <TextInputGroup>
                   <TextInputGroupMain
                     icon={<SearchIcon />}
-                    value={apiGroupsSearchValue}
-                    onChange={(_event, value) => setApiGroupsSearchValue(value)}
-                    placeholder="Search API groups..."
-                    aria-label="Search API groups"
+                    value={resourcesSearchValue}
+                    onChange={(_event, value) => setResourcesSearchValue(value)}
+                    placeholder="Search resources..."
+                    aria-label="Search resources"
                   />
                 </TextInputGroup>
               </div>
@@ -403,47 +474,53 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                 <ToggleGroup aria-label="Resource category filter">
                   <ToggleGroupItem
                     text="All"
-                    buttonId="filter-all"
-                    isSelected={apiGroupsCategoryFilter === 'All'}
-                    onChange={() => setApiGroupsCategoryFilter('All')}
+                    buttonId="resource-filter-all"
+                    isSelected={resourcesCategoryFilter === 'All'}
+                    onChange={() => setResourcesCategoryFilter('All')}
                   />
                   <ToggleGroupItem
                     text="Core"
-                    buttonId="filter-core"
-                    isSelected={apiGroupsCategoryFilter === 'Core'}
-                    onChange={() => setApiGroupsCategoryFilter('Core')}
+                    buttonId="resource-filter-core"
+                    isSelected={resourcesCategoryFilter === 'Core'}
+                    onChange={() => setResourcesCategoryFilter('Core')}
                   />
                   <ToggleGroupItem
-                    text="KubeVirt"
-                    buttonId="filter-kubevirt"
-                    isSelected={apiGroupsCategoryFilter === 'KubeVirt'}
-                    onChange={() => setApiGroupsCategoryFilter('KubeVirt')}
-                  />
-                  <ToggleGroupItem
-                    text="Networking"
-                    buttonId="filter-networking"
-                    isSelected={apiGroupsCategoryFilter === 'Networking'}
-                    onChange={() => setApiGroupsCategoryFilter('Networking')}
+                    text="Apps"
+                    buttonId="resource-filter-apps"
+                    isSelected={resourcesCategoryFilter === 'Apps'}
+                    onChange={() => setResourcesCategoryFilter('Apps')}
                   />
                   <ToggleGroupItem
                     text="Storage"
-                    buttonId="filter-storage"
-                    isSelected={apiGroupsCategoryFilter === 'Storage'}
-                    onChange={() => setApiGroupsCategoryFilter('Storage')}
+                    buttonId="resource-filter-storage"
+                    isSelected={resourcesCategoryFilter === 'Storage'}
+                    onChange={() => setResourcesCategoryFilter('Storage')}
+                  />
+                  <ToggleGroupItem
+                    text="Networking"
+                    buttonId="resource-filter-networking"
+                    isSelected={resourcesCategoryFilter === 'Networking'}
+                    onChange={() => setResourcesCategoryFilter('Networking')}
+                  />
+                  <ToggleGroupItem
+                    text="RBAC"
+                    buttonId="resource-filter-rbac"
+                    isSelected={resourcesCategoryFilter === 'RBAC'}
+                    onChange={() => setResourcesCategoryFilter('RBAC')}
                   />
                 </ToggleGroup>
               </div>
 
-              {['Core', 'KubeVirt', 'Networking', 'Storage'].map((category) => {
-                const groups = groupedApiGroups[category] || [];
-                if (groups.length === 0) return null;
+              {['Core', 'Apps', 'Storage', 'Networking', 'RBAC'].map((category) => {
+                const resourceList = groupedResources[category] || [];
+                if (resourceList.length === 0) return null;
 
                 return (
                   <div key={category} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
                     <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
                       {category}
                     </Title>
-                    {groups.map((group, index) => (
+                    {resourceList.map((resource, index) => (
                       <div 
                         key={index}
                         style={{ 
@@ -455,25 +532,16 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                       >
                         <div style={{ flex: '1 1 0%' }}>
                           <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
-                            {group.name || '""'}{' '}
-                            <span style={{ 
-                              fontWeight: 'normal', 
-                              fontStyle: 'italic', 
-                              fontSize: '0.875rem', 
-                              color: 'var(--pf-v5-global--Color--200)',
-                              marginLeft: '4px'
-                            }}>
-                              (empty string)
-                            </span>
+                            {resource.name}
                           </div>
                           <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
-                            {group.description}
+                            {resource.description}
                           </Content>
                         </div>
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => handleAddApiGroup(group.name)}
+                          onClick={() => handleAddResource(resource.name)}
                         >
                           Add
                         </Button>
@@ -487,8 +555,127 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
         }
       >
         <DrawerContentBody>
-          {breadcrumb}
-          <PageSection>
+          <Drawer isExpanded={isApiGroupsDrawerOpen}>
+            <DrawerContent
+              panelContent={
+                <DrawerPanelContent defaultSize="500px" minSize="500px">
+                  <DrawerHead>
+                    <Title headingLevel="h2" size="xl">Browse API Groups</Title>
+                    <DrawerActions>
+                      <DrawerCloseButton onClick={() => setIsApiGroupsDrawerOpen(false)} />
+                    </DrawerActions>
+                  </DrawerHead>
+                  <DrawerPanelBody style={{ padding: 'var(--pf-t--global--spacer--md)' }}>
+                    <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                      <TextInputGroup>
+                        <TextInputGroupMain
+                          icon={<SearchIcon />}
+                          value={apiGroupsSearchValue}
+                          onChange={(_event, value) => setApiGroupsSearchValue(value)}
+                          placeholder="Search API groups..."
+                          aria-label="Search API groups"
+                        />
+                      </TextInputGroup>
+                    </div>
+
+                    <Content component="p" style={{ 
+                      fontSize: 'var(--pf-v5-global--FontSize--sm)', 
+                      color: 'var(--pf-v5-global--Color--200)',
+                      marginBottom: 'var(--pf-t--global--spacer--sm)'
+                    }}>
+                      Filter by category
+                    </Content>
+
+                    <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                      <ToggleGroup aria-label="Resource category filter">
+                        <ToggleGroupItem
+                          text="All"
+                          buttonId="filter-all"
+                          isSelected={apiGroupsCategoryFilter === 'All'}
+                          onChange={() => setApiGroupsCategoryFilter('All')}
+                        />
+                        <ToggleGroupItem
+                          text="Core"
+                          buttonId="filter-core"
+                          isSelected={apiGroupsCategoryFilter === 'Core'}
+                          onChange={() => setApiGroupsCategoryFilter('Core')}
+                        />
+                        <ToggleGroupItem
+                          text="KubeVirt"
+                          buttonId="filter-kubevirt"
+                          isSelected={apiGroupsCategoryFilter === 'KubeVirt'}
+                          onChange={() => setApiGroupsCategoryFilter('KubeVirt')}
+                        />
+                        <ToggleGroupItem
+                          text="Networking"
+                          buttonId="filter-networking"
+                          isSelected={apiGroupsCategoryFilter === 'Networking'}
+                          onChange={() => setApiGroupsCategoryFilter('Networking')}
+                        />
+                        <ToggleGroupItem
+                          text="Storage"
+                          buttonId="filter-storage"
+                          isSelected={apiGroupsCategoryFilter === 'Storage'}
+                          onChange={() => setApiGroupsCategoryFilter('Storage')}
+                        />
+                      </ToggleGroup>
+                    </div>
+
+                    {['Core', 'KubeVirt', 'Networking', 'Storage'].map((category) => {
+                      const groups = groupedApiGroups[category] || [];
+                      if (groups.length === 0) return null;
+
+                      return (
+                        <div key={category} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
+                          <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                            {category}
+                          </Title>
+                          {groups.map((group, index) => (
+                            <div 
+                              key={index}
+                              style={{ 
+                                marginBottom: 'var(--pf-t--global--spacer--md)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start'
+                              }}
+                            >
+                              <div style={{ flex: '1 1 0%' }}>
+                                <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
+                                  {group.name || '""'}{' '}
+                                  <span style={{ 
+                                    fontWeight: 'normal', 
+                                    fontStyle: 'italic', 
+                                    fontSize: '0.875rem', 
+                                    color: 'var(--pf-v5-global--Color--200)',
+                                    marginLeft: '4px'
+                                  }}>
+                                    (empty string)
+                                  </span>
+                                </div>
+                                <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
+                                  {group.description}
+                                </Content>
+                              </div>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleAddApiGroup(group.name)}
+                              >
+                                Add
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </DrawerPanelBody>
+                </DrawerPanelContent>
+              }
+            >
+              <DrawerContentBody>
+                {breadcrumb}
+                <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
@@ -655,7 +842,12 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                                 onChange={(_event, value) => setResources(value)}
                                 placeholder="Enter resources"
                               />
-                              <Button variant="link" isInline style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}>
+                              <Button 
+                                variant="link" 
+                                isInline 
+                                style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
+                                onClick={() => setIsResourcesDrawerOpen(true)}
+                              >
                                 Browse and select resources
                               </Button>
                             </FormGroup>
@@ -1075,6 +1267,9 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
           </Button>
         </ModalFooter>
       </Modal>
+              </DrawerContentBody>
+            </DrawerContent>
+          </Drawer>
         </DrawerContentBody>
       </DrawerContent>
     </Drawer>
