@@ -140,7 +140,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
       {breadcrumb}
       <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
-        <Content style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
+        <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
         </Content>
         <Button variant="link" isInline style={{ paddingLeft: 0, marginBottom: '16px' }}>
