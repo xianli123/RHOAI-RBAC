@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
 import {
@@ -561,19 +560,10 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
         }
       >
         <DrawerContentBody>
-          {isApiGroupsDrawerOpen && createPortal(
-            <Drawer isExpanded={true} style={{ position: 'fixed', top: 0, right: 0, left: 'auto', zIndex: 1000, height: '100vh' }}>
-              <DrawerContent
-                panelContent={
-                <DrawerPanelContent 
-                  defaultSize="500px" 
-                  minSize="500px" 
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    height: '100vh'
-                  }}
-                >
+          <Drawer isExpanded={isApiGroupsDrawerOpen}>
+            <DrawerContent
+              panelContent={
+                <DrawerPanelContent defaultSize="500px" minSize="500px" style={{ display: 'flex', flexDirection: 'column' }}>
                   <DrawerHead>
                     <Title headingLevel="h2" size="xl">Browse API Groups</Title>
                     <DrawerActions>
@@ -584,8 +574,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                     padding: 'var(--pf-t--global--spacer--md)',
                     overflowY: 'auto',
                     flex: 1,
-                    minHeight: 0,
-                    maxHeight: 'calc(100vh - 76px)'
+                    minHeight: 0
                   }}>
                     <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
                       <TextInputGroup>
@@ -694,15 +683,9 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                 </DrawerPanelContent>
               }
             >
-                <DrawerContentBody style={{ display: 'none' }}>
-                  {/* Empty - content is in parent */}
-                </DrawerContentBody>
-              </DrawerContent>
-            </Drawer>,
-            document.body
-          )}
-          {breadcrumb}
-          <PageSection>
+              <DrawerContentBody>
+                {breadcrumb}
+                <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
