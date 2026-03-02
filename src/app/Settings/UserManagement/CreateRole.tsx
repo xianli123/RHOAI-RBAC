@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TypeaheadSelect, TypeaheadSelectOption } from '@patternfly/react-templates';
+import { TypeaheadSelect, TypeaheadSelectOption, SimpleDropdown } from '@patternfly/react-templates';
 import {
   PageSection,
   Title,
@@ -60,41 +60,317 @@ import {
 import { DownloadIcon, PlusIcon, SearchIcon } from '@patternfly/react-icons';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 
+type VerbsState = {
+  get: boolean;
+  list: boolean;
+  watch: boolean;
+  create: boolean;
+  update: boolean;
+  patch: boolean;
+  delete: boolean;
+  deletecollection: boolean;
+  bind: boolean;
+  escalate: boolean;
+  impersonate: boolean;
+  use: boolean;
+  approve: boolean;
+  all: boolean;
+};
+
+const defaultVerbs: VerbsState = {
+  get: false,
+  list: false,
+  watch: false,
+  create: false,
+  update: false,
+  patch: false,
+  delete: false,
+  deletecollection: false,
+  bind: false,
+  escalate: false,
+  impersonate: false,
+  use: false,
+  approve: false,
+  all: false,
+};
+
+type Rule = {
+  id: string;
+  apiGroups: string;
+  resources: string;
+  verbs: VerbsState;
+};
+
+const createRule = (overrides?: Partial<Rule>): Rule => ({
+  id: `rule-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  apiGroups: '',
+  resources: '',
+  verbs: { ...defaultVerbs },
+  ...overrides,
+});
+
+// Shared rule sets: maintainer (full), reader (get/list/watch only), updater (read + update/patch on notebooks)
+const MAINTAINER_RULES: Rule[] = [
+  { id: 'maint-1', apiGroups: '', resources: 'namespaces', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'maint-2', apiGroups: 'kubeflow.org', resources: 'notebooks', verbs: { ...defaultVerbs, all: true } },
+  { id: 'maint-3', apiGroups: 'image.openshift.io', resources: 'imagestreams', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'maint-4', apiGroups: '', resources: 'persistentvolumeclaims', verbs: { ...defaultVerbs, all: true } },
+  { id: 'maint-5', apiGroups: '', resources: 'persistentvolumeclaims/status', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'maint-6', apiGroups: '', resources: 'pods, statefulsets', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'maint-7', apiGroups: '', resources: 'secrets, configmaps', verbs: { ...defaultVerbs, all: true } },
+  { id: 'maint-8', apiGroups: 'infrastructure.opendatahub.io', resources: 'hardwareprofiles', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'maint-9', apiGroups: '', resources: 'events', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+];
+
+const READER_RULES: Rule[] = [
+  { id: 'read-1', apiGroups: '', resources: 'namespaces', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-2', apiGroups: 'kubeflow.org', resources: 'notebooks', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-3', apiGroups: 'image.openshift.io', resources: 'imagestreams', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-4', apiGroups: '', resources: 'persistentvolumeclaims', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-5', apiGroups: '', resources: 'persistentvolumeclaims/status', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-6', apiGroups: '', resources: 'pods, statefulsets', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-7', apiGroups: '', resources: 'secrets, configmaps', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-8', apiGroups: 'infrastructure.opendatahub.io', resources: 'hardwareprofiles', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'read-9', apiGroups: '', resources: 'events', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+];
+
+const UPDATER_RULES: Rule[] = [
+  { id: 'upd-1', apiGroups: '', resources: 'namespaces', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'upd-2', apiGroups: 'kubeflow.org', resources: 'notebooks', verbs: { ...defaultVerbs, get: true, list: true, watch: true, update: true, patch: true } },
+  { id: 'upd-3', apiGroups: 'image.openshift.io', resources: 'imagestreams', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'upd-4', apiGroups: '', resources: 'persistentvolumeclaims', verbs: { ...defaultVerbs, all: true } },
+  { id: 'upd-5', apiGroups: '', resources: 'persistentvolumeclaims/status', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'upd-6', apiGroups: '', resources: 'pods, statefulsets', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'upd-7', apiGroups: '', resources: 'secrets, configmaps', verbs: { ...defaultVerbs, all: true } },
+  { id: 'upd-8', apiGroups: 'infrastructure.opendatahub.io', resources: 'hardwareprofiles', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+  { id: 'upd-9', apiGroups: '', resources: 'events', verbs: { ...defaultVerbs, get: true, list: true, watch: true } },
+];
+
+const ruleTemplates = [
+  { id: 'maintainer', name: 'Maintainer', category: 'Permissions', description: 'Full access (get, list, watch, create, update, patch, delete) to selected resources.', rules: MAINTAINER_RULES },
+  { id: 'reader', name: 'Reader', category: 'Permissions', description: 'Read-only access (get, list, watch) to selected resources.', rules: READER_RULES },
+  { id: 'updater', name: 'Updater', category: 'Permissions', description: 'Read and update access (get, list, watch, update, patch) to selected resources.', rules: UPDATER_RULES },
+];
+
+/** Shared drawer panel: search (sticky) + filter by category (sticky) + scrollable list. Used by both Browse Resources and Browse API Groups. */
+function BrowseDrawerPanelContent(props: {
+  title: string;
+  onClose: () => void;
+  searchPlaceholder: string;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  searchAriaLabel: string;
+  filterAriaLabel: string;
+  toggleItems: Array<{ buttonId: string; text: string; isSelected: boolean; onChange: () => void }>;
+  categoryOrder: string[];
+  getItemsForCategory: (category: string) => Array<{ name: string; description: string }>;
+  onAddItem: (name: string) => void;
+  getItemDisplayName?: (name: string) => string;
+}) {
+  const {
+    title,
+    onClose,
+    searchPlaceholder,
+    searchValue,
+    onSearchChange,
+    searchAriaLabel,
+    filterAriaLabel,
+    toggleItems,
+    categoryOrder,
+    getItemsForCategory,
+    onAddItem,
+    getItemDisplayName = (name) => name,
+  } = props;
+
+  return (
+    <DrawerPanelContent defaultSize="500px" minSize="500px" style={{ display: 'flex', flexDirection: 'column' }}>
+      <DrawerHead>
+        <Title headingLevel="h2" size="xl">{title}</Title>
+        <DrawerActions>
+          <DrawerCloseButton onClick={onClose} />
+        </DrawerActions>
+      </DrawerHead>
+      <DrawerPanelBody style={{
+        paddingTop: 0,
+        paddingRight: 'var(--pf-t--global--spacer--md)',
+        paddingBottom: 'var(--pf-t--global--spacer--md)',
+        paddingLeft: 'var(--pf-t--global--spacer--md)',
+        overflowY: 'auto',
+        flex: '1 1 0%',
+        minHeight: 0,
+      }}>
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          backgroundColor: 'var(--pf-v5-global--BackgroundColor--100, #ffffff)',
+          paddingTop: 'var(--pf-t--global--spacer--md)',
+          paddingBottom: 'var(--pf-t--global--spacer--md)',
+          marginBottom: 'var(--pf-t--global--spacer--md)',
+        }}>
+          <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+            <TextInputGroup>
+              <TextInputGroupMain
+                icon={<SearchIcon />}
+                value={searchValue}
+                onChange={(_event, value) => onSearchChange(value)}
+                placeholder={searchPlaceholder}
+                aria-label={searchAriaLabel}
+              />
+            </TextInputGroup>
+          </div>
+          <Content component="p" style={{
+            fontSize: 'var(--pf-v5-global--FontSize--sm)',
+            color: 'var(--pf-v5-global--Color--200)',
+            marginBottom: 'var(--pf-t--global--spacer--sm)',
+          }}>
+            Filter by category
+          </Content>
+          <div style={{ marginBottom: 0 }}>
+            <ToggleGroup aria-label={filterAriaLabel}>
+              {toggleItems.map((item) => (
+                <ToggleGroupItem
+                  key={item.buttonId}
+                  text={item.text}
+                  buttonId={item.buttonId}
+                  isSelected={item.isSelected}
+                  onChange={item.onChange}
+                />
+              ))}
+            </ToggleGroup>
+          </div>
+        </div>
+
+        {categoryOrder.map((category) => {
+          const items = getItemsForCategory(category);
+          if (items.length === 0) return null;
+          return (
+            <div key={category} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
+              <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                {category}
+              </Title>
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: 'var(--pf-t--global--spacer--md)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <div style={{ flex: '1 1 0%' }}>
+                    <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
+                      {getItemDisplayName(item.name)}
+                    </div>
+                    <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
+                      {item.description}
+                    </Content>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={() => onAddItem(item.name)}>
+                    Add
+                  </Button>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </DrawerPanelBody>
+    </DrawerPanelContent>
+  );
+}
+
+type TemplateTableItem = { id: string; name: string; category: string; description: string };
+
+function TemplateTable<T extends TemplateTableItem>({
+  searchPlaceholder,
+  searchValue,
+  onSearchChange,
+  searchAriaLabel,
+  items,
+  emptyMessage,
+  actionLabel,
+  onAction,
+  tableAriaLabel,
+}: {
+  searchPlaceholder: string;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  searchAriaLabel: string;
+  items: T[];
+  emptyMessage: string;
+  actionLabel: string;
+  onAction: (item: T) => void;
+  tableAriaLabel: string;
+}) {
+  return (
+    <>
+      <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
+        <SearchInput
+          placeholder={searchPlaceholder}
+          value={searchValue}
+          onChange={(_event, value) => onSearchChange(value)}
+          onClear={() => onSearchChange('')}
+          aria-label={searchAriaLabel}
+        />
+      </div>
+      <Table variant="compact" aria-label={tableAriaLabel}>
+        <Thead>
+          <Tr>
+            <Th>Name</Th>
+            <Th>Category</Th>
+            <Th>Description</Th>
+            <Th>Actions</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {items.length > 0 ? (
+            items.map((template) => (
+              <Tr key={template.id}>
+                <Td dataLabel="Name">{template.name}</Td>
+                <Td dataLabel="Category">{template.category}</Td>
+                <Td dataLabel="Description">{template.description}</Td>
+                <Td dataLabel="Actions">
+                  <Button variant="secondary" onClick={() => onAction(template)}>
+                    {actionLabel}
+                  </Button>
+                </Td>
+              </Tr>
+            ))
+          ) : (
+            <Tr>
+              <Td colSpan={4} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--lg)' }}>
+                {emptyMessage}
+              </Td>
+            </Tr>
+          )}
+        </Tbody>
+      </Table>
+    </>
+  );
+}
+
 const CreateRole: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [roleName, setRoleName] = React.useState('my-custom-role');
   const [description, setDescription] = React.useState('');
   const [category, setCategory] = React.useState('');
   const [categoryInputValue, setCategoryInputValue] = React.useState('');
-  const [isRuleExpanded, setIsRuleExpanded] = React.useState(true);
-  const [apiGroups, setApiGroups] = React.useState('');
-  const [resources, setResources] = React.useState('');
+  const [rules, setRules] = React.useState<Rule[]>(() => [
+    createRule({ verbs: { ...defaultVerbs, get: true } }),
+  ]);
+  const [expandedRuleIds, setExpandedRuleIds] = React.useState<Set<string>>(() => new Set());
   const [isTemplateModalOpen, setIsTemplateModalOpen] = React.useState(false);
   const [templateSearchValue, setTemplateSearchValue] = React.useState('');
-  const [isApiGroupsDrawerOpen, setIsApiGroupsDrawerOpen] = React.useState(false);
+  const [ruleTemplateSearchValue, setRuleTemplateSearchValue] = React.useState('');
+  const [templateModalMode, setTemplateModalMode] = React.useState<'role' | 'rule'>('role');
+  const [editingRuleIndex, setEditingRuleIndex] = React.useState(0);
   const [apiGroupsSearchValue, setApiGroupsSearchValue] = React.useState('');
   const [apiGroupsCategoryFilter, setApiGroupsCategoryFilter] = React.useState('All');
   const [isResourcesDrawerOpen, setIsResourcesDrawerOpen] = React.useState(false);
+  const [browseDrawerMode, setBrowseDrawerMode] = React.useState<'resources' | 'apiGroups'>('resources');
   const [resourcesSearchValue, setResourcesSearchValue] = React.useState('');
   const [resourcesCategoryFilter, setResourcesCategoryFilter] = React.useState('All');
-  
-  // Verbs state
-  const [verbs, setVerbs] = React.useState({
-    get: true,
-    list: false,
-    watch: false,
-    create: false,
-    update: false,
-    patch: false,
-    delete: false,
-    deletecollection: false,
-    bind: false,
-    escalate: false,
-    impersonate: false,
-    use: false,
-    approve: false,
-    all: false,
-  });
 
   useDocumentTitle('Create Role');
 
@@ -164,77 +440,122 @@ const CreateRole: React.FunctionComponent = () => {
       name: 'Admin',
       category: 'Project Management',
       description: 'User can edit the project and manage user access. User can view and manage any project resource.',
+      templateRoleName: 'copy-of-Admin',
+      templateRules: MAINTAINER_RULES,
     },
     {
       id: '2',
       name: 'Contributor',
       category: 'Project Management',
       description: 'User can view and manage any project resource. Users with this role can manage all resources in the namespace, including workbenches, model deployments, and cluster storage, except for permissions controlling.',
+      templateRoleName: 'copy-of-Contributor',
+      templateRules: MAINTAINER_RULES,
     },
     {
       id: '3',
       name: 'Deployment maintainer',
       category: 'Deployment Management',
       description: 'User can view and manage all model deployments.',
+      templateRoleName: 'copy-of-Deployment Maintainer',
+      templateRules: MAINTAINER_RULES,
     },
     {
       id: '4',
       name: 'Deployment reader',
       category: 'Deployment Management',
       description: 'User can view and open model deployments without modifying their configuration.',
+      templateRoleName: 'copy-of-Deployment Reader',
+      templateRules: READER_RULES,
     },
     {
       id: '5',
       name: 'Deployment updater',
       category: 'Deployment Management',
       description: 'User can view model deployments and update existing deployments.',
+      templateRoleName: 'copy-of-Deployment Updater',
+      templateRules: UPDATER_RULES,
     },
     {
       id: '6',
       name: 'Pipeline maintainer',
       category: 'Pipeline Management',
       description: 'User can view and manage all pipelines.',
+      templateRoleName: 'copy-of-Pipeline Maintainer',
+      templateRules: MAINTAINER_RULES,
     },
     {
       id: '7',
       name: 'Pipeline reader',
       category: 'Pipeline Management',
       description: 'User can view and open pipelines without modifying their configuration.',
+      templateRoleName: 'copy-of-Pipeline Reader',
+      templateRules: READER_RULES,
     },
     {
       id: '8',
       name: 'Pipeline updater',
       category: 'Pipeline Management',
       description: 'User can view pipelines and modify their configuration, but cannot create or delete them.',
+      templateRoleName: 'copy-of-Pipeline Updater',
+      templateRules: UPDATER_RULES,
     },
     {
       id: '9',
       name: 'Workbench maintainer',
       category: 'Workbench Management',
-      description: 'User can view and manage all workbenches. Applies to all workbenches.',
+      description: 'The role that grants minimum permissions to allow users as the admin of the workbench component.',
+      templateRoleName: 'copy-of-Workbench Maintainer',
+      templateRules: MAINTAINER_RULES,
     },
     {
       id: '10',
       name: 'Workbench reader',
       category: 'Workbench Management',
-      description: 'User can view and open workbenches without modifying their configuration.',
+      description: 'The role that grants minimum permissions to allow users to view the workbench component without modification permissions.',
+      templateRoleName: 'copy-of-Workbench Reader',
+      templateRules: READER_RULES,
     },
     {
       id: '11',
       name: 'Workbench updater',
       category: 'Workbench Management',
-      description: 'User can view workbenches and modify their configuration, but cannot create or delete them.',
+      description: 'The role that grants minimum permissions to allow users as the updater of the workbench component without creation/deletion permissions',
+      templateRoleName: 'copy-of-Workbench Updater',
+      templateRules: UPDATER_RULES,
     },
   ];
 
-  const handleUseTemplate = (template: typeof roleTemplates[0]) => {
-    // Populate form with template data
-    const templateNameSlug = template.name.toLowerCase().replace(/\s+/g, '-');
-    setRoleName(`copy-of-${templateNameSlug}`);
+  type RoleTemplate = typeof roleTemplates[0] & {
+    templateRoleName?: string;
+    templateApiGroups?: string;
+    templateResources?: string;
+    templateVerbs?: Partial<VerbsState>;
+    templateRules?: Rule[];
+  };
+
+  const handleUseTemplate = (template: RoleTemplate) => {
+    setRoleName(
+      template.templateRoleName ?? `copy-of-${template.name.toLowerCase().replace(/\s+/g, '-')}`
+    );
     setDescription(template.description);
     setCategory(template.category);
+    if (template.templateRules && template.templateRules.length > 0) {
+      setRules(template.templateRules.map((r) => ({ ...r, id: r.id || `rule-${Date.now()}-${Math.random().toString(36).slice(2)}` })));
+      setExpandedRuleIds(new Set(template.templateRules.map((r) => r.id)));
+    } else {
+      if (template.templateApiGroups !== undefined || template.templateResources !== undefined || template.templateVerbs) {
+        setRules([
+          createRule({
+            apiGroups: template.templateApiGroups ?? '',
+            resources: template.templateResources ?? '',
+            verbs: template.templateVerbs ? { ...defaultVerbs, ...template.templateVerbs } : defaultVerbs,
+          }),
+        ]);
+        setExpandedRuleIds(new Set());
+      }
+    }
     setIsTemplateModalOpen(false);
-    setTemplateSearchValue(''); // Clear search when template is used
+    setTemplateSearchValue('');
   };
 
   // Filter templates based on search value
@@ -251,38 +572,185 @@ const CreateRole: React.FunctionComponent = () => {
     );
   }, [templateSearchValue]);
 
-  const handleVerbChange = (verb: string, checked: boolean) => {
-    setVerbs(prev => ({ ...prev, [verb]: checked }));
+  /** Add rules from a role template to the current form (used by "Select rule template" modal). */
+  const addRulesFromRoleTemplate = (template: RoleTemplate) => {
+    if (template.templateRules && template.templateRules.length > 0) {
+      const newRules = template.templateRules.map((r, i) => ({
+        ...r,
+        id: `rule-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`,
+      }));
+      setRules((prev) => [...prev, ...newRules]);
+      setExpandedRuleIds((prev) => {
+        const next = new Set(prev);
+        newRules.forEach((r) => next.add(r.id));
+        return next;
+      });
+    } else if (
+      template.templateApiGroups !== undefined ||
+      template.templateResources !== undefined ||
+      template.templateVerbs !== undefined
+    ) {
+      const newRule = createRule({
+        apiGroups: template.templateApiGroups ?? '',
+        resources: template.templateResources ?? '',
+        verbs: template.templateVerbs ? { ...defaultVerbs, ...template.templateVerbs } : defaultVerbs,
+      });
+      newRule.id = `rule-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setRules((prev) => [...prev, newRule]);
+      setExpandedRuleIds((prev) => new Set(prev).add(newRule.id));
+    }
+    setIsTemplateModalOpen(false);
+    setRuleTemplateSearchValue('');
   };
 
-  const handleSelectAll = (category: 'read' | 'write' | 'delete' | 'advanced') => {
-    if (category === 'read') {
-      setVerbs(prev => ({ ...prev, get: true, list: true, watch: true }));
-    } else if (category === 'write') {
-      setVerbs(prev => ({ ...prev, create: true, update: true, patch: true }));
-    } else if (category === 'delete') {
-      setVerbs(prev => ({ ...prev, delete: true, deletecollection: true }));
-    } else if (category === 'advanced') {
-      setVerbs(prev => ({ ...prev, bind: true, escalate: true, impersonate: true, use: true, approve: true, all: true }));
+  const filteredRuleTemplates = React.useMemo(() => {
+    if (!ruleTemplateSearchValue.trim()) {
+      return roleTemplates;
     }
+    const searchLower = ruleTemplateSearchValue.toLowerCase();
+    return roleTemplates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(searchLower) ||
+        template.category.toLowerCase().includes(searchLower) ||
+        template.description.toLowerCase().includes(searchLower)
+    );
+  }, [ruleTemplateSearchValue]);
+
+  const updateRule = (ruleIndex: number, updates: Partial<Rule>) => {
+    setRules((prev) =>
+      prev.map((r, i) => (i === ruleIndex ? { ...r, ...updates } : r))
+    );
+  };
+
+  const handleVerbChange = (ruleIndex: number, verb: keyof VerbsState, checked: boolean) => {
+    setRules((prev) =>
+      prev.map((r, i) =>
+        i === ruleIndex ? { ...r, verbs: { ...r.verbs, [verb]: checked } } : r
+      )
+    );
+  };
+
+  const isCategoryAllSelected = (verbs: VerbsState, category: 'read' | 'write' | 'delete' | 'advanced'): boolean => {
+    if (category === 'read') return verbs.get && verbs.list && verbs.watch;
+    if (category === 'write') return verbs.create && verbs.update && verbs.patch;
+    if (category === 'delete') return verbs.delete && verbs.deletecollection;
+    if (category === 'advanced') return verbs.bind && verbs.escalate && verbs.impersonate && verbs.use && verbs.approve && verbs.all;
+    return false;
+  };
+
+  const handleSelectAllOrDeselectAll = (ruleIndex: number, category: 'read' | 'write' | 'delete' | 'advanced') => {
+    setRules((prev) =>
+      prev.map((r, i) => {
+        if (i !== ruleIndex) return r;
+        const allSelected = isCategoryAllSelected(r.verbs, category);
+        const v = { ...r.verbs };
+        if (category === 'read') {
+          const val = !allSelected;
+          v.get = val; v.list = val; v.watch = val;
+        } else if (category === 'write') {
+          const val = !allSelected;
+          v.create = val; v.update = val; v.patch = val;
+        } else if (category === 'delete') {
+          const val = !allSelected;
+          v.delete = val; v.deletecollection = val;
+        } else if (category === 'advanced') {
+          const val = !allSelected;
+          v.bind = val; v.escalate = val; v.impersonate = val; v.use = val; v.approve = val; v.all = val;
+        }
+        return { ...r, verbs: v };
+      })
+    );
+  };
+
+  const isAllCategoriesSelected = (verbs: VerbsState): boolean =>
+    (Object.keys(defaultVerbs) as (keyof VerbsState)[]).every((key) => verbs[key]);
+
+  const handleSelectAllCategories = (ruleIndex: number) => {
+    setRules((prev) =>
+      prev.map((r, i) => {
+        if (i !== ruleIndex) return r;
+        const v = { ...r.verbs };
+        (Object.keys(defaultVerbs) as (keyof VerbsState)[]).forEach((key) => { v[key] = true; });
+        return { ...r, verbs: v };
+      })
+    );
+  };
+
+  const handleDeselectAllCategories = (ruleIndex: number) => {
+    setRules((prev) =>
+      prev.map((r, i) => {
+        if (i !== ruleIndex) return r;
+        const v = { ...r.verbs };
+        (Object.keys(defaultVerbs) as (keyof VerbsState)[]).forEach((key) => { v[key] = false; });
+        return { ...r, verbs: v };
+      })
+    );
+  };
+
+  const handleAddRule = () => {
+    setRules((prev) => [...prev, createRule()]);
+  };
+
+  const handleRemoveRule = (ruleIndex: number) => {
+    setRules((prev) => prev.filter((_, i) => i !== ruleIndex));
+  };
+
+  const toggleRuleExpanded = (ruleId: string) => {
+    setExpandedRuleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ruleId)) next.delete(ruleId);
+      else next.add(ruleId);
+      return next;
+    });
   };
 
   const generateYAML = () => {
-    const selectedVerbs = Object.entries(verbs)
-      .filter(([_, checked]) => checked)
-      .map(([verb]) => verb === 'all' ? '*' : verb);
+    const ruleBlocks = rules.map((rule) => {
+      const selectedVerbs = Object.entries(rule.verbs)
+        .filter(([_, checked]) => checked)
+        .map(([verb]) => (verb === 'all' ? '*' : verb));
+      const apiGroupList = rule.apiGroups
+        .split(',')
+        .map((g) => g.trim())
+        .filter((g) => g !== undefined);
+      const resourceList = rule.resources
+        .split(',')
+        .map((r) => r.trim())
+        .filter((r) => r !== undefined);
+      const apiGroupsYaml =
+        apiGroupList.length > 0
+          ? apiGroupList.map((g) => `  - "${g}"`).join('\n')
+          : '  - "*"';
+      const resourcesYaml =
+        resourceList.length > 0
+          ? resourceList.map((r) => `  - "${r}"`).join('\n')
+          : '  - "*"';
+      const verbsYaml =
+        selectedVerbs.length > 0
+          ? selectedVerbs.map((v) => `  - "${v}"`).join('\n')
+          : '  - "*"';
+      return `- apiGroups:
+${apiGroupsYaml}
+  resources:
+${resourcesYaml}
+  verbs:
+${verbsYaml}`;
+    });
+
+    const displayName = (roleName || 'my-custom-role').replace(/'/g, "''");
+    const descriptionAnnotation = (description || '').replace(/'/g, "''");
 
     return `apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ${roleName}
+  labels:
+    opendatahub.io/dashboard: 'true'
+  annotations:
+    openshift.io/display-name: '${displayName}'
+    openshift.io/description: '${descriptionAnnotation}'
 rules:
-- apiGroups:
-  - "${apiGroups || '*'}"
-  resources:
-  - "${resources || '*'}"
-  verbs:
-${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '  - "*"'}
+${ruleBlocks.join('\n')}
 `;
   };
 
@@ -290,7 +758,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
 
   React.useEffect(() => {
     setYamlContent(generateYAML());
-  }, [roleName, apiGroups, resources, verbs]);
+  }, [roleName, description, rules]);
 
   const handleSubmit = () => {
     // Handle form submission
@@ -313,6 +781,9 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     { name: 'apps', description: 'Deployments, StatefulSets, DaemonSets', category: 'Core' },
     { name: 'batch', description: 'Jobs and CronJobs', category: 'Core' },
     { name: 'rbac.authorization.k8s.io', description: 'Roles and role bindings', category: 'Core' },
+    { name: 'kubeflow.org', description: 'Kubeflow resources (e.g. notebooks)', category: 'Core' },
+    { name: 'image.openshift.io', description: 'OpenShift image streams', category: 'Core' },
+    { name: 'infrastructure.opendatahub.io', description: 'Open Data Hub infrastructure (e.g. hardware profiles)', category: 'Core' },
     { name: 'kubevirt.io', description: 'KubeVirt virtualization APIs', category: 'KubeVirt' },
     { name: 'cdi.kubevirt.io', description: 'Containerized Data Importer', category: 'KubeVirt' },
     { name: 'instancetype.kubevirt.io', description: 'VM instance types', category: 'KubeVirt' },
@@ -354,10 +825,12 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
   }, [filteredApiGroups]);
 
   const handleAddApiGroup = (groupName: string) => {
-    const currentGroups = apiGroups.split(',').map(g => g.trim()).filter(g => g);
+    const rule = rules[editingRuleIndex];
+    if (!rule) return;
+    const currentGroups = rule.apiGroups.split(',').map((g) => g.trim()).filter((g) => g !== undefined);
     if (!currentGroups.includes(groupName)) {
       const newGroups = [...currentGroups, groupName].join(', ');
-      setApiGroups(newGroups);
+      updateRule(editingRuleIndex, { apiGroups: newGroups });
     }
   };
 
@@ -374,6 +847,10 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     { name: 'configmaps', description: 'ConfigMap resources', category: 'Core' },
     { name: 'secrets', description: 'Secret resources', category: 'Core' },
     { name: 'namespaces', description: 'Namespace resources', category: 'Core' },
+    { name: 'events', description: 'Event resources', category: 'Core' },
+    { name: 'notebooks', description: 'Kubeflow notebook resources', category: 'Apps' },
+    { name: 'imagestreams', description: 'OpenShift image stream resources', category: 'Apps' },
+    { name: 'hardwareprofiles', description: 'Hardware profile resources', category: 'Apps' },
     { name: 'deployments', description: 'Deployment resources', category: 'Apps' },
     { name: 'statefulsets', description: 'StatefulSet resources', category: 'Apps' },
     { name: 'daemonsets', description: 'DaemonSet resources', category: 'Apps' },
@@ -381,6 +858,7 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     { name: 'cronjobs', description: 'CronJob resources', category: 'Apps' },
     { name: 'persistentvolumes', description: 'PersistentVolume resources', category: 'Storage' },
     { name: 'persistentvolumeclaims', description: 'PersistentVolumeClaim resources', category: 'Storage' },
+    { name: 'persistentvolumeclaims/status', description: 'PersistentVolumeClaim status subresource', category: 'Storage' },
     { name: 'storageclasses', description: 'StorageClass resources', category: 'Storage' },
     { name: 'networkpolicies', description: 'NetworkPolicy resources', category: 'Networking' },
     { name: 'ingresses', description: 'Ingress resources', category: 'Networking' },
@@ -422,10 +900,12 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
   }, [filteredResources]);
 
   const handleAddResource = (resourceName: string) => {
-    const currentResources = resources.split(',').map(r => r.trim()).filter(r => r);
+    const rule = rules[editingRuleIndex];
+    if (!rule) return;
+    const currentResources = rule.resources.split(',').map((r) => r.trim()).filter((r) => r);
     if (!currentResources.includes(resourceName)) {
       const newResources = [...currentResources, resourceName].join(', ');
-      setResources(newResources);
+      updateRule(editingRuleIndex, { resources: newResources });
     }
   };
 
@@ -442,246 +922,59 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
     <Drawer isExpanded={isResourcesDrawerOpen}>
       <DrawerContent
         panelContent={
-          <DrawerPanelContent defaultSize="500px" minSize="500px" style={{ display: 'flex', flexDirection: 'column' }}>
-            <DrawerHead>
-              <Title headingLevel="h2" size="xl">Browse Resources</Title>
-              <DrawerActions>
-                <DrawerCloseButton onClick={() => setIsResourcesDrawerOpen(false)} />
-              </DrawerActions>
-            </DrawerHead>
-            <DrawerPanelBody style={{ 
-              padding: 'var(--pf-t--global--spacer--md)',
-              overflowY: 'auto',
-              flex: 1,
-              minHeight: 0
-            }}>
-              <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                <TextInputGroup>
-                  <TextInputGroupMain
-                    icon={<SearchIcon />}
-                    value={resourcesSearchValue}
-                    onChange={(_event, value) => setResourcesSearchValue(value)}
-                    placeholder="Search resources..."
-                    aria-label="Search resources"
-                  />
-                </TextInputGroup>
-              </div>
-
-              <Content component="p" style={{ 
-                fontSize: 'var(--pf-v5-global--FontSize--sm)', 
-                color: 'var(--pf-v5-global--Color--200)',
-                marginBottom: 'var(--pf-t--global--spacer--sm)'
-              }}>
-                Filter by category
-              </Content>
-
-              <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                <ToggleGroup aria-label="Resource category filter">
-                  <ToggleGroupItem
-                    text="All"
-                    buttonId="resource-filter-all"
-                    isSelected={resourcesCategoryFilter === 'All'}
-                    onChange={() => setResourcesCategoryFilter('All')}
-                  />
-                  <ToggleGroupItem
-                    text="Core"
-                    buttonId="resource-filter-core"
-                    isSelected={resourcesCategoryFilter === 'Core'}
-                    onChange={() => setResourcesCategoryFilter('Core')}
-                  />
-                  <ToggleGroupItem
-                    text="Apps"
-                    buttonId="resource-filter-apps"
-                    isSelected={resourcesCategoryFilter === 'Apps'}
-                    onChange={() => setResourcesCategoryFilter('Apps')}
-                  />
-                  <ToggleGroupItem
-                    text="Storage"
-                    buttonId="resource-filter-storage"
-                    isSelected={resourcesCategoryFilter === 'Storage'}
-                    onChange={() => setResourcesCategoryFilter('Storage')}
-                  />
-                  <ToggleGroupItem
-                    text="Networking"
-                    buttonId="resource-filter-networking"
-                    isSelected={resourcesCategoryFilter === 'Networking'}
-                    onChange={() => setResourcesCategoryFilter('Networking')}
-                  />
-                  <ToggleGroupItem
-                    text="RBAC"
-                    buttonId="resource-filter-rbac"
-                    isSelected={resourcesCategoryFilter === 'RBAC'}
-                    onChange={() => setResourcesCategoryFilter('RBAC')}
-                  />
-                </ToggleGroup>
-              </div>
-
-              {['Core', 'Apps', 'Storage', 'Networking', 'RBAC'].map((category) => {
-                const resourceList = groupedResources[category] || [];
-                if (resourceList.length === 0) return null;
-
-                return (
-                  <div key={category} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
-                    <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                      {category}
-                    </Title>
-                    {resourceList.map((resource, index) => (
-                      <div 
-                        key={index}
-                        style={{ 
-                          marginBottom: 'var(--pf-t--global--spacer--md)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start'
-                        }}
-                      >
-                        <div style={{ flex: '1 1 0%' }}>
-                          <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
-                            {resource.name}
-                          </div>
-                          <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
-                            {resource.description}
-                          </Content>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleAddResource(resource.name)}
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </DrawerPanelBody>
-          </DrawerPanelContent>
+          browseDrawerMode === 'apiGroups' ? (
+            <BrowseDrawerPanelContent
+              title="Browse API Groups"
+              onClose={() => setIsResourcesDrawerOpen(false)}
+              searchPlaceholder="Search API groups..."
+              searchValue={apiGroupsSearchValue}
+              onSearchChange={setApiGroupsSearchValue}
+              searchAriaLabel="Search API groups"
+              filterAriaLabel="API group category filter"
+              toggleItems={[
+                { buttonId: 'api-group-filter-all', text: 'All', isSelected: apiGroupsCategoryFilter === 'All', onChange: () => setApiGroupsCategoryFilter('All') },
+                { buttonId: 'api-group-filter-core', text: 'Core', isSelected: apiGroupsCategoryFilter === 'Core', onChange: () => setApiGroupsCategoryFilter('Core') },
+                { buttonId: 'api-group-filter-kubevirt', text: 'KubeVirt', isSelected: apiGroupsCategoryFilter === 'KubeVirt', onChange: () => setApiGroupsCategoryFilter('KubeVirt') },
+                { buttonId: 'api-group-filter-networking', text: 'Networking', isSelected: apiGroupsCategoryFilter === 'Networking', onChange: () => setApiGroupsCategoryFilter('Networking') },
+                { buttonId: 'api-group-filter-storage', text: 'Storage', isSelected: apiGroupsCategoryFilter === 'Storage', onChange: () => setApiGroupsCategoryFilter('Storage') },
+              ]}
+              categoryOrder={['Core', 'KubeVirt', 'Networking', 'Storage']}
+              getItemsForCategory={(category) => groupedApiGroups[category] || []}
+              onAddItem={handleAddApiGroup}
+              getItemDisplayName={(name) => name || '(core)'}
+            />
+          ) : (
+            <BrowseDrawerPanelContent
+              title="Browse Resources"
+              onClose={() => setIsResourcesDrawerOpen(false)}
+              searchPlaceholder="Search resources..."
+              searchValue={resourcesSearchValue}
+              onSearchChange={setResourcesSearchValue}
+              searchAriaLabel="Search resources"
+              filterAriaLabel="Resource category filter"
+              toggleItems={[
+                { buttonId: 'resource-filter-all', text: 'All', isSelected: resourcesCategoryFilter === 'All', onChange: () => setResourcesCategoryFilter('All') },
+                { buttonId: 'resource-filter-core', text: 'Core', isSelected: resourcesCategoryFilter === 'Core', onChange: () => setResourcesCategoryFilter('Core') },
+                { buttonId: 'resource-filter-apps', text: 'Apps', isSelected: resourcesCategoryFilter === 'Apps', onChange: () => setResourcesCategoryFilter('Apps') },
+                { buttonId: 'resource-filter-storage', text: 'Storage', isSelected: resourcesCategoryFilter === 'Storage', onChange: () => setResourcesCategoryFilter('Storage') },
+                { buttonId: 'resource-filter-networking', text: 'Networking', isSelected: resourcesCategoryFilter === 'Networking', onChange: () => setResourcesCategoryFilter('Networking') },
+                { buttonId: 'resource-filter-rbac', text: 'RBAC', isSelected: resourcesCategoryFilter === 'RBAC', onChange: () => setResourcesCategoryFilter('RBAC') },
+              ]}
+              categoryOrder={['Core', 'Apps', 'Storage', 'Networking', 'RBAC']}
+              getItemsForCategory={(category) => groupedResources[category] || []}
+              onAddItem={handleAddResource}
+            />
+          )
         }
       >
         <DrawerContentBody>
-          <Drawer isExpanded={isApiGroupsDrawerOpen}>
-            <DrawerContent
-              panelContent={
-                <DrawerPanelContent defaultSize="500px" minSize="500px" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <DrawerHead>
-                    <Title headingLevel="h2" size="xl">Browse API Groups</Title>
-                    <DrawerActions>
-                      <DrawerCloseButton onClick={() => setIsApiGroupsDrawerOpen(false)} />
-                    </DrawerActions>
-                  </DrawerHead>
-                  <DrawerPanelBody style={{ 
-                    padding: 'var(--pf-t--global--spacer--md)',
-                    overflowY: 'auto',
-                    flex: 1,
-                    minHeight: 0
-                  }}>
-                    <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                      <TextInputGroup>
-                        <TextInputGroupMain
-                          icon={<SearchIcon />}
-                          value={apiGroupsSearchValue}
-                          onChange={(_event, value) => setApiGroupsSearchValue(value)}
-                          placeholder="Search API groups..."
-                          aria-label="Search API groups"
-                        />
-                      </TextInputGroup>
-                    </div>
-
-                    <Content component="p" style={{ 
-                      fontSize: 'var(--pf-v5-global--FontSize--sm)', 
-                      color: 'var(--pf-v5-global--Color--200)',
-                      marginBottom: 'var(--pf-t--global--spacer--sm)'
-                    }}>
-                      Filter by category
-                    </Content>
-
-                    <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                      <ToggleGroup aria-label="Resource category filter">
-                        <ToggleGroupItem
-                          text="All"
-                          buttonId="filter-all"
-                          isSelected={apiGroupsCategoryFilter === 'All'}
-                          onChange={() => setApiGroupsCategoryFilter('All')}
-                        />
-                        <ToggleGroupItem
-                          text="Core"
-                          buttonId="filter-core"
-                          isSelected={apiGroupsCategoryFilter === 'Core'}
-                          onChange={() => setApiGroupsCategoryFilter('Core')}
-                        />
-                        <ToggleGroupItem
-                          text="KubeVirt"
-                          buttonId="filter-kubevirt"
-                          isSelected={apiGroupsCategoryFilter === 'KubeVirt'}
-                          onChange={() => setApiGroupsCategoryFilter('KubeVirt')}
-                        />
-                        <ToggleGroupItem
-                          text="Networking"
-                          buttonId="filter-networking"
-                          isSelected={apiGroupsCategoryFilter === 'Networking'}
-                          onChange={() => setApiGroupsCategoryFilter('Networking')}
-                        />
-                        <ToggleGroupItem
-                          text="Storage"
-                          buttonId="filter-storage"
-                          isSelected={apiGroupsCategoryFilter === 'Storage'}
-                          onChange={() => setApiGroupsCategoryFilter('Storage')}
-                        />
-                      </ToggleGroup>
-                    </div>
-
-                    {['Core', 'KubeVirt', 'Networking', 'Storage'].map((category) => {
-                      const groups = groupedApiGroups[category] || [];
-                      if (groups.length === 0) return null;
-
-                      return (
-                        <div key={category} style={{ marginBottom: 'var(--pf-t--global--spacer--lg)' }}>
-                          <Title headingLevel="h3" size="md" style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-                            {category}
-                          </Title>
-                          {groups.map((group, index) => (
-                            <div 
-                              key={index}
-                              style={{ 
-                                marginBottom: 'var(--pf-t--global--spacer--md)',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start'
-                              }}
-                            >
-                              <div style={{ flex: '1 1 0%' }}>
-                                <div style={{ fontWeight: 'var(--pf-v5-global--FontWeight--bold)' }}>
-                                  {group.name}
-                                </div>
-                                <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)' }}>
-                                  {group.description}
-                                </Content>
-                              </div>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleAddApiGroup(group.name)}
-                              >
-                                Add
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </DrawerPanelBody>
-                </DrawerPanelContent>
-              }
-            >
-              <DrawerContentBody>
-                {breadcrumb}
+          {breadcrumb}
                 <PageSection>
         <Title headingLevel="h1" size="2xl" style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>Create custom role</Title>
         <Content style={{ marginBottom: '16px', color: 'var(--pf-v5-global--Color--200)' }}>
           Create a custom role to control what users can see and do across your cluster resources. Define permissions, navigation access, and resource scopes to implement fine-grained access control.
         </Content>
-        <Button variant="link" isInline style={{ paddingLeft: 0, marginBottom: '16px' }} onClick={() => setIsTemplateModalOpen(true)}>
+        <Button variant="link" isInline style={{ paddingLeft: 0, marginBottom: '16px' }} onClick={() => { setTemplateModalMode('role'); setIsTemplateModalOpen(true); }}>
           Select templates
         </Button>
 
@@ -789,395 +1082,247 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
                       <Title headingLevel="h3" size="md">Permission Rules</Title>
                     </SplitItem>
                     <SplitItem>
-                      <Button variant="link" isInline icon={<PlusIcon />}>
-                        Add Rule
-                      </Button>
+                      <SimpleDropdown
+                        toggleContent="Add rule"
+                        initialItems={[
+                          { value: 'from-scratch', content: 'Add rule from scratch' },
+                          { value: 'via-template', content: 'Add rule via template' },
+                        ]}
+                        onSelect={(_event, value) => {
+                          if (value === 'from-scratch') {
+                            handleAddRule();
+                          } else if (value === 'via-template') {
+                            setTemplateModalMode('rule');
+                            setIsTemplateModalOpen(true);
+                          }
+                        }}
+                      />
                     </SplitItem>
                   </Split>
 
-                  <Card style={{ marginTop: 'var(--pf-v5-global--spacer--md)', overflow: 'visible' }}>
-                    <CardBody style={{ overflow: 'visible' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--pf-v5-global--spacer--md)', overflow: 'visible' }}>
-                        <div style={{ flex: '1 1 0%', minWidth: 0 }}>
-                          <ExpandableSection
-                            toggleText="Rule 1"
-                            isExpanded={isRuleExpanded}
-                            onToggle={(_event, isExpanded) => setIsRuleExpanded(isExpanded)}
-                          >
-                            <FormGroup
-                              label="API Groups"
-                              fieldId="api-groups-1"
-                              style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}
+                  {rules.map((rule, ruleIndex) => (
+                    <Card key={rule.id} style={{ marginTop: ruleIndex === 0 ? 'var(--pf-v5-global--spacer--md)' : '16px', overflow: 'visible' }}>
+                      <CardBody style={{ overflow: 'visible' }}>
+                        <div style={{ position: 'relative', overflow: 'visible' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <ExpandableSection
+                              toggleText={`Rule ${ruleIndex + 1}`}
+                              isExpanded={expandedRuleIds.has(rule.id) || (rules.length === 1 && expandedRuleIds.size === 0)}
+                              onToggle={() => toggleRuleExpanded(rule.id)}
                             >
-                              <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                Enter one or more API groups for this rule. Separate multiple values with commas.
-                              </Content>
-                              <TextInput
-                                id="api-groups-1"
-                                value={apiGroups}
-                                onChange={(_event, value) => setApiGroups(value)}
-                                placeholder="Enter API groups"
-                              />
-                              <Button 
-                                variant="link" 
-                                isInline 
-                                style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
-                                onClick={() => setIsApiGroupsDrawerOpen(true)}
+                              <FormGroup
+                                label="API Groups"
+                                fieldId={`api-groups-${ruleIndex}`}
+                                style={{ marginTop: 'var(--pf-v5-global--spacer--md)' }}
                               >
-                                Browse and select API groups
-                              </Button>
-                            </FormGroup>
+                                <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                  Enter one or more API groups for this rule. Separate multiple values with commas.
+                                </Content>
+                                <TextInput
+                                  id={`api-groups-${ruleIndex}`}
+                                  value={rule.apiGroups}
+                                  onChange={(_event, value) => updateRule(ruleIndex, { apiGroups: value ?? '' })}
+                                  placeholder="Enter API groups (empty for core)"
+                                />
+                                <Button
+                                  variant="link"
+                                  isInline
+                                  style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
+                                  onClick={() => { setEditingRuleIndex(ruleIndex); setBrowseDrawerMode('apiGroups'); setIsResourcesDrawerOpen(true); }}
+                                >
+                                  Browse and select API groups
+                                </Button>
+                              </FormGroup>
 
-                            <Divider style={{ margin: '16px 0' }} />
+                              <Divider style={{ margin: '16px 0' }} />
 
-                            <FormGroup
-                              label="Resources"
-                              fieldId="resources-1"
-                            >
-                              <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                Enter one or more resource types for the selected API groups. Separate multiple values with commas.
-                              </Content>
-                              <TextInput
-                                id="resources-1"
-                                value={resources}
-                                onChange={(_event, value) => setResources(value)}
-                                placeholder="Enter resources"
-                              />
-                              <Button 
-                                variant="link" 
-                                isInline 
-                                style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
-                                onClick={() => setIsResourcesDrawerOpen(true)}
+                              <FormGroup
+                                label="Resources"
+                                fieldId={`resources-${ruleIndex}`}
                               >
-                                Browse and select resources
-                              </Button>
-                            </FormGroup>
+                                <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                  Enter one or more resource types for the selected API groups. Separate multiple values with commas.
+                                </Content>
+                                <TextInput
+                                  id={`resources-${ruleIndex}`}
+                                  value={rule.resources}
+                                  onChange={(_event, value) => updateRule(ruleIndex, { resources: value ?? '' })}
+                                  placeholder="Enter resources"
+                                />
+                                <Button
+                                  variant="link"
+                                  isInline
+                                  style={{ paddingLeft: 0, marginTop: 'var(--pf-v5-global--spacer--sm)' }}
+                                  onClick={() => { setEditingRuleIndex(ruleIndex); setBrowseDrawerMode('resources'); setIsResourcesDrawerOpen(true); }}
+                                >
+                                  Browse and select resources
+                                </Button>
+                              </FormGroup>
 
-                            <Divider style={{ margin: '16px 0' }} />
+                              <Divider style={{ margin: '16px 0' }} />
 
-                            <FormGroup
-                              label="Verbs (Permissions)"
-                              fieldId="verbs-1"
-                            >
-                              <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                <SplitItem isFilled>
-                                  <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                    Select the actions this rule allows on the chosen resources.
-                                  </Content>
-                                </SplitItem>
-                                <SplitItem>
-                                  <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                    Select all categories
-                                  </Button>
-                                </SplitItem>
-                              </Split>
+                              <FormGroup
+                                label="Verbs (Permissions)"
+                                fieldId={`verbs-${ruleIndex}`}
+                              >
+                                <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                  <SplitItem isFilled>
+                                    <Content component="p" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                      Select the actions this rule allows on the chosen resources.
+                                    </Content>
+                                  </SplitItem>
+                                  <SplitItem>
+                                    <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => (isAllCategoriesSelected(rule.verbs) ? handleDeselectAllCategories(ruleIndex) : handleSelectAllCategories(ruleIndex))}>
+                                      {isAllCategoriesSelected(rule.verbs) ? 'Deselect all categories' : 'Select all categories'}
+                                    </Button>
+                                  </SplitItem>
+                                </Split>
 
-                              {/* Read Operations */}
-                              <Card style={{ marginBottom: '16px' }}>
-                                <CardBody>
-                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                    <SplitItem isFilled>
-                                      <Content style={{ fontWeight: 600, margin: 0 }}>Read Operations</Content>
-                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                        View and monitor resources
-                                      </Content>
-                                    </SplitItem>
-                                    <SplitItem>
-                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('read')}>
-                                        Select all
-                                      </Button>
-                                    </SplitItem>
-                                  </Split>
-                                  <Grid hasGutter>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-get"
-                                        label={
-                                          <>
-                                            <strong>Get</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Read individual resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.get}
-                                        onChange={(_event, checked) => handleVerbChange('get', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-list"
-                                        label={
-                                          <>
-                                            <strong>List</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              List multiple resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.list}
-                                        onChange={(_event, checked) => handleVerbChange('list', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-watch"
-                                        label={
-                                          <>
-                                            <strong>Watch</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Watch for resource changes
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.watch}
-                                        onChange={(_event, checked) => handleVerbChange('watch', checked)}
-                                      />
-                                    </GridItem>
-                                  </Grid>
-                                </CardBody>
-                              </Card>
+                                {/* Read Operations */}
+                                <Card style={{ marginBottom: '16px' }}>
+                                  <CardBody>
+                                    <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                      <SplitItem isFilled>
+                                        <Content style={{ fontWeight: 600, margin: 0 }}>Read Operations</Content>
+                                        <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
+                                          View and monitor resources
+                                        </Content>
+                                      </SplitItem>
+                                      <SplitItem>
+                                        <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAllOrDeselectAll(ruleIndex, 'read')}>
+                                          {isCategoryAllSelected(rule.verbs, 'read') ? 'Deselect all' : 'Select all'}
+                                        </Button>
+                                      </SplitItem>
+                                    </Split>
+                                    <Grid hasGutter>
+                                      <GridItem span={4}>
+                                        <Checkbox
+                                          id={`verb-${ruleIndex}-get`}
+                                          label={<><strong>Get</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Read individual resources</span></>}
+                                          isChecked={rule.verbs.get}
+                                          onChange={(_event, checked) => handleVerbChange(ruleIndex, 'get', checked ?? false)}
+                                        />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox
+                                          id={`verb-${ruleIndex}-list`}
+                                          label={<><strong>List</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>List multiple resources</span></>}
+                                          isChecked={rule.verbs.list}
+                                          onChange={(_event, checked) => handleVerbChange(ruleIndex, 'list', checked ?? false)}
+                                        />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox
+                                          id={`verb-${ruleIndex}-watch`}
+                                          label={<><strong>Watch</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Watch for resource changes</span></>}
+                                          isChecked={rule.verbs.watch}
+                                          onChange={(_event, checked) => handleVerbChange(ruleIndex, 'watch', checked ?? false)}
+                                        />
+                                      </GridItem>
+                                    </Grid>
+                                  </CardBody>
+                                </Card>
 
-                              {/* Write Operations */}
-                              <Card style={{ marginBottom: '16px' }}>
-                                <CardBody>
-                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                    <SplitItem isFilled>
-                                      <Content style={{ fontWeight: 600, margin: 0 }}>Write Operations</Content>
-                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                        Create and modify resources
-                                      </Content>
-                                    </SplitItem>
-                                    <SplitItem>
-                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('write')}>
-                                        Select all
-                                      </Button>
-                                    </SplitItem>
-                                  </Split>
-                                  <Grid hasGutter>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-create"
-                                        label={
-                                          <>
-                                            <strong>Create</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Create new resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.create}
-                                        onChange={(_event, checked) => handleVerbChange('create', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-update"
-                                        label={
-                                          <>
-                                            <strong>Update</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Update existing resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.update}
-                                        onChange={(_event, checked) => handleVerbChange('update', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-patch"
-                                        label={
-                                          <>
-                                            <strong>Patch</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Partially update resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.patch}
-                                        onChange={(_event, checked) => handleVerbChange('patch', checked)}
-                                      />
-                                    </GridItem>
-                                  </Grid>
-                                </CardBody>
-                              </Card>
+                                {/* Write Operations */}
+                                <Card style={{ marginBottom: '16px' }}>
+                                  <CardBody>
+                                    <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                      <SplitItem isFilled>
+                                        <Content style={{ fontWeight: 600, margin: 0 }}>Write Operations</Content>
+                                        <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>Create and modify resources</Content>
+                                      </SplitItem>
+                                      <SplitItem>
+                                        <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAllOrDeselectAll(ruleIndex, 'write')}>{isCategoryAllSelected(rule.verbs, 'write') ? 'Deselect all' : 'Select all'}</Button>
+                                      </SplitItem>
+                                    </Split>
+                                    <Grid hasGutter>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-create`} label={<><strong>Create</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Create new resources</span></>} isChecked={rule.verbs.create} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'create', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-update`} label={<><strong>Update</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Update existing resources</span></>} isChecked={rule.verbs.update} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'update', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-patch`} label={<><strong>Patch</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Partially update resources</span></>} isChecked={rule.verbs.patch} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'patch', checked ?? false)} />
+                                      </GridItem>
+                                    </Grid>
+                                  </CardBody>
+                                </Card>
 
-                              {/* Delete Operations */}
-                              <Card style={{ marginBottom: '16px' }}>
-                                <CardBody>
-                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                    <SplitItem isFilled>
-                                      <Content style={{ fontWeight: 600, margin: 0 }}>Delete Operations</Content>
-                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                        Remove resources
-                                      </Content>
-                                    </SplitItem>
-                                    <SplitItem>
-                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('delete')}>
-                                        Select all
-                                      </Button>
-                                    </SplitItem>
-                                  </Split>
-                                  <Grid hasGutter>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-delete"
-                                        label={
-                                          <>
-                                            <strong>Delete</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Delete individual resources
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.delete}
-                                        onChange={(_event, checked) => handleVerbChange('delete', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-deletecollection"
-                                        label={
-                                          <>
-                                            <strong>Delete Collection</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Delete multiple resources at once
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.deletecollection}
-                                        onChange={(_event, checked) => handleVerbChange('deletecollection', checked)}
-                                      />
-                                    </GridItem>
-                                  </Grid>
-                                </CardBody>
-                              </Card>
+                                {/* Delete Operations */}
+                                <Card style={{ marginBottom: '16px' }}>
+                                  <CardBody>
+                                    <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                      <SplitItem isFilled>
+                                        <Content style={{ fontWeight: 600, margin: 0 }}>Delete Operations</Content>
+                                        <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>Remove resources</Content>
+                                      </SplitItem>
+                                      <SplitItem>
+                                        <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAllOrDeselectAll(ruleIndex, 'delete')}>{isCategoryAllSelected(rule.verbs, 'delete') ? 'Deselect all' : 'Select all'}</Button>
+                                      </SplitItem>
+                                    </Split>
+                                    <Grid hasGutter>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-delete`} label={<><strong>Delete</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Delete individual resources</span></>} isChecked={rule.verbs.delete} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'delete', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-deletecollection`} label={<><strong>Delete Collection</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Delete multiple resources at once</span></>} isChecked={rule.verbs.deletecollection} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'deletecollection', checked ?? false)} />
+                                      </GridItem>
+                                    </Grid>
+                                  </CardBody>
+                                </Card>
 
-                              {/* Advanced Operations */}
-                              <Card>
-                                <CardBody>
-                                  <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
-                                    <SplitItem isFilled>
-                                      <Content style={{ fontWeight: 600, margin: 0 }}>Advanced Operations</Content>
-                                      <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>
-                                        Special permissions (use with caution)
-                                      </Content>
-                                    </SplitItem>
-                                    <SplitItem>
-                                      <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAll('advanced')}>
-                                        Select all
-                                      </Button>
-                                    </SplitItem>
-                                  </Split>
-                                  <Grid hasGutter>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-bind"
-                                        label={
-                                          <>
-                                            <strong>Bind</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Bind roles to users or groups
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.bind}
-                                        onChange={(_event, checked) => handleVerbChange('bind', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-escalate"
-                                        label={
-                                          <>
-                                            <strong>Escalate</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Grant permissions above current role
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.escalate}
-                                        onChange={(_event, checked) => handleVerbChange('escalate', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-impersonate"
-                                        label={
-                                          <>
-                                            <strong>Impersonate</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Impersonate another user
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.impersonate}
-                                        onChange={(_event, checked) => handleVerbChange('impersonate', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-use"
-                                        label={
-                                          <>
-                                            <strong>Use</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Use named resources (e.g., SecurityContextConstraints)
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.use}
-                                        onChange={(_event, checked) => handleVerbChange('use', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-approve"
-                                        label={
-                                          <>
-                                            <strong>Approve</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              Approve certificate signing requests
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.approve}
-                                        onChange={(_event, checked) => handleVerbChange('approve', checked)}
-                                      />
-                                    </GridItem>
-                                    <GridItem span={4}>
-                                      <Checkbox
-                                        id="verb-1-all"
-                                        label={
-                                          <>
-                                            <strong>All (*)</strong><br />
-                                            <span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>
-                                              All operations (admin level)
-                                            </span>
-                                          </>
-                                        }
-                                        isChecked={verbs.all}
-                                        onChange={(_event, checked) => handleVerbChange('all', checked)}
-                                      />
-                                    </GridItem>
-                                  </Grid>
-                                </CardBody>
-                              </Card>
-                            </FormGroup>
-                          </ExpandableSection>
+                                {/* Advanced Operations */}
+                                <Card>
+                                  <CardBody>
+                                    <Split hasGutter style={{ marginBottom: 'var(--pf-v5-global--spacer--sm)' }}>
+                                      <SplitItem isFilled>
+                                        <Content style={{ fontWeight: 600, margin: 0 }}>Advanced Operations</Content>
+                                        <Content component="small" style={{ color: 'var(--pf-v5-global--Color--200)', fontSize: 'var(--pf-v5-global--FontSize--sm)' }}>Special permissions (use with caution)</Content>
+                                      </SplitItem>
+                                      <SplitItem>
+                                        <Button variant="link" isInline style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)' }} onClick={() => handleSelectAllOrDeselectAll(ruleIndex, 'advanced')}>{isCategoryAllSelected(rule.verbs, 'advanced') ? 'Deselect all' : 'Select all'}</Button>
+                                      </SplitItem>
+                                    </Split>
+                                    <Grid hasGutter>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-bind`} label={<><strong>Bind</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Bind roles to users or groups</span></>} isChecked={rule.verbs.bind} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'bind', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-escalate`} label={<><strong>Escalate</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Grant permissions above current role</span></>} isChecked={rule.verbs.escalate} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'escalate', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-impersonate`} label={<><strong>Impersonate</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Impersonate another user</span></>} isChecked={rule.verbs.impersonate} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'impersonate', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4} style={{ minWidth: 0 }}>
+                                        <div style={{ minWidth: 0, maxWidth: '100%' }}>
+                                          <Checkbox id={`verb-${ruleIndex}-use`} label={<><strong>Use</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)', display: 'block', wordBreak: 'break-word', overflowWrap: 'break-word' }}>Use named resources (e.g., SecurityContextConstraints)</span></>} isChecked={rule.verbs.use} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'use', checked ?? false)} />
+                                        </div>
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-approve`} label={<><strong>Approve</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>Approve certificate signing requests</span></>} isChecked={rule.verbs.approve} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'approve', checked ?? false)} />
+                                      </GridItem>
+                                      <GridItem span={4}>
+                                        <Checkbox id={`verb-${ruleIndex}-all`} label={<><strong>All (*)</strong><br /><span style={{ fontSize: 'var(--pf-v5-global--FontSize--sm)', color: 'var(--pf-v5-global--Color--200)' }}>All operations (admin level)</span></>} isChecked={rule.verbs.all} onChange={(_event, checked) => handleVerbChange(ruleIndex, 'all', checked ?? false)} />
+                                      </GridItem>
+                                    </Grid>
+                                  </CardBody>
+                                </Card>
+                              </FormGroup>
+                            </ExpandableSection>
+                          </div>
+                          {rules.length > 1 && (
+                            <Button variant="link" isDanger onClick={() => handleRemoveRule(ruleIndex)} style={{ position: 'absolute', right: 0, top: 0 }}>
+                              Remove rule
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                    </CardBody>
-                  </Card>
+                      </CardBody>
+                    </Card>
+                  ))}
                 </Form>
               </CardBody>
             </Card>
-
-            <div style={{ marginTop: 'var(--pf-v5-global--spacer--lg)' }}>
-              <Button variant="primary" onClick={handleSubmit}>Create Role</Button>
-            </div>
           </GridItem>
 
           <GridItem span={6}>
@@ -1208,69 +1353,60 @@ ${selectedVerbs.length > 0 ? selectedVerbs.map(v => `  - "${v}"`).join('\n') : '
         </Grid>
       </PageSection>
 
-      {/* Template Selection Modal */}
+      <section className="pf-v6-c-page__main-section pf-m-sticky-bottom" aria-label="Create role actions">
+        <div className="pf-v6-l-stack pf-m-gutter">
+          <div className="pf-v6-l-stack__item">
+            <div className="pf-v6-l-stack pf-m-gutter">
+              <div className="pf-v6-l-stack__item">
+                <div className="pf-v6-c-action-list">
+                  <div className="pf-v6-c-action-list__item">
+                    <Button variant="primary" onClick={handleSubmit}>Create Role</Button>
+                  </div>
+                  <div className="pf-v6-c-action-list__item">
+                    <Button variant="link" onClick={handleCancel}>Cancel</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Template Selection Modal - reused for both role templates and rule templates */}
       <Modal
         variant={ModalVariant.large}
         isOpen={isTemplateModalOpen}
-        onClose={() => setIsTemplateModalOpen(false)}
-        aria-labelledby="template-modal-title"
+        onClose={() => {
+          setIsTemplateModalOpen(false);
+          setTemplateSearchValue('');
+          setRuleTemplateSearchValue('');
+        }}
+        aria-labelledby={templateModalMode === 'role' ? 'template-modal-title' : 'rule-template-modal-title'}
       >
-        <ModalHeader title="Select template" />
+        <ModalHeader title={templateModalMode === 'role' ? 'Select template' : 'Select rule template'} />
         <ModalBody>
-          <div style={{ marginBottom: 'var(--pf-v5-global--spacer--md)' }}>
-            <SearchInput
-              placeholder="Search templates"
-              value={templateSearchValue}
-              onChange={(_event, value) => setTemplateSearchValue(value)}
-              onClear={() => setTemplateSearchValue('')}
-              aria-label="Search templates"
-            />
-          </div>
-          <Table variant="compact" aria-label="Role templates table">
-            <Thead>
-              <Tr>
-                <Th>Name</Th>
-                <Th>Category</Th>
-                <Th>Description</Th>
-                <Th>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {filteredTemplates.length > 0 ? (
-                filteredTemplates.map((template) => (
-                  <Tr key={template.id}>
-                    <Td dataLabel="Name">{template.name}</Td>
-                    <Td dataLabel="Category">{template.category}</Td>
-                    <Td dataLabel="Description">{template.description}</Td>
-                    <Td dataLabel="Actions">
-                      <Button variant="secondary" onClick={() => handleUseTemplate(template)}>
-                        Use template
-                      </Button>
-                    </Td>
-                  </Tr>
-                ))
-              ) : (
-                <Tr>
-                  <Td colSpan={4} style={{ textAlign: 'center', padding: 'var(--pf-v5-global--spacer--lg)' }}>
-                    No templates found matching your search.
-                  </Td>
-                </Tr>
-              )}
-            </Tbody>
-          </Table>
+          <TemplateTable
+            searchPlaceholder="Search templates"
+            searchValue={templateModalMode === 'role' ? templateSearchValue : ruleTemplateSearchValue}
+            onSearchChange={templateModalMode === 'role' ? setTemplateSearchValue : setRuleTemplateSearchValue}
+            searchAriaLabel="Search templates"
+            items={templateModalMode === 'role' ? filteredTemplates : filteredRuleTemplates}
+            emptyMessage="No templates found matching your search."
+            actionLabel={templateModalMode === 'role' ? 'Use template' : 'Add'}
+            onAction={templateModalMode === 'role' ? handleUseTemplate : addRulesFromRoleTemplate}
+            tableAriaLabel={templateModalMode === 'role' ? 'Role templates table' : 'Rule templates table'}
+          />
         </ModalBody>
         <ModalFooter>
           <Button variant="link" onClick={() => {
             setIsTemplateModalOpen(false);
-            setTemplateSearchValue(''); // Clear search when modal closes
+            setTemplateSearchValue('');
+            setRuleTemplateSearchValue('');
           }}>
             Cancel
           </Button>
         </ModalFooter>
       </Modal>
-              </DrawerContentBody>
-            </DrawerContent>
-          </Drawer>
         </DrawerContentBody>
       </DrawerContent>
     </Drawer>

@@ -941,3 +941,23 @@ interface User {
       - Select all checkbox removed from toolbar
       - Delete role button always disabled (no selection state)
     - Applied in Roles.tsx component
+
+42. **Settings - Create Role Form (CreateRole.tsx) - Current State and Key Decisions:**
+    - **Single Browse Drawer (Resources + API Groups):**
+      - One drawer is used for both "Browse and select resources" and "Browse and select API groups."
+      - State: `isResourcesDrawerOpen` (drawer open/close), `browseDrawerMode: 'resources' | 'apiGroups'` (which content to show).
+      - "Browse and select resources" sets `browseDrawerMode('resources')` and opens the drawer; "Browse and select API groups" sets `browseDrawerMode('apiGroups')` and opens the same drawer.
+      - Panel content is conditional on `browseDrawerMode`: either Resources or API Groups `BrowseDrawerPanelContent` with respective props.
+    - **Shared BrowseDrawerPanelContent Component:**
+      - Single component used for both Resources and API Groups panels (same structure and behavior).
+      - Structure: DrawerPanelContent > DrawerHead (title + close) > DrawerPanelBody (scrollable).
+      - DrawerPanelBody: no top padding (`paddingTop: 0`); left/right/bottom padding only. Sticky block has `paddingTop` so there is no gap between drawer title and sticky header (avoids list items showing in the gap when scrolling).
+      - Sticky block: `position: sticky`, `top: 0`, `zIndex: 10`, solid background (`var(--pf-v5-global--BackgroundColor--100, #ffffff)`). Contains search input, "Filter by category" label, ToggleGroup (All/Core/...), then scrollable category list with rows (name, description, Add button).
+      - Prevents overlap: sticky header has opaque background and higher z-index so scrolling list items do not show through or appear above it.
+    - **Verbs (Permissions) - Select/Deselect All Categories:**
+      - "Select all categories" button: selects all verbs for that rule (all keys in `defaultVerbs` set to `true`). Handler: `handleSelectAllCategories(ruleIndex)`.
+      - After all verbs are selected, the button label becomes "Deselect all categories". Clicking it deselects all verbs for that rule. Handler: `handleDeselectAllCategories(ruleIndex)`.
+      - Helper: `isAllCategoriesSelected(verbs)` returns true when every verb in the rule is selected; used for button label and to decide which handler to call.
+      - Per-category "Select all" / "Deselect all" in each operations card (Read, Write, Delete, Advanced) unchanged; they show "Deselect all" when all verbs in that category are selected.
+    - **Other Create Role Form Details (unchanged in this session):**
+      - Rule templates (Maintainer, Reader, Updater), Add rule dropdown, rule template modal (search + table), Live YAML, permission rules with API groups/Resources/Verbs, `editingRuleIndex` for which rule is being edited when using the browse drawer.
