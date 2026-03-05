@@ -968,5 +968,8 @@ interface User {
       - 16px gap between the "Role Configuration" title and the first field label ("Role Name"): Form uses `style={{ marginTop: '16px' }}`.
     - **Operations cards (Verbs) – spacing:**
       - 8px gap between the description (under each operation title) and the checkbox section: each card’s checkbox `Grid` has `style={{ marginTop: '8px' }}` (Read, Write, Delete, Advanced Operations).
+    - **Permission Rules – scroll to new rule and "no rule defined yet":**
+      - **Scroll to new rule:** After "Add rule from scratch", the new rule is expanded (id added to `expandedRuleIds`) and the page scrolls to it after 150ms via `newRuleIdRef` and a `useEffect` that runs when `rules.length` changes; the target element is found by `data-rule-id`. After "Add rule via template", the first newly added rule's id is set in `newRuleIdRef`, so the same effect scrolls to the first new rule when the modal closes.
+      - **No rule defined yet:** When adding rules via rule template, if `rules.length <= 1` (no rules or only the default), the template rules **replace** the current list instead of appending, so the first template rule displays as "Rule 1", the next as "Rule 2", etc. When there are already 2+ rules, template rules are appended as before.
     - **Other Create Role Form Details:**
       - Rule templates (Maintainer, Reader, Updater), Add rule dropdown, rule template modal (search + table), Live YAML, permission rules with API groups/Resources/Verbs, `editingRuleIndex` for which rule is being edited when using the browse drawer.

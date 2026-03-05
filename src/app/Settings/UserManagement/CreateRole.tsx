@@ -575,17 +575,17 @@ const CreateRole: React.FunctionComponent = () => {
 
   /** Add rules from a role template to the current form (used by "Select rule template" modal). */
   const addRulesFromRoleTemplate = (template: RoleTemplate) => {
+    const noRulesDefinedYet = rules.length <= 1;
     if (template.templateRules && template.templateRules.length > 0) {
       const newRules = template.templateRules.map((r, i) => ({
         ...r,
         id: `rule-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`,
       }));
-      setRules((prev) => [...prev, ...newRules]);
-      setExpandedRuleIds((prev) => {
-        const next = new Set(prev);
-        newRules.forEach((r) => next.add(r.id));
-        return next;
-      });
+      setRules((prev) => (noRulesDefinedYet ? newRules : [...prev, ...newRules]));
+      setExpandedRuleIds((prev) =>
+        noRulesDefinedYet ? new Set(newRules.map((r) => r.id)) : new Set(Array.from(prev).concat(newRules.map((r) => r.id)))
+      );
+      newRuleIdRef.current = newRules[0].id;
     } else if (
       template.templateApiGroups !== undefined ||
       template.templateResources !== undefined ||
@@ -597,8 +597,9 @@ const CreateRole: React.FunctionComponent = () => {
         verbs: template.templateVerbs ? { ...defaultVerbs, ...template.templateVerbs } : defaultVerbs,
       });
       newRule.id = `rule-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      setRules((prev) => [...prev, newRule]);
-      setExpandedRuleIds((prev) => new Set(prev).add(newRule.id));
+      setRules((prev) => (noRulesDefinedYet ? [newRule] : [...prev, newRule]));
+      setExpandedRuleIds((prev) => (noRulesDefinedYet ? new Set([newRule.id]) : new Set(Array.from(prev).concat(newRule.id))));
+      newRuleIdRef.current = newRule.id;
     }
     setIsTemplateModalOpen(false);
     setRuleTemplateSearchValue('');
@@ -688,9 +689,26 @@ const CreateRole: React.FunctionComponent = () => {
     );
   };
 
+  const newRuleIdRef = React.useRef<string | null>(null);
+
   const handleAddRule = () => {
-    setRules((prev) => [...prev, createRule()]);
+    const newRule = createRule();
+    setRules((prev) => [...prev, newRule]);
+    setExpandedRuleIds((prev) => new Set(Array.from(prev).concat(newRule.id)));
+    newRuleIdRef.current = newRule.id;
   };
+
+  React.useEffect(() => {
+    const ruleId = newRuleIdRef.current;
+    if (!ruleId) return;
+    const scrollToNewRule = () => {
+      const el = document.querySelector(`[data-rule-id="${ruleId}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      newRuleIdRef.current = null;
+    };
+    const t = window.setTimeout(scrollToNewRule, 150);
+    return () => window.clearTimeout(t);
+  }, [rules.length]);
 
   const handleRemoveRule = (ruleIndex: number) => {
     setRules((prev) => prev.filter((_, i) => i !== ruleIndex));
@@ -1143,11 +1161,12 @@ ${ruleBlocks.join('\n')}
                   </Split>
 
                   {rules.map((rule, ruleIndex) => (
-                    <Card key={rule.id} style={{ marginTop: ruleIndex === 0 ? 'var(--pf-v5-global--spacer--md)' : '16px', overflow: 'visible' }}>
-                      <CardBody style={{ overflow: 'visible' }}>
-                        <div style={{ position: 'relative', overflow: 'visible' }}>
-                          <div style={{ minWidth: 0 }}>
-                            <ExpandableSection
+                    <div key={rule.id} data-rule-id={rule.id}>
+                      <Card style={{ marginTop: ruleIndex === 0 ? 'var(--pf-v5-global--spacer--md)' : '16px', overflow: 'visible' }}>
+                        <CardBody style={{ overflow: 'visible' }}>
+                          <div style={{ position: 'relative', overflow: 'visible' }}>
+                            <div style={{ minWidth: 0 }}>
+                              <ExpandableSection
                               toggleText={`Rule ${ruleIndex + 1}`}
                               isExpanded={expandedRuleIds.has(rule.id) || (rules.length === 1 && expandedRuleIds.size === 0)}
                               onToggle={() => toggleRuleExpanded(rule.id)}
@@ -1361,6 +1380,7 @@ ${ruleBlocks.join('\n')}
                         </div>
                       </CardBody>
                     </Card>
+                    </div>
                   ))}
                 </Form>
               </CardBody>
